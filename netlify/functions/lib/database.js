@@ -1,8 +1,28 @@
 const { neon } = require('@neondatabase/serverless');
 const crypto = require('crypto-js');
 
-// Database connection
-const sql = neon(process.env.DATABASE_URL);
+// Database connection with error handling
+let sql;
+try {
+    if (!process.env.DATABASE_URL) {
+        throw new Error('DATABASE_URL environment variable is not set');
+    }
+    
+    // Clean the URL and validate format
+    const databaseUrl = process.env.DATABASE_URL.trim();
+    console.log('Initializing Neon connection with URL length:', databaseUrl.length);
+    console.log('URL starts with:', databaseUrl.substring(0, 20));
+    
+    if (!databaseUrl.startsWith('postgresql://')) {
+        throw new Error(`Invalid DATABASE_URL format. Expected postgresql://, got: ${databaseUrl.substring(0, 20)}...`);
+    }
+    
+    sql = neon(databaseUrl);
+    console.log('Neon connection initialized successfully');
+} catch (error) {
+    console.error('Error initializing Neon connection:', error);
+    throw error;
+}
 
 // Encrypt sensitive data before storing
 function encryptData(text) {

@@ -31,13 +31,23 @@ exports.handler = async (event, context) => {
             nodeEnv: process.env.NODE_ENV || 'development',
             databaseUrlFormat: process.env.DATABASE_URL ? 
                 (process.env.DATABASE_URL.startsWith('postgresql://') ? 'valid' : 'invalid') : 
-                'missing'
+                'missing',
+            databaseUrlLength: process.env.DATABASE_URL ? process.env.DATABASE_URL.length : 0,
+            databaseUrlFirst20: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 20) : 'none',
+            databaseUrlLast20: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(process.env.DATABASE_URL.length - 20) : 'none'
         };
 
         // 2. Test Database Connection
         if (process.env.DATABASE_URL) {
             try {
-                const sql = neon(process.env.DATABASE_URL);
+                // Clean the URL of any potential hidden characters
+                const cleanUrl = process.env.DATABASE_URL.trim();
+                console.log('Raw DATABASE_URL:', process.env.DATABASE_URL);
+                console.log('Cleaned DATABASE_URL:', cleanUrl);
+                console.log('URL length:', cleanUrl.length);
+                console.log('Starts with postgresql://', cleanUrl.startsWith('postgresql://'));
+                
+                const sql = neon(cleanUrl);
                 
                 // Test basic connection
                 const connectionTest = await sql`SELECT NOW() as current_time, version() as postgres_version`;
