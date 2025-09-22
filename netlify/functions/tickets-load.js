@@ -1,4 +1,4 @@
-const { initializeDatabase, getTickets } = require('./lib/database');
+const { getTickets } = require('./lib/database');
 
 exports.handler = async (event, context) => {
     // Handle CORS preflight requests
@@ -30,9 +30,6 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        // Initialize database if needed
-        await initializeDatabase();
-
         // Get query parameters
         const params = event.queryStringParameters || {};
         const limit = parseInt(params.limit) || 100;

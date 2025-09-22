@@ -233,7 +233,6 @@ async function updateTicketStatus(ticketId, status) {
 
 module.exports = {
     getDatabase,
-    initializeDatabase,
     getUserSettings,
     saveUserSettings,
     saveTicket,

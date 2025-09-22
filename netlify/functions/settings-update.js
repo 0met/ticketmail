@@ -1,4 +1,4 @@
-const { initializeDatabase, saveUserSettings } = require('./lib/database');
+const { saveUserSettings } = require('./lib/database');
 
 exports.handler = async (event, context) => {
     // Handle CORS preflight requests
@@ -30,9 +30,6 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        // Initialize database if needed
-        await initializeDatabase();
-
         // Parse request body
         const settings = JSON.parse(event.body);
 

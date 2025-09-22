@@ -1,4 +1,4 @@
-const { initializeDatabase, getUserSettings, saveTicket } = require('./lib/database');
+const { getUserSettings, saveTicket } = require('./lib/database');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 
@@ -172,11 +172,6 @@ exports.handler = async (event, context) => {
     try {
         console.log('Starting email sync process...');
         
-        // Initialize database if needed
-        console.log('Initializing database...');
-        await initializeDatabase();
-        console.log('Database initialized successfully');
-
         // Get user settings
         console.log('Fetching user settings...');
         const settings = await getUserSettings();

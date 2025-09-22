@@ -1,4 +1,4 @@
-const { initializeDatabase, getUserSettings } = require('./lib/database');
+const { getUserSettings } = require('./lib/database');
 
 exports.handler = async (event, context) => {
     // Handle CORS preflight requests
@@ -16,12 +16,8 @@ exports.handler = async (event, context) => {
 
     try {
         console.log('Testing settings retrieval...');
-        
-        // Initialize database if needed
-        await initializeDatabase();
-        console.log('Database initialized successfully');
 
-        // Get user settings
+        // Get user settings (database initialization is handled internally)
         const settings = await getUserSettings();
         console.log('Settings retrieved:', settings);
 
