@@ -170,12 +170,20 @@ exports.handler = async (event, context) => {
     let imap = null;
 
     try {
+        console.log('Starting email sync process...');
+        
         // Initialize database if needed
+        console.log('Initializing database...');
         await initializeDatabase();
+        console.log('Database initialized successfully');
 
         // Get user settings
+        console.log('Fetching user settings...');
         const settings = await getUserSettings();
+        console.log('Settings retrieved:', settings ? 'Found' : 'Not found');
+        
         if (!settings) {
+            console.log('No settings found, returning error');
             return {
                 statusCode: 400,
                 headers: {
@@ -189,10 +197,42 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Validate settings
+        if (!settings.gmailAddress || !settings.appPassword) {
+            console.log('Invalid settings - missing email or password');
+            return {
+                statusCode: 400,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    success: false,
+                    error: 'Gmail settings are incomplete. Please check your email and app password.'
+                })
+            };
+        }
+
+        console.log('Attempting to connect to Gmail IMAP for:', settings.gmailAddress);
+        
         // Connect to IMAP
-        console.log('Connecting to Gmail IMAP...');
-        imap = await connectToImap(settings);
-        console.log('Connected to Gmail successfully');
+        try {
+            imap = await connectToImap(settings);
+            console.log('Connected to Gmail successfully');
+        } catch (imapError) {
+            console.error('IMAP connection failed:', imapError);
+            return {
+                statusCode: 500,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    success: false,
+                    error: 'Failed to connect to Gmail: ' + imapError.message
+                })
+            };
+        }
 
         // Parse request body for options
         let options = {};
@@ -272,7 +312,8 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
-        console.error('Error in tickets-sync function:', error);
+        console.error('Critical error in tickets-sync function:', error);
+        console.error('Error stack:', error.stack);
         
         // Make sure to close IMAP connection on error
         if (imap) {
@@ -293,6 +334,9 @@ exports.handler = async (event, context) => {
         } else if (error.message && error.message.includes('connection')) {
             statusCode = 503;
             errorMessage = 'Unable to connect to Gmail. Please try again later.';
+        } else if (error.message && error.message.includes('database')) {
+            statusCode = 500;
+            errorMessage = 'Database error: ' + error.message;
         } else if (error.message) {
             errorMessage = error.message;
         }
@@ -305,7 +349,8 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({
                 success: false,
-                error: errorMessage
+                error: errorMessage,
+                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
             })
         };
     }

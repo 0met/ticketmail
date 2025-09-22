@@ -513,6 +513,7 @@
                         <button type="button" class="btn btn-secondary" onclick="testConnection()">🔗 Test Connection</button>
                         <button type="button" class="btn btn-secondary" onclick="testNetlifyFunctions()">🧪 Test Functions</button>
                         <button type="button" class="btn btn-success" onclick="validateEnvironment()">✅ Validate Environment</button>
+                        <button type="button" class="btn btn-info" onclick="testSavedSettings()">🔍 Test Saved Settings</button>
                     </div>
                 </form>
 
@@ -734,6 +735,48 @@
             } catch (error) {
                 console.error('Environment validation error:', error);
                 alert('❌ Validation error: ' + error.message);
+            }
+        }
+
+        // Test saved settings retrieval
+        async function testSavedSettings() {
+            try {
+                console.log('Testing saved settings...');
+                
+                const response = await fetch('/.netlify/functions/test-settings', {
+                    method: 'GET'
+                });
+                
+                console.log('Test settings response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Test settings result:', result);
+                
+                if (result.success) {
+                    let message = `🔍 Settings Test Complete\n\n`;
+                    message += `Has Settings: ${result.hasSettings ? '✅ Yes' : '❌ No'}\n\n`;
+                    
+                    if (result.settingsData) {
+                        message += `Settings Details:\n`;
+                        message += `- Gmail Address: ${result.settingsData.hasGmailAddress ? '✅ Set (' + result.settingsData.gmailAddress + ')' : '❌ Missing'}\n`;
+                        message += `- App Password: ${result.settingsData.hasAppPassword ? '✅ Set' : '❌ Missing'}\n`;
+                        message += `- Refresh Interval: ${result.settingsData.refreshInterval} minutes\n`;
+                        message += `- Default Status: ${result.settingsData.defaultStatus}\n`;
+                    } else {
+                        message += `❌ No settings found in database.\nPlease save your Gmail settings first.`;
+                    }
+                    
+                    alert(message);
+                } else {
+                    alert('❌ Settings test failed: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Settings test error:', error);
+                alert('❌ Settings test error: ' + error.message);
             }
         }
 
