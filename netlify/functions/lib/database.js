@@ -1,27 +1,41 @@
 const { neon } = require('@neondatabase/serverless');
 const crypto = require('crypto-js');
 
-// Database connection with error handling
-let sql;
-try {
-    if (!process.env.DATABASE_URL) {
-        throw new Error('DATABASE_URL environment variable is not set');
+// Database connection - initialized on demand
+let sql = null;
+
+// Initialize database connection
+function initializeConnection() {
+    if (sql) {
+        return sql; // Return existing connection
     }
     
-    // Clean the URL and validate format
-    const databaseUrl = process.env.DATABASE_URL.trim();
-    console.log('Initializing Neon connection with URL length:', databaseUrl.length);
-    console.log('URL starts with:', databaseUrl.substring(0, 20));
-    
-    if (!databaseUrl.startsWith('postgresql://')) {
-        throw new Error(`Invalid DATABASE_URL format. Expected postgresql://, got: ${databaseUrl.substring(0, 20)}...`);
+    try {
+        if (!process.env.DATABASE_URL) {
+            throw new Error('DATABASE_URL environment variable is not set');
+        }
+        
+        // Clean the URL and validate format
+        const databaseUrl = process.env.DATABASE_URL.trim();
+        console.log('Initializing Neon connection with URL length:', databaseUrl.length);
+        console.log('URL starts with:', databaseUrl.substring(0, 20));
+        
+        if (!databaseUrl.startsWith('postgresql://')) {
+            throw new Error(`Invalid DATABASE_URL format. Expected postgresql://, got: ${databaseUrl.substring(0, 20)}...`);
+        }
+        
+        sql = neon(databaseUrl);
+        console.log('Neon connection initialized successfully');
+        return sql;
+    } catch (error) {
+        console.error('Error initializing Neon connection:', error);
+        throw error;
     }
-    
-    sql = neon(databaseUrl);
-    console.log('Neon connection initialized successfully');
-} catch (error) {
-    console.error('Error initializing Neon connection:', error);
-    throw error;
+}
+
+// Get database connection
+function getDatabase() {
+    return initializeConnection();
 }
 
 // Encrypt sensitive data before storing
@@ -47,6 +61,8 @@ function decryptData(encryptedText) {
 // Initialize database tables if they don't exist
 async function initializeDatabase() {
     try {
+        const sql = getDatabase();
+        
         // Create settings table
         await sql`
             CREATE TABLE IF NOT EXISTS user_settings (
@@ -100,6 +116,8 @@ async function initializeDatabase() {
 // Get user settings
 async function getUserSettings() {
     try {
+        const sql = getDatabase();
+        
         const result = await sql`
             SELECT gmail_address, app_password, refresh_interval, default_status 
             FROM user_settings 
@@ -127,6 +145,7 @@ async function getUserSettings() {
 // Save user settings
 async function saveUserSettings(settings) {
     try {
+        const sql = getDatabase();
         const encryptedPassword = encryptData(settings.appPassword);
         
         // Delete existing settings and insert new ones
@@ -147,6 +166,8 @@ async function saveUserSettings(settings) {
 // Save ticket to database
 async function saveTicket(ticket) {
     try {
+        const sql = getDatabase();
+        
         await sql`
             INSERT INTO tickets (subject, from_email, to_email, body, status, message_id, date_received)
             VALUES (${ticket.subject}, ${ticket.from}, ${ticket.to}, ${ticket.body}, ${ticket.status}, ${ticket.messageId}, ${ticket.date})
@@ -167,6 +188,8 @@ async function saveTicket(ticket) {
 // Get all tickets
 async function getTickets(limit = 100) {
     try {
+        const sql = getDatabase();
+        
         const result = await sql`
             SELECT id, subject, from_email, to_email, body, status, date_received, created_at
             FROM tickets 
@@ -193,6 +216,8 @@ async function getTickets(limit = 100) {
 // Update ticket status
 async function updateTicketStatus(ticketId, status) {
     try {
+        const sql = getDatabase();
+        
         await sql`
             UPDATE tickets 
             SET status = ${status}, updated_at = CURRENT_TIMESTAMP 
@@ -207,7 +232,7 @@ async function updateTicketStatus(ticketId, status) {
 }
 
 module.exports = {
-    sql,
+    getDatabase,
     initializeDatabase,
     getUserSettings,
     saveUserSettings,

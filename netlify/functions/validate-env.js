@@ -1,4 +1,4 @@
-const { neon } = require('@neondatabase/serverless');
+const { getDatabase } = require('./lib/database');
 const crypto = require('crypto-js');
 
 exports.handler = async (event, context) => {
@@ -40,14 +40,8 @@ exports.handler = async (event, context) => {
         // 2. Test Database Connection
         if (process.env.DATABASE_URL) {
             try {
-                // Clean the URL of any potential hidden characters
-                const cleanUrl = process.env.DATABASE_URL.trim();
-                console.log('Raw DATABASE_URL:', process.env.DATABASE_URL);
-                console.log('Cleaned DATABASE_URL:', cleanUrl);
-                console.log('URL length:', cleanUrl.length);
-                console.log('Starts with postgresql://', cleanUrl.startsWith('postgresql://'));
-                
-                const sql = neon(cleanUrl);
+                console.log('Testing database connection...');
+                const sql = getDatabase();
                 
                 // Test basic connection
                 const connectionTest = await sql`SELECT NOW() as current_time, version() as postgres_version`;
