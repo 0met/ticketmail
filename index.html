@@ -508,10 +508,11 @@
                         </select>
                     </div>
 
-                    <div style="display: flex; gap: 1rem;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                         <button type="button" class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
                         <button type="button" class="btn btn-secondary" onclick="testConnection()">🔗 Test Connection</button>
                         <button type="button" class="btn btn-secondary" onclick="testNetlifyFunctions()">🧪 Test Functions</button>
+                        <button type="button" class="btn btn-success" onclick="validateEnvironment()">✅ Validate Environment</button>
                     </div>
                 </form>
 
@@ -655,6 +656,84 @@
             } catch (error) {
                 console.error('Function test error:', error);
                 alert('❌ Function test error: ' + error.message);
+            }
+        }
+
+        // Validate complete environment setup
+        async function validateEnvironment() {
+            try {
+                console.log('Validating complete environment...');
+                
+                const response = await fetch('/.netlify/functions/validate-env', {
+                    method: 'GET'
+                });
+                
+                console.log('Environment validation response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Environment validation result:', result);
+                
+                if (result.success) {
+                    const r = result.results;
+                    let message = `🔍 Environment Validation Complete\n\n`;
+                    
+                    // Environment Variables
+                    message += `📋 Environment Variables:\n`;
+                    message += `- Database URL: ${r.environment.hasDatabase ? '✅ Present' : '❌ Missing'}\n`;
+                    message += `- Encryption Key: ${r.environment.hasEncryption ? '✅ Present' : '❌ Missing'}\n`;
+                    message += `- Database Format: ${r.environment.databaseUrlFormat}\n\n`;
+                    
+                    // Database Connection
+                    message += `🗄️ Database Connection:\n`;
+                    message += `- Connection: ${r.database.connection === 'success' ? '✅ Working' : '❌ Failed'}\n`;
+                    if (r.database.connection === 'success') {
+                        message += `- Version: ${r.database.version}\n`;
+                        message += `- Table Operations: ${r.database.tableOperations === 'success' ? '✅ Working' : '❌ Failed'}\n`;
+                    }
+                    if (r.database.error) {
+                        message += `- Error: ${r.database.error}\n`;
+                    }
+                    message += `\n`;
+                    
+                    // Encryption
+                    message += `🔐 Encryption:\n`;
+                    message += `- Test: ${r.encryption.test === 'success' ? '✅ Working' : '❌ Failed'}\n`;
+                    if (r.encryption.keyLength) {
+                        message += `- Key Length: ${r.encryption.keyLength} characters\n`;
+                    }
+                    if (r.encryption.error) {
+                        message += `- Error: ${r.encryption.error}\n`;
+                    }
+                    message += `\n`;
+                    
+                    // Overall Status
+                    const statusEmoji = {
+                        'all_systems_go': '🎉',
+                        'mostly_working': '⚠️',
+                        'config_ok_db_issues': '🔧',
+                        'needs_configuration': '❌'
+                    };
+                    
+                    const statusText = {
+                        'all_systems_go': 'All Systems Go! Ready for production.',
+                        'mostly_working': 'Mostly working, minor issues detected.',
+                        'config_ok_db_issues': 'Configuration OK, database needs attention.',
+                        'needs_configuration': 'Needs configuration - check environment variables.'
+                    };
+                    
+                    message += `${statusEmoji[r.overall]} Overall Status: ${statusText[r.overall]}`;
+                    
+                    alert(message);
+                } else {
+                    alert('❌ Environment validation failed: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Environment validation error:', error);
+                alert('❌ Validation error: ' + error.message);
             }
         }
 
