@@ -511,6 +511,7 @@
                     <div style="display: flex; gap: 1rem;">
                         <button type="button" class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
                         <button type="button" class="btn btn-secondary" onclick="testConnection()">🔗 Test Connection</button>
+                        <button type="button" class="btn btn-secondary" onclick="testNetlifyFunctions()">🧪 Test Functions</button>
                     </div>
                 </form>
 
@@ -572,13 +573,23 @@
             };
 
             try {
+                console.log('Attempting to save settings:', { ...settings, appPassword: '[HIDDEN]' });
+                
                 const response = await fetch('/.netlify/functions/settings-update', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(settings)
                 });
                 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
+                console.log('Response result:', result);
                 
                 if (result.success) {
                     appState.settings = { ...appState.settings, ...settings };
@@ -586,9 +597,10 @@
                     alert('✅ Settings saved successfully!');
                     updateConnectionStatus();
                 } else {
-                    alert('❌ Error saving settings: ' + result.error);
+                    alert('❌ Error saving settings: ' + (result.error || 'Unknown error'));
                 }
             } catch (error) {
+                console.error('Full error details:', error);
                 alert('❌ Network error: ' + error.message);
             }
         }
@@ -617,6 +629,35 @@
             }, 2000);
         }
 
+        // Test Netlify Functions
+        async function testNetlifyFunctions() {
+            try {
+                console.log('Testing Netlify Functions...');
+                
+                const response = await fetch('/.netlify/functions/test', {
+                    method: 'GET'
+                });
+                
+                console.log('Test function response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Test function result:', result);
+                
+                if (result.success) {
+                    alert(`✅ ${result.message}\n\nEnvironment:\n- Database: ${result.environment.hasDatabase ? 'Configured' : 'Missing'}\n- Encryption: ${result.environment.hasEncryption ? 'Configured' : 'Missing'}\n- Node Env: ${result.environment.nodeEnv}`);
+                } else {
+                    alert('❌ Function test failed');
+                }
+            } catch (error) {
+                console.error('Function test error:', error);
+                alert('❌ Function test error: ' + error.message);
+            }
+        }
+
         // Update connection status display
         function updateConnectionStatus() {
             const statusElement = document.getElementById('connectionStatus');
@@ -639,19 +680,29 @@
             }
 
             try {
+                console.log('Attempting to sync emails...');
+                
                 const response = await fetch('/.netlify/functions/tickets-sync', {
                     method: 'POST'
                 });
                 
+                console.log('Sync response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
+                console.log('Sync result:', result);
                 
                 if (result.success) {
                     alert(`✅ ${result.message}`);
                     await loadTickets(); // Load the updated tickets
                 } else {
-                    alert('❌ Error syncing emails: ' + result.error);
+                    alert('❌ Error syncing emails: ' + (result.error || 'Unknown error'));
                 }
             } catch (error) {
+                console.error('Full sync error:', error);
                 alert('❌ Network error: ' + error.message);
             }
         }
@@ -659,21 +710,30 @@
         // Load tickets from database
         async function loadTickets() {
             try {
+                console.log('Loading tickets from database...');
+                
                 const response = await fetch('/.netlify/functions/tickets-load', {
                     method: 'GET'
                 });
                 
+                console.log('Load tickets response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
+                console.log('Load tickets result:', result);
                 
                 if (result.success) {
                     appState.tickets = result.tickets || [];
                     renderTickets();
                     updateDashboardStats();
                 } else {
-                    console.error('Error loading tickets:', result.error);
+                    console.error('Error loading tickets:', result.error || 'Unknown error');
                 }
             } catch (error) {
-                console.error('Network error loading tickets:', error.message);
+                console.error('Network error loading tickets:', error);
             }
         }
 
