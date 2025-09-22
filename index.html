@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail Ticket System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem 1rem;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo h1 {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .nav-icon {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .page {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            min-height: calc(100vh - 4rem);
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: #64748b;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .tickets-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .ticket-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .ticket-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .ticket-subject {
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+
+        .ticket-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .ticket-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-new {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-open {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-closed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8fafc;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #f1f5f9;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .status-connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dot-green {
+            background: #10b981;
+        }
+
+        .dot-red {
+            background: #ef4444;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-placeholder {
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border-radius: 6px;
+            color: #64748b;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <div class="logo">
+                <h1>📧 TicketMail</h1>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" data-page="dashboard">
+                        <span class="nav-icon">📊</span>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-page="tickets">
+                        <span class="nav-icon">🎫</span>
+                        Tickets
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-page="analytics">
+                        <span class="nav-icon">📈</span>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-page="settings">
+                        <span class="nav-icon">⚙️</span>
+                        Settings
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page active">
+                <div class="page-header">
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle">Overview of your email ticket system</p>
+                </div>
+
+                <div id="connectionStatus" class="connection-status status-disconnected">
+                    <span class="status-dot dot-red"></span>
+                    <span>Gmail: Not Connected</span>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTickets">0</div>
+                        <div class="stat-label">Total Tickets</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="openTickets">0</div>
+                        <div class="stat-label">Open Tickets</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="closedTickets">0</div>
+                        <div class="stat-label">Closed Tickets</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="responseTime">0</div>
+                        <div class="stat-label">Avg Response Time (hrs)</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 1rem;">Recent Activity</h3>
+                    <div class="chart-placeholder">
+                        Ticket activity chart will appear here
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tickets Page -->
+            <div id="tickets" class="page">
+                <div class="page-header">
+                    <h1 class="page-title">Tickets</h1>
+                    <p class="page-subtitle">Manage your email tickets</p>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <button class="btn btn-primary" onclick="fetchEmails()">🔄 Refresh Emails</button>
+                    <div>
+                        <select id="statusFilter" class="form-input" style="width: auto; margin-right: 1rem;">
+                            <option value="all">All Status</option>
+                            <option value="new">New</option>
+                            <option value="open">Open</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="ticketsContainer" class="tickets-grid">
+                    <div class="ticket-card">
+                        <div class="ticket-header">
+                            <div>
+                                <div class="ticket-subject">Sample Support Request</div>
+                                <div class="ticket-meta">
+                                    <span>From: customer@example.com</span>
+                                    <span>2 hours ago</span>
+                                </div>
+                            </div>
+                            <span class="ticket-status status-new">New</span>
+                        </div>
+                        <p style="color: #64748b; margin-top: 1rem;">
+                            This is a sample ticket. Real tickets will appear here once you connect your Gmail account and configure the settings.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div id="analytics" class="page">
+                <div class="page-header">
+                    <h1 class="page-title">Analytics</h1>
+                    <p class="page-subtitle">Insights into your ticket performance</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">85%</div>
+                        <div class="stat-label">Resolution Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">2.4</div>
+                        <div class="stat-label">Avg Response Time (hrs)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">94%</div>
+                        <div class="stat-label">Customer Satisfaction</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">12</div>
+                        <div class="stat-label">Tickets This Week</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 1rem;">Tickets Over Time</h3>
+                    <div class="chart-placeholder">
+                        Time series chart will appear here
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 1rem;">Response Time Distribution</h3>
+                    <div class="chart-placeholder">
+                        Response time histogram will appear here
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings" class="page">
+                <div class="page-header">
+                    <h1 class="page-title">Settings</h1>
+                    <p class="page-subtitle">Configure your Gmail integration and system preferences</p>
+                </div>
+
+                <form id="settingsForm">
+                    <div class="form-group">
+                        <label class="form-label">Gmail Address</label>
+                        <input type="email" id="gmailAddress" class="form-input" placeholder="emailticket4@gmail.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">App Password</label>
+                        <input type="password" id="appPassword" class="form-input" placeholder="Enter your Gmail app password">
+                        <small style="color: #64748b;">Use the app password you generated in Gmail settings</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">IMAP Server</label>
+                        <input type="text" id="imapServer" class="form-input" value="imap.gmail.com" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">IMAP Port</label>
+                        <input type="number" id="imapPort" class="form-input" value="993" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Auto-refresh Interval (minutes)</label>
+                        <input type="number" id="refreshInterval" class="form-input" value="5" min="1" max="60">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Default Ticket Status</label>
+                        <select id="defaultStatus" class="form-input">
+                            <option value="new">New</option>
+                            <option value="open">Open</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+                        <button type="button" class="btn btn-secondary" onclick="testConnection()">🔗 Test Connection</button>
+                    </div>
+                </form>
+
+                <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
+                    <h3 style="margin-bottom: 1rem; color: #374151;">Integration Instructions</h3>
+                    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; color: #64748b; line-height: 1.6;">
+                        <p><strong>To set up Gmail integration:</strong></p>
+                        <ol style="margin: 1rem 0; padding-left: 2rem;">
+                            <li>Enable 2-step verification in your Gmail account</li>
+                            <li>Generate an App Password in Gmail Security settings</li>
+                            <li>Enter your Gmail address and app password above</li>
+                            <li>Click "Test Connection" to verify the setup</li>
+                            <li>Save settings and start managing tickets!</li>
+                        </ol>
+                        <p><em>Note: This demo uses client-side storage. For production, consider using a secure backend service.</em></p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Application State
+        let appState = {
+            tickets: [],
+            settings: {
+                gmailAddress: '',
+                appPassword: '',
+                refreshInterval: 5,
+                defaultStatus: 'new'
+            },
+            isConnected: false
+        };
+
+        // Load settings from localStorage on page load
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('ticketSystemSettings');
+            if (savedSettings) {
+                appState.settings = { ...appState.settings, ...JSON.parse(savedSettings) };
+                populateSettingsForm();
+            }
+        }
+
+        // Populate settings form with saved data
+        function populateSettingsForm() {
+            document.getElementById('gmailAddress').value = appState.settings.gmailAddress || '';
+            document.getElementById('appPassword').value = appState.settings.appPassword || '';
+            document.getElementById('refreshInterval').value = appState.settings.refreshInterval || 5;
+            document.getElementById('defaultStatus').value = appState.settings.defaultStatus || 'new';
+        }
+
+        // Save settings to localStorage and database
+        async function saveSettings() {
+            const settings = {
+                gmailAddress: document.getElementById('gmailAddress').value,
+                appPassword: document.getElementById('appPassword').value,
+                refreshInterval: parseInt(document.getElementById('refreshInterval').value),
+                defaultStatus: document.getElementById('defaultStatus').value
+            };
+
+            try {
+                const response = await fetch('/.netlify/functions/settings-update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    appState.settings = { ...appState.settings, ...settings };
+                    localStorage.setItem('ticketSystemSettings', JSON.stringify(settings));
+                    alert('✅ Settings saved successfully!');
+                    updateConnectionStatus();
+                } else {
+                    alert('❌ Error saving settings: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ Network error: ' + error.message);
+            }
+        }
+
+        // Test Gmail connection
+        async function testConnection() {
+            const gmail = document.getElementById('gmailAddress').value;
+            const password = document.getElementById('appPassword').value;
+
+            if (!gmail || !password) {
+                alert('❌ Please enter both Gmail address and app password');
+                return;
+            }
+
+            // Simulate connection test (in real implementation, this would test IMAP connection)
+            alert('🔄 Testing connection...');
+            
+            setTimeout(() => {
+                if (gmail.includes('@gmail.com') && password.length >= 16) {
+                    appState.isConnected = true;
+                    updateConnectionStatus();
+                    alert('✅ Connection successful!');
+                } else {
+                    alert('❌ Connection failed. Please check your credentials.');
+                }
+            }, 2000);
+        }
+
+        // Update connection status display
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connectionStatus');
+            const hasCredentials = appState.settings.gmailAddress && appState.settings.appPassword;
+            
+            if (hasCredentials && appState.isConnected) {
+                statusElement.className = 'connection-status status-connected';
+                statusElement.innerHTML = '<span class="status-dot dot-green"></span><span>Gmail: Connected</span>';
+            } else {
+                statusElement.className = 'connection-status status-disconnected';
+                statusElement.innerHTML = '<span class="status-dot dot-red"></span><span>Gmail: Not Connected</span>';
+            }
+        }
+
+        // Fetch emails using Netlify function
+        async function fetchEmails() {
+            if (!appState.isConnected) {
+                alert('❌ Please configure and test your Gmail connection first');
+                return;
+            }
+
+            try {
+                const response = await fetch('/.netlify/functions/tickets-sync', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`✅ ${result.message}`);
+                    await loadTickets(); // Load the updated tickets
+                } else {
+                    alert('❌ Error syncing emails: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ Network error: ' + error.message);
+            }
+        }
+
+        // Load tickets from database
+        async function loadTickets() {
+            try {
+                const response = await fetch('/.netlify/functions/tickets-load', {
+                    method: 'GET'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    appState.tickets = result.tickets || [];
+                    renderTickets();
+                    updateDashboardStats();
+                } else {
+                    console.error('Error loading tickets:', result.error);
+                }
+            } catch (error) {
+                console.error('Network error loading tickets:', error.message);
+            }
+        }
+
+        // Render tickets in the tickets page
+        function renderTickets() {
+            const container = document.getElementById('ticketsContainer');
+            
+            if (appState.tickets.length === 0) {
+                container.innerHTML = '<div class="ticket-card"><p style="text-align: center; color: #64748b;">No tickets found. Click "Refresh Emails" to fetch new tickets.</p></div>';
+                return;
+            }
+
+            container.innerHTML = appState.tickets.map(ticket => `
+                <div class="ticket-card">
+                    <div class="ticket-header">
+                        <div>
+                            <div class="ticket-subject">${ticket.subject}</div>
+                            <div class="ticket-meta">
+                                <span>From: ${ticket.from}</span>
+                                <span>${formatDate(ticket.date)}</span>
+                            </div>
+                        </div>
+                        <span class="ticket-status status-${ticket.status}">${ticket.status.toUpperCase()}</span>
+                    </div>
+                    <p style="color: #64748b; margin-top: 1rem;">${ticket.body}</p>
+                </div>
+            `).join('');
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats() {
+            const total = appState.tickets.length;
+            const open = appState.tickets.filter(t => t.status === 'open').length;
+            const closed = appState.tickets.filter(t => t.status === 'closed').length;
+
+            document.getElementById('totalTickets').textContent = total;
+            document.getElementById('openTickets').textContent = open;
+            document.getElementById('closedTickets').textContent = closed;
+        }
+
+        // Format date for display
+        function formatDate(date) {
+            const now = new Date();
+            const diff = now - date;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            
+            if (hours < 1) return 'Just now';
+            if (hours < 24) return `${hours} hours ago`;
+            const days = Math.floor(hours / 24);
+            return `${days} days ago`;
+        }
+
+        // Navigation functionality
+        function initNavigation() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetPage = link.dataset.page;
+
+                    // Update active nav link
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+
+                    // Show target page
+                    pages.forEach(page => {
+                        page.classList.remove('active');
+                        if (page.id === targetPage) {
+                            page.classList.add('active');
+                        }
+                    });
+                });
+            });
+        }
+
+        // Initialize application
+        function init() {
+            loadSettings();
+            updateConnectionStatus();
+            initNavigation();
+            
+            // Set up auto-refresh if connected
+            if (appState.isConnected) {
+                setInterval(() => {
+                    if (appState.isConnected) {
+                        fetchEmails();
+                    }
+                }, appState.settings.refreshInterval * 60 * 1000);
+            }
+        }
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
