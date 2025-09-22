@@ -2,9 +2,13 @@ const { getUserSettings, saveTicket } = require('./lib/database');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 
-// Helper function to connect to IMAP
-function connectToImap(settings) {
+// Helper function to connect to IMAP with timeout
+function connectToImap(settings, timeoutMs = 15000) {
     return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            reject(new Error('IMAP connection timeout'));
+        }, timeoutMs);
+
         const imap = new Imap({
             user: settings.gmailAddress,
             password: settings.appPassword,
@@ -13,18 +17,27 @@ function connectToImap(settings) {
             tls: true,
             tlsOptions: {
                 rejectUnauthorized: false
-            }
+            },
+            connTimeout: 10000, // 10 second connection timeout
+            authTimeout: 5000   // 5 second auth timeout
         });
 
         imap.once('ready', () => {
+            clearTimeout(timeout);
             resolve(imap);
         });
 
         imap.once('error', (err) => {
+            clearTimeout(timeout);
             reject(err);
         });
 
-        imap.connect();
+        try {
+            imap.connect();
+        } catch (error) {
+            clearTimeout(timeout);
+            reject(error);
+        }
     });
 }
 
@@ -139,6 +152,9 @@ function categorizeTicket(email) {
 }
 
 exports.handler = async (event, context) => {
+    // Set function timeout
+    context.callbackWaitsForEmptyEventLoop = false;
+
     // Handle CORS preflight requests
     if (event.httpMethod === 'OPTIONS') {
         return {
@@ -210,21 +226,22 @@ exports.handler = async (event, context) => {
 
         console.log('Attempting to connect to Gmail IMAP for:', settings.gmailAddress);
         
-        // Connect to IMAP
+        // Connect to IMAP with timeout
         try {
-            imap = await connectToImap(settings);
+            imap = await connectToImap(settings, 15000); // 15 second timeout
             console.log('Connected to Gmail successfully');
         } catch (imapError) {
             console.error('IMAP connection failed:', imapError);
             return {
-                statusCode: 500,
+                statusCode: 400,
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     success: false,
-                    error: 'Failed to connect to Gmail: ' + imapError.message
+                    error: 'Failed to connect to Gmail: ' + imapError.message,
+                    hint: 'Please verify your Gmail address and app password are correct.'
                 })
             };
         }
