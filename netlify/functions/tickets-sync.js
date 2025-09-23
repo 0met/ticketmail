@@ -307,17 +307,12 @@ exports.handler = async (event, context) => {
                     
                     const ticket = {
                         subject: email.subject,
-                        description: email.body.substring(0, 1000), // Limit description length
-                        email: email.from,
+                        from: email.from,
+                        to: email.to,
+                        body: email.body.substring(0, 1000), // Limit description length
                         status: getTicketStatus(email),
-                        category: categorizeTicket(email),
-                        priority: email.subject.toLowerCase().includes('urgent') ? 'high' : 'medium',
-                        source: 'email',
-                        metadata: {
-                            messageId: email.messageId,
-                            originalDate: email.date,
-                            to: email.to
-                        }
+                        messageId: email.messageId,
+                        date: email.date
                     };
 
                     await saveTicket(ticket);
