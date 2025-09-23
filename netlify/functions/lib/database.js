@@ -169,11 +169,11 @@ async function saveTicket(ticket) {
         const sql = getDatabase();
         
         await sql`
-            INSERT INTO tickets (subject, from_email, to_email, body, status, message_id, date_received)
+            INSERT INTO tickets (subject, from_email, to_email, body_text, status, email_id, received_at)
             VALUES (${ticket.subject}, ${ticket.from}, ${ticket.to}, ${ticket.body}, ${ticket.status}, ${ticket.messageId}, ${ticket.date})
-            ON CONFLICT (message_id) DO UPDATE SET
+            ON CONFLICT (email_id) DO UPDATE SET
                 subject = EXCLUDED.subject,
-                body = EXCLUDED.body,
+                body_text = EXCLUDED.body_text,
                 status = EXCLUDED.status,
                 updated_at = CURRENT_TIMESTAMP
         `;
@@ -191,9 +191,9 @@ async function getTickets(limit = 100) {
         const sql = getDatabase();
         
         const result = await sql`
-            SELECT id, subject, from_email, to_email, body, status, date_received, created_at
+            SELECT id, subject, from_email, to_email, body_text, status, received_at, created_at
             FROM tickets 
-            ORDER BY date_received DESC 
+            ORDER BY received_at DESC 
             LIMIT ${limit}
         `;
         
@@ -202,9 +202,9 @@ async function getTickets(limit = 100) {
             subject: ticket.subject,
             from: ticket.from_email,
             to: ticket.to_email,
-            body: ticket.body,
+            body: ticket.body_text,
             status: ticket.status,
-            date: new Date(ticket.date_received),
+            date: new Date(ticket.received_at),
             createdAt: ticket.created_at
         }));
     } catch (error) {
