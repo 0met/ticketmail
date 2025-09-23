@@ -18,8 +18,8 @@ function connectToImap(settings, timeoutMs = 15000) {
             tlsOptions: {
                 rejectUnauthorized: false
             },
-            connTimeout: 10000, // 10 second connection timeout
-            authTimeout: 5000   // 5 second auth timeout
+            connTimeout: 10000,
+            authTimeout: 5000
         });
 
         imap.once('ready', () => {
@@ -41,8 +41,8 @@ function connectToImap(settings, timeoutMs = 15000) {
     });
 }
 
-// Helper function to fetch emails
-function fetchEmails(imap, searchCriteria = ['UNSEEN']) {
+// Fixed email fetching function with proper async handling
+function fetchEmails(imap, searchCriteria = ['UNSEEN'], maxEmails = 10) {
     return new Promise((resolve, reject) => {
         imap.openBox('INBOX', false, (err, box) => {
             if (err) {
@@ -57,56 +57,80 @@ function fetchEmails(imap, searchCriteria = ['UNSEEN']) {
                 }
 
                 if (!results || results.length === 0) {
+                    console.log('No emails found matching search criteria');
                     resolve([]);
                     return;
                 }
 
+                // Limit the number of emails to process
+                const emailIds = results.slice(0, maxEmails);
+                console.log(`Processing ${emailIds.length} emails`);
+
                 const emails = [];
-                const fetch = imap.fetch(results, { 
+                const emailPromises = [];
+
+                const fetch = imap.fetch(emailIds, { 
                     bodies: '',
-                    markSeen: false // Don't mark as read automatically
+                    markSeen: false
                 });
 
                 fetch.on('message', (msg) => {
-                    let emailData = {};
-                    
-                    msg.on('body', (stream) => {
+                    const emailPromise = new Promise((resolveEmail, rejectEmail) => {
                         let buffer = '';
-                        stream.on('data', (chunk) => {
-                            buffer += chunk.toString('utf8');
-                        });
                         
-                        stream.once('end', async () => {
-                            try {
-                                const parsed = await simpleParser(buffer);
-                                emailData = {
-                                    messageId: parsed.messageId,
-                                    subject: parsed.subject,
-                                    from: parsed.from?.text || parsed.from?.value?.[0]?.address,
-                                    to: parsed.to?.text || parsed.to?.value?.[0]?.address,
-                                    date: parsed.date,
-                                    body: parsed.text || parsed.html?.replace(/<[^>]*>/g, '') || '',
-                                    headers: parsed.headers
-                                };
-                            } catch (parseErr) {
-                                console.error('Error parsing email:', parseErr);
-                            }
+                        msg.on('body', (stream) => {
+                            stream.on('data', (chunk) => {
+                                buffer += chunk.toString('utf8');
+                            });
+                            
+                            stream.once('end', async () => {
+                                try {
+                                    const parsed = await simpleParser(buffer);
+                                    const emailData = {
+                                        messageId: parsed.messageId,
+                                        subject: parsed.subject || 'No Subject',
+                                        from: parsed.from?.text || parsed.from?.value?.[0]?.address || 'Unknown',
+                                        to: parsed.to?.text || parsed.to?.value?.[0]?.address || 'Unknown',
+                                        date: parsed.date || new Date(),
+                                        body: parsed.text || parsed.html?.replace(/<[^>]*>/g, '') || '',
+                                        headers: parsed.headers
+                                    };
+                                    resolveEmail(emailData);
+                                } catch (parseErr) {
+                                    console.error('Error parsing email:', parseErr);
+                                    resolveEmail(null); // Return null for failed emails
+                                }
+                            });
+                        });
+
+                        msg.once('error', (msgErr) => {
+                            console.error('Message error:', msgErr);
+                            resolveEmail(null);
                         });
                     });
 
-                    msg.once('end', () => {
-                        if (emailData.subject) {
-                            emails.push(emailData);
-                        }
-                    });
+                    emailPromises.push(emailPromise);
                 });
 
                 fetch.once('error', (err) => {
+                    console.error('Fetch error:', err);
                     reject(err);
                 });
 
-                fetch.once('end', () => {
-                    resolve(emails);
+                fetch.once('end', async () => {
+                    try {
+                        // Wait for all email parsing to complete
+                        const parsedEmails = await Promise.all(emailPromises);
+                        
+                        // Filter out null emails (failed to parse)
+                        const validEmails = parsedEmails.filter(email => email && email.subject);
+                        
+                        console.log(`Successfully parsed ${validEmails.length} emails`);
+                        resolve(validEmails);
+                    } catch (promiseErr) {
+                        console.error('Error waiting for email parsing:', promiseErr);
+                        reject(promiseErr);
+                    }
                 });
             });
         });
@@ -115,8 +139,8 @@ function fetchEmails(imap, searchCriteria = ['UNSEEN']) {
 
 // Helper function to determine if email is a ticket
 function isTicketEmail(email) {
-    const subject = email.subject.toLowerCase();
-    const body = email.body.toLowerCase();
+    const subject = (email.subject || '').toLowerCase();
+    const body = (email.body || '').toLowerCase();
     
     // Common support/ticket keywords
     const ticketKeywords = [
@@ -130,29 +154,33 @@ function isTicketEmail(email) {
     );
 }
 
-// Helper function to auto-categorize ticket status
+// Helper function to categorize ticket
 function categorizeTicket(email) {
-    const subject = email.subject.toLowerCase();
-    const body = email.body.toLowerCase();
+    const subject = (email.subject || '').toLowerCase();
+    const body = (email.body || '').toLowerCase();
     
-    // Check for urgent keywords
-    if (subject.includes('urgent') || subject.includes('emergency') || 
-        body.includes('urgent') || body.includes('emergency')) {
-        return 'open';
+    if (subject.includes('urgent') || subject.includes('emergency') || body.includes('urgent')) {
+        return 'urgent';
     }
     
-    // Check for question/inquiry keywords
-    if (subject.includes('question') || subject.includes('inquiry') ||
-        body.includes('question') || body.includes('inquiry')) {
-        return 'new';
+    if (subject.includes('bug') || subject.includes('error') || body.includes('bug')) {
+        return 'bug';
     }
     
+    if (subject.includes('question') || subject.includes('inquiry')) {
+        return 'question';
+    }
+    
+    return 'general';
+}
+
+// Helper function to determine ticket status
+function getTicketStatus(email) {
     // Default status
     return 'new';
 }
 
 exports.handler = async (event, context) => {
-    // Set function timeout
     context.callbackWaitsForEmptyEventLoop = false;
 
     // Handle CORS preflight requests
@@ -219,7 +247,7 @@ exports.handler = async (event, context) => {
                 },
                 body: JSON.stringify({
                     success: false,
-                    error: 'Gmail settings are incomplete. Please check your email and app password.'
+                    error: 'Invalid Gmail settings. Missing email or app password.'
                 })
             };
         }
@@ -228,7 +256,7 @@ exports.handler = async (event, context) => {
         
         // Connect to IMAP with timeout
         try {
-            imap = await connectToImap(settings, 15000); // 15 second timeout
+            imap = await connectToImap(settings, 15000);
             console.log('Connected to Gmail successfully');
         } catch (imapError) {
             console.error('IMAP connection failed:', imapError);
@@ -246,64 +274,62 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Parse request body for options
-        let options = {};
-        try {
-            if (event.body) {
-                options = JSON.parse(event.body);
-            }
-        } catch (e) {
-            // Ignore parsing errors, use defaults
-        }
-
-        // Set search criteria (default to last 7 days)
-        const days = options.days || 7;
-        const searchDate = new Date();
-        searchDate.setDate(searchDate.getDate() - days);
-        
-        const searchCriteria = options.unreadOnly ? 
-            ['UNSEEN'] : 
-            ['SINCE', searchDate.toISOString().split('T')[0].replace(/-/g, '-')];
-
         // Fetch emails
-        console.log('Fetching emails with criteria:', searchCriteria);
-        const emails = await fetchEmails(imap, searchCriteria);
+        console.log('Fetching emails...');
+        const emails = await fetchEmails(imap, ['UNSEEN'], 5); // Limit to 5 emails for testing
         console.log(`Found ${emails.length} emails`);
 
-        // Process emails and save tickets
-        let ticketsProcessed = 0;
-        let ticketsSkipped = 0;
+        if (emails.length === 0) {
+            return {
+                statusCode: 200,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    success: true,
+                    message: 'No new emails found',
+                    processed: 0,
+                    tickets: 0
+                })
+            };
+        }
+
+        // Process emails and create tickets
+        console.log('Processing emails for tickets...');
+        let ticketsCreated = 0;
 
         for (const email of emails) {
             try {
-                // Check if email should be treated as a ticket
+                // Check if this is a support ticket
                 if (isTicketEmail(email)) {
-                    const ticketStatus = categorizeTicket(email);
+                    console.log('Creating ticket for email:', email.subject);
                     
                     const ticket = {
                         subject: email.subject,
-                        from: email.from,
-                        to: email.to,
-                        body: email.body.substring(0, 5000), // Limit body size
-                        status: ticketStatus,
-                        messageId: email.messageId,
-                        date: email.date
+                        description: email.body.substring(0, 1000), // Limit description length
+                        email: email.from,
+                        status: getTicketStatus(email),
+                        category: categorizeTicket(email),
+                        priority: email.subject.toLowerCase().includes('urgent') ? 'high' : 'medium',
+                        source: 'email',
+                        metadata: {
+                            messageId: email.messageId,
+                            originalDate: email.date,
+                            to: email.to
+                        }
                     };
 
                     await saveTicket(ticket);
-                    ticketsProcessed++;
+                    ticketsCreated++;
+                    console.log(`Ticket created successfully for: ${email.subject}`);
                 } else {
-                    ticketsSkipped++;
+                    console.log('Email not identified as ticket:', email.subject);
                 }
             } catch (ticketError) {
-                console.error('Error processing ticket:', ticketError);
+                console.error('Error creating ticket for email:', email.subject, ticketError);
                 // Continue processing other emails
             }
-        }
-
-        // Close IMAP connection
-        if (imap) {
-            imap.end();
         }
 
         return {
@@ -314,56 +340,40 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({
                 success: true,
-                message: `Successfully synced ${ticketsProcessed} tickets`,
-                details: {
-                    emailsFound: emails.length,
-                    ticketsProcessed: ticketsProcessed,
-                    emailsSkipped: ticketsSkipped
-                }
+                message: `Email sync completed successfully`,
+                processed: emails.length,
+                tickets: ticketsCreated,
+                details: emails.map(email => ({
+                    subject: email.subject,
+                    from: email.from,
+                    isTicket: isTicketEmail(email)
+                }))
             })
         };
 
     } catch (error) {
-        console.error('Critical error in tickets-sync function:', error);
-        console.error('Error stack:', error.stack);
-        
-        // Make sure to close IMAP connection on error
-        if (imap) {
-            try {
-                imap.end();
-            } catch (e) {
-                console.error('Error closing IMAP connection:', e);
-            }
-        }
-
-        // Return appropriate error response
-        let statusCode = 500;
-        let errorMessage = 'Internal server error';
-
-        if (error.message && error.message.includes('authentication')) {
-            statusCode = 401;
-            errorMessage = 'Gmail authentication failed. Please check your email and app password.';
-        } else if (error.message && error.message.includes('connection')) {
-            statusCode = 503;
-            errorMessage = 'Unable to connect to Gmail. Please try again later.';
-        } else if (error.message && error.message.includes('database')) {
-            statusCode = 500;
-            errorMessage = 'Database error: ' + error.message;
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
+        console.error('Error in email sync:', error);
         
         return {
-            statusCode: statusCode,
+            statusCode: 500,
             headers: {
                 'Access-Control-Allow-Origin': '*',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 success: false,
-                error: errorMessage,
-                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+                error: 'Email sync failed: ' + error.message
             })
         };
+    } finally {
+        // Always clean up IMAP connection
+        if (imap) {
+            try {
+                imap.end();
+                console.log('IMAP connection closed');
+            } catch (cleanupError) {
+                console.log('Error closing IMAP connection:', cleanupError.message);
+            }
+        }
     }
 };
