@@ -594,20 +594,37 @@
             <!-- Tickets Page -->
             <div id="tickets" class="page">
                 <div class="page-header">
-                    <h1 class="page-title">Tickets</h1>
-                    <p class="page-subtitle">Manage your email tickets</p>
+                    <h1 class="page-title">Student Support Tickets</h1>
+                    <p class="page-subtitle">Manage and track student service requests</p>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <button class="btn btn-primary" onclick="fetchEmails()">🔄 Refresh Emails</button>
-                    <div>
-                        <select id="statusFilter" class="form-input" style="width: auto; margin-right: 1rem;">
-                            <option value="all">All Status</option>
-                            <option value="new">New</option>
-                            <option value="open">Open</option>
-                            <option value="closed">Closed</option>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <select id="categoryFilter" class="form-input" style="width: auto;">
+                            <option value="all">All Categories</option>
+                            <option value="access">Access Requests</option>
+                            <option value="service">Service Requests</option>
+                            <option value="technical">Technical Issues</option>
+                            <option value="billing">Billing Questions</option>
+                            <option value="general">General Inquiries</option>
                         </select>
+                        <select id="priorityFilter" class="form-input" style="width: auto;">
+                            <option value="all">All Priorities</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                        <select id="statusFilter" class="form-input" style="width: auto;">
+                            <option value="all">All Status</option>
+                            <option value="open">Open</option>
+                            <option value="in-review">In Review</option>
+                            <option value="approved">Approved</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="fetchEmails()">🔄 Refresh Emails</button>
                     </div>
+                    <button class="btn btn-success" onclick="showNewTicketModal()">➕ New Ticket</button>
                 </div>
 
                 <div id="ticketsContainer" class="tickets-grid">
@@ -660,8 +677,9 @@
                     <h3 style="margin-bottom: 1rem;">🎯 Service Category Performance</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                         <div>
-                            <h4 style="color: #374151; margin-bottom: 1rem;">Top Request Types</h4>
-                            <div style="space-y: 0.5rem;">
+                            <div>
+                                <h4 style="color: #374151; margin-bottom: 1rem;">Top Request Types</h4>
+                                <div>
                                 <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: #f8fafc; border-radius: 6px; margin-bottom: 0.5rem;">
                                     <span>Accessibility Services</span>
                                     <span style="font-weight: 600; color: #667eea;">89 (33%)</span>
@@ -685,8 +703,9 @@
                             </div>
                         </div>
                         <div>
-                            <h4 style="color: #374151; margin-bottom: 1rem;">Response Time Targets</h4>
-                            <div style="space-y: 0.5rem;">
+                            <div>
+                                <h4 style="color: #374151; margin-bottom: 1rem;">Response Time Targets</h4>
+                                <div>
                                 <div style="margin-bottom: 1rem;">
                                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
                                         <span style="font-size: 0.9rem;">Urgent (≤ 1 hour)</span>
@@ -744,6 +763,76 @@
                             <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem;">95.8%</div>
                             <div style="opacity: 0.9;">Cases closed within SLA targets</div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Ticket Modal -->
+            <div id="newTicketModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Create New Support Ticket</h2>
+                        <button class="close-modal" onclick="closeNewTicketModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="margin-bottom: 1.5rem; color: #6b7280;">
+                            Create a new student support ticket for tracking and resolution:
+                        </p>
+                        
+                        <form id="newTicketForm">
+                            <div class="form-group">
+                                <label class="form-label" for="ticketFrom">Student Email Address *</label>
+                                <input type="email" id="ticketFrom" name="ticketFrom" class="form-input" 
+                                       placeholder="student@university.edu" 
+                                       style="background-color: white; color: black;" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="ticketSubject">Subject *</label>
+                                <input type="text" id="ticketSubject" name="ticketSubject" class="form-input" 
+                                       placeholder="Brief description of the issue or request" 
+                                       style="background-color: white; color: black;" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="ticketContent">Description *</label>
+                                <textarea id="ticketContent" name="ticketContent" class="form-input" rows="6" 
+                                          placeholder="Detailed description of the student's request or issue..." 
+                                          style="background-color: white; color: black;" required></textarea>
+                            </div>
+                            
+                            <div class="form-row" style="display: flex; gap: 1rem;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label class="form-label" for="ticketCategory">Category *</label>
+                                    <select id="ticketCategory" name="ticketCategory" class="form-input" 
+                                            style="background-color: white; color: black;" required>
+                                        <option value="">Select Category</option>
+                                        <option value="access">Access Request</option>
+                                        <option value="service">Service Request</option>
+                                        <option value="technical">Technical Issue</option>
+                                        <option value="billing">Billing Question</option>
+                                        <option value="general">General Inquiry</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group" style="flex: 1;">
+                                    <label class="form-label" for="ticketPriority">Priority *</label>
+                                    <select id="ticketPriority" name="ticketPriority" class="form-input" 
+                                            style="background-color: white; color: black;" required>
+                                        <option value="">Select Priority</option>
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                                <button type="button" class="btn btn-secondary" onclick="closeNewTicketModal()">Cancel</button>
+                                <button type="submit" class="btn btn-primary">🎫 Create Ticket</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -1277,12 +1366,64 @@
                                 // Load analytics data
                             } else if (targetPage === 'users') {
                                 renderUsers();
+                            } else if (targetPage === 'tickets') {
+                                renderTickets();
                             }
                         }
                     });
                 });
             });
         }
+
+        // Add form handlers and filter listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // New ticket form handler
+            const newTicketForm = document.getElementById('newTicketForm');
+            if (newTicketForm) {
+                newTicketForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const from = document.getElementById('ticketFrom').value.trim();
+                    const subject = document.getElementById('ticketSubject').value.trim();
+                    const content = document.getElementById('ticketContent').value.trim();
+                    const category = document.getElementById('ticketCategory').value;
+                    const priority = document.getElementById('ticketPriority').value;
+                    
+                    if (!from || !subject || !content || !category || !priority) {
+                        alert('❌ Please fill in all required fields');
+                        return;
+                    }
+                    
+                    // Create new ticket
+                    const newTicket = {
+                        id: 'ticket-' + Date.now(),
+                        subject: subject,
+                        from: from,
+                        content: content,
+                        category: category,
+                        priority: priority,
+                        status: 'open',
+                        created_at: new Date().toISOString(),
+                        assigned_to: 'Unassigned'
+                    };
+                    
+                    ticketsData.unshift(newTicket);
+                    closeNewTicketModal();
+                    renderTickets();
+                    
+                    alert(`✅ New ticket created successfully!\n\nTicket ID: ${newTicket.id}\nSubject: ${subject}\nPriority: ${priority.toUpperCase()}`);
+                });
+            }
+            
+            // Filter change handlers
+            const filters = ['categoryFilter', 'priorityFilter', 'statusFilter'];
+            filters.forEach(filterId => {
+                const filter = document.getElementById(filterId);
+                if (filter) {
+                    filter.addEventListener('change', renderTickets);
+                }
+            });
+        });
 
         // Initialize application
         function init() {
@@ -1297,6 +1438,178 @@
                         fetchEmails();
                     }
                 }, appState.settings.refreshInterval * 60 * 1000);
+            }
+        }
+
+        // Enhanced Ticket Management Functions
+        let ticketsData = [
+            {
+                id: 'ticket-001',
+                subject: 'Accessibility Accommodation Request',
+                from: 'student1@university.edu',
+                content: 'I need extended time accommodations for my upcoming exams due to my learning disability.',
+                category: 'access',
+                priority: 'high',
+                status: 'open',
+                created_at: '2025-09-23T14:30:00Z',
+                assigned_to: 'Sarah Johnson'
+            },
+            {
+                id: 'ticket-002',
+                subject: 'Housing Assignment Issue',
+                from: 'student2@university.edu',
+                content: 'My dorm room assignment was not processed correctly for the spring semester.',
+                category: 'service',
+                priority: 'medium',
+                status: 'in-review',
+                created_at: '2025-09-23T10:15:00Z',
+                assigned_to: 'Mike Chen'
+            },
+            {
+                id: 'ticket-003',
+                subject: 'Student Portal Login Problems',
+                from: 'student3@university.edu',
+                content: 'Cannot access the student portal. Getting error message when trying to log in.',
+                category: 'technical',
+                priority: 'urgent',
+                status: 'open',
+                created_at: '2025-09-24T08:45:00Z',
+                assigned_to: 'Tech Support'
+            }
+        ];
+
+        function renderTickets() {
+            const container = document.getElementById('ticketsContainer');
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            container.innerHTML = '';
+            
+            const filteredTickets = ticketsData.filter(ticket => {
+                return (categoryFilter === 'all' || ticket.category === categoryFilter) &&
+                       (priorityFilter === 'all' || ticket.priority === priorityFilter) &&
+                       (statusFilter === 'all' || ticket.status === statusFilter);
+            });
+            
+            if (filteredTickets.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #64748b;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                        <h3>No tickets found</h3>
+                        <p>No tickets match the current filter criteria.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredTickets.forEach(ticket => {
+                const ticketCard = document.createElement('div');
+                ticketCard.className = 'ticket-card';
+                
+                const priorityColors = {
+                    low: '#10b981',
+                    medium: '#f59e0b', 
+                    high: '#ef4444',
+                    urgent: '#dc2626'
+                };
+                
+                const statusColors = {
+                    open: '#3b82f6',
+                    'in-review': '#f59e0b',
+                    approved: '#10b981',
+                    resolved: '#6b7280'
+                };
+                
+                ticketCard.innerHTML = `
+                    <div class="ticket-header">
+                        <div>
+                            <div class="ticket-subject">${ticket.subject}</div>
+                            <div class="ticket-meta">
+                                <span>From: ${ticket.from}</span>
+                                <span>${formatDate(ticket.created_at)}</span>
+                                <span>Assigned to: ${ticket.assigned_to}</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+                            <span class="ticket-status" style="background: ${priorityColors[ticket.priority]}20; color: ${priorityColors[ticket.priority]}; border: 1px solid ${priorityColors[ticket.priority]}40;">
+                                ${ticket.priority.toUpperCase()}
+                            </span>
+                            <span class="ticket-status" style="background: ${statusColors[ticket.status]}20; color: ${statusColors[ticket.status]}; border: 1px solid ${statusColors[ticket.status]}40;">
+                                ${ticket.status.toUpperCase().replace('-', ' ')}
+                            </span>
+                        </div>
+                    </div>
+                    <p style="color: #64748b; margin-top: 1rem; line-height: 1.5;">
+                        ${ticket.content}
+                    </p>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="updateTicketStatus('${ticket.id}', 'in-review')">
+                            📋 Review
+                        </button>
+                        <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="updateTicketStatus('${ticket.id}', 'resolved')">
+                            ✅ Resolve
+                        </button>
+                    </div>
+                `;
+                container.appendChild(ticketCard);
+            });
+        }
+
+        function updateTicketStatus(ticketId, newStatus) {
+            const ticket = ticketsData.find(t => t.id === ticketId);
+            if (ticket) {
+                ticket.status = newStatus;
+                renderTickets();
+                alert(`✅ Ticket status updated to "${newStatus.replace('-', ' ').toUpperCase()}"`);
+            }
+        }
+
+        function showNewTicketModal() {
+            const modal = document.getElementById('newTicketModal');
+            if (modal) {
+                modal.classList.add('active');
+                
+                // Focus on the first input
+                setTimeout(() => {
+                    const firstInput = document.getElementById('ticketFrom');
+                    if (firstInput) firstInput.focus();
+                }, 100);
+            }
+        }
+
+        function closeNewTicketModal() {
+            const modal = document.getElementById('newTicketModal');
+            if (modal) {
+                modal.classList.remove('active');
+                
+                // Reset form
+                const form = document.getElementById('newTicketForm');
+                if (form) form.reset();
+            }
+        }
+
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) {
+                    return 'Invalid date';
+                }
+                
+                const now = new Date();
+                const diffTime = Math.abs(now - date);
+                const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+                
+                if (diffHours < 1) {
+                    return 'Just now';
+                } else if (diffHours < 24) {
+                    return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+                } else {
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+                }
+            } catch (error) {
+                return 'Unknown date';
             }
         }
 
@@ -1431,6 +1744,7 @@
                 document.getElementById('mainApp').classList.remove('hidden');
                 this.updateUserInfo();
                 init(); // Initialize the main app
+                renderTickets(); // Load initial tickets
             },
 
             updateUserInfo() {
