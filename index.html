@@ -1343,13 +1343,18 @@
 
         // Navigation functionality
         function initNavigation() {
+            console.log('initNavigation called');
             const navLinks = document.querySelectorAll('.nav-link');
             const pages = document.querySelectorAll('.page');
+            
+            console.log('Found nav links:', navLinks.length);
+            console.log('Found pages:', pages.length);
 
             navLinks.forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const targetPage = link.dataset.page;
+                    console.log('Navigating to page:', targetPage);
 
                     // Update active nav link
                     navLinks.forEach(l => l.classList.remove('active'));
@@ -1359,14 +1364,18 @@
                     pages.forEach(page => {
                         page.classList.remove('active');
                         if (page.id === targetPage) {
+                            console.log('Activating page:', page.id);
                             page.classList.add('active');
                             
                             // Load specific data when pages are opened
                             if (targetPage === 'analytics') {
+                                console.log('Loading analytics data');
                                 // Load analytics data
                             } else if (targetPage === 'users') {
+                                console.log('Rendering users');
                                 renderUsers();
                             } else if (targetPage === 'tickets') {
+                                console.log('Rendering tickets');
                                 renderTickets();
                             }
                         }
@@ -1654,9 +1663,13 @@
 
         // User Management Functions
         function renderUsers() {
+            console.log('renderUsers called');
             const container = document.getElementById('usersContainer');
             const roleFilterElement = document.getElementById('roleFilter');
             const roleFilter = roleFilterElement ? roleFilterElement.value : 'all';
+            
+            console.log('usersContainer:', container);
+            console.log('roleFilter:', roleFilter);
             
             if (!container) {
                 console.error('usersContainer not found');
@@ -1664,6 +1677,8 @@
             }
             
             container.innerHTML = '';
+            
+            console.log('authSystem.users:', authSystem.users);
             
             Object.entries(authSystem.users).forEach(([username, user]) => {
                 if (roleFilter === 'all' || user.role === roleFilter) {
