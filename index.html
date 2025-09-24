@@ -1375,7 +1375,7 @@
             });
         }
 
-        // Add form handlers and filter listeners
+        // Consolidated DOM Content Loaded Handler
         document.addEventListener('DOMContentLoaded', function() {
             // New ticket form handler
             const newTicketForm = document.getElementById('newTicketForm');
@@ -1423,6 +1423,45 @@
                     filter.addEventListener('change', renderTickets);
                 }
             });
+            
+            // Add user form handler
+            const addUserForm = document.getElementById('addUserForm');
+            if (addUserForm) {
+                addUserForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const username = document.getElementById('newUsername').value.trim();
+                    const name = document.getElementById('newUserName').value.trim();
+                    const password = document.getElementById('newPassword').value;
+                    const role = document.getElementById('newUserRole').value;
+                    
+                    if (authSystem.users[username]) {
+                        alert('❌ Username already exists. Please choose a different username.');
+                        return;
+                    }
+                    
+                    authSystem.users[username] = {
+                        password: password,
+                        role: role,
+                        name: name
+                    };
+                    
+                    closeAddUserModal();
+                    renderUsers();
+                    alert(`✅ User "${username}" has been added successfully.`);
+                });
+            }
+
+            // Role filter handler
+            const roleFilter = document.getElementById('roleFilter');
+            if (roleFilter) {
+                roleFilter.addEventListener('change', renderUsers);
+            }
+            
+            // Check if user is already logged in
+            if (!authSystem.checkAuth()) {
+                authSystem.showLoginScreen();
+            }
         });
 
         // Initialize application
@@ -1616,7 +1655,13 @@
         // User Management Functions
         function renderUsers() {
             const container = document.getElementById('usersContainer');
-            const roleFilter = document.getElementById('roleFilter').value;
+            const roleFilterElement = document.getElementById('roleFilter');
+            const roleFilter = roleFilterElement ? roleFilterElement.value : 'all';
+            
+            if (!container) {
+                console.error('usersContainer not found');
+                return;
+            }
             
             container.innerHTML = '';
             
@@ -1765,14 +1810,6 @@
                 console.log('Login successful for:', username);
             } else {
                 alert('❌ Invalid credentials. Please try again.');
-            }
-        });
-
-        // Start the application
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is already logged in
-            if (!authSystem.checkAuth()) {
-                authSystem.showLoginScreen();
             }
         });
     </script>
