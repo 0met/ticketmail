@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gmail Ticket System</title>
+    <title>Student Affairs - Email Ticketing System</title>
     <style>
         * {
             margin: 0;
@@ -311,14 +311,173 @@
             color: #64748b;
             font-style: italic;
         }
+
+        /* Login Screen Styles */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .login-logo {
+            margin-bottom: 2rem;
+        }
+
+        .login-logo h1 {
+            color: #1a202c;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-logo p {
+            color: #64748b;
+            font-size: 1rem;
+        }
+
+        .login-form {
+            text-align: left;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .modal-title {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #64748b;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-modal:hover {
+            background: #f1f5f9;
+            color: #1a202c;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
     </style>
 </head>
 <body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <h1>🎓 Student Affairs</h1>
+                <p>Email Ticketing System</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="username" class="form-input" placeholder="Enter your username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                    🔑 Sign In
+                </button>
+            </form>
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e2e8f0; font-size: 0.9rem; color: #64748b;">
+                <p>Demo Credentials:</p>
+                <p><strong>Admin:</strong> admin / admin123</p>
+                <p><strong>User:</strong> user / user123</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application (hidden initially) -->
+    <div id="mainApp" class="hidden">
     <div class="container">
         <nav class="sidebar">
             <div class="logo">
-                <h1>📧 TicketMail</h1>
+                <h1>🎓 Student Affairs</h1>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 0.5rem;">Email Ticketing System</p>
             </div>
+            
+            <!-- User Info -->
+            <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem; margin-bottom: 2rem; text-align: center;">
+                <div id="currentUserName" style="color: white; font-weight: 600; margin-bottom: 0.5rem;"></div>
+                <div id="currentUserRole" style="color: rgba(255,255,255,0.8); font-size: 0.85rem; margin-bottom: 1rem;"></div>
+                <button class="btn btn-secondary" onclick="authSystem.logout()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                    🚪 Logout
+                </button>
+            </div>
+            
             <ul class="nav-menu">
                 <li class="nav-item">
                     <a href="#" class="nav-link active" data-page="dashboard">
@@ -339,6 +498,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="#" class="nav-link" data-page="users">
+                        <span class="nav-icon">👥</span>
+                        User Management
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="#" class="nav-link" data-page="settings">
                         <span class="nav-icon">⚙️</span>
                         Settings
@@ -351,8 +516,8 @@
             <!-- Dashboard Page -->
             <div id="dashboard" class="page active">
                 <div class="page-header">
-                    <h1 class="page-title">Dashboard</h1>
-                    <p class="page-subtitle">Overview of your email ticket system</p>
+                    <h1 class="page-title">Student Affairs Dashboard</h1>
+                    <p class="page-subtitle">Overview of student services and support requests</p>
                 </div>
 
                 <div id="connectionStatus" class="connection-status status-disconnected">
@@ -362,27 +527,66 @@
 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-number" id="totalTickets">0</div>
-                        <div class="stat-label">Total Tickets</div>
+                        <div class="stat-number" id="totalRequests">1,245</div>
+                        <div class="stat-label">Total Requests</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="openTickets">0</div>
-                        <div class="stat-label">Open Tickets</div>
+                        <div class="stat-number" id="activeAccommodations">342</div>
+                        <div class="stat-label">Active Accommodations</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="closedTickets">0</div>
-                        <div class="stat-label">Closed Tickets</div>
+                        <div class="stat-number" id="campusAccessIssues">156</div>
+                        <div class="stat-label">Campus Access Issues</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="responseTime">0</div>
+                        <div class="stat-number" id="avgResponseTime">2.4</div>
                         <div class="stat-label">Avg Response Time (hrs)</div>
                     </div>
                 </div>
 
+                <!-- Request Categories Overview -->
                 <div class="chart-container">
-                    <h3 style="margin-bottom: 1rem;">Recent Activity</h3>
-                    <div class="chart-placeholder">
-                        Ticket activity chart will appear here
+                    <h3 style="margin-bottom: 1rem;">📊 Request Categories This Month</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div style="text-align: center; padding: 1rem;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #667eea;">89</div>
+                            <div style="color: #64748b; font-size: 0.9rem;">Accessibility Services</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #764ba2;">67</div>
+                            <div style="color: #64748b; font-size: 0.9rem;">Academic Support</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #10b981;">45</div>
+                            <div style="color: #64748b; font-size: 0.9rem;">Housing Inquiries</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #f59e0b;">32</div>
+                            <div style="color: #64748b; font-size: 0.9rem;">Financial Aid</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #ef4444;">28</div>
+                            <div style="color: #64748b; font-size: 0.9rem;">General Support</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 1rem;">📈 Recent Activity Trends</h3>
+                    <div style="background: #f8fafc; border-radius: 8px; padding: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span style="color: #64748b;">Week-over-week change:</span>
+                            <span style="color: #10b981; font-weight: 600;">↗ +12.5%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span style="color: #64748b;">Average resolution time:</span>
+                            <span style="color: #667eea; font-weight: 600;">2.4 hours</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #64748b;">Student satisfaction:</span>
+                            <span style="color: #10b981; font-weight: 600;">94.2%</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -428,40 +632,180 @@
             <!-- Analytics Page -->
             <div id="analytics" class="page">
                 <div class="page-header">
-                    <h1 class="page-title">Analytics</h1>
-                    <p class="page-subtitle">Insights into your ticket performance</p>
+                    <h1 class="page-title">Student Affairs Analytics</h1>
+                    <p class="page-subtitle">Detailed insights into student services and support metrics</p>
                 </div>
 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-number">85%</div>
-                        <div class="stat-label">Resolution Rate</div>
+                        <div class="stat-number">94.2%</div>
+                        <div class="stat-label">Student Satisfaction</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">2.4</div>
+                        <div class="stat-number">2.1</div>
                         <div class="stat-label">Avg Response Time (hrs)</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">94%</div>
-                        <div class="stat-label">Customer Satisfaction</div>
+                        <div class="stat-number">89.5%</div>
+                        <div class="stat-label">First-Contact Resolution</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">12</div>
-                        <div class="stat-label">Tickets This Week</div>
+                        <div class="stat-number">267</div>
+                        <div class="stat-label">Cases This Month</div>
                     </div>
                 </div>
 
+                <!-- Service Category Breakdown -->
                 <div class="chart-container">
-                    <h3 style="margin-bottom: 1rem;">Tickets Over Time</h3>
-                    <div class="chart-placeholder">
-                        Time series chart will appear here
+                    <h3 style="margin-bottom: 1rem;">🎯 Service Category Performance</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div>
+                            <h4 style="color: #374151; margin-bottom: 1rem;">Top Request Types</h4>
+                            <div style="space-y: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: #f8fafc; border-radius: 6px; margin-bottom: 0.5rem;">
+                                    <span>Accessibility Services</span>
+                                    <span style="font-weight: 600; color: #667eea;">89 (33%)</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: #f8fafc; border-radius: 6px; margin-bottom: 0.5rem;">
+                                    <span>Academic Support</span>
+                                    <span style="font-weight: 600; color: #764ba2;">67 (25%)</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: #f8fafc; border-radius: 6px; margin-bottom: 0.5rem;">
+                                    <span>Housing Inquiries</span>
+                                    <span style="font-weight: 600; color: #10b981;">45 (17%)</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: #f8fafc; border-radius: 6px; margin-bottom: 0.5rem;">
+                                    <span>Financial Aid</span>
+                                    <span style="font-weight: 600; color: #f59e0b;">32 (12%)</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: #f8fafc; border-radius: 6px;">
+                                    <span>General Support</span>
+                                    <span style="font-weight: 600; color: #ef4444;">28 (10%)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 style="color: #374151; margin-bottom: 1rem;">Response Time Targets</h4>
+                            <div style="space-y: 0.5rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                        <span style="font-size: 0.9rem;">Urgent (≤ 1 hour)</span>
+                                        <span style="font-size: 0.9rem; font-weight: 600;">96%</span>
+                                    </div>
+                                    <div style="background: #e2e8f0; height: 8px; border-radius: 4px;">
+                                        <div style="background: #10b981; height: 8px; border-radius: 4px; width: 96%;"></div>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                        <span style="font-size: 0.9rem;">High (≤ 4 hours)</span>
+                                        <span style="font-size: 0.9rem; font-weight: 600;">89%</span>
+                                    </div>
+                                    <div style="background: #e2e8f0; height: 8px; border-radius: 4px;">
+                                        <div style="background: #667eea; height: 8px; border-radius: 4px; width: 89%;"></div>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                        <span style="font-size: 0.9rem;">Medium (≤ 24 hours)</span>
+                                        <span style="font-size: 0.9rem; font-weight: 600;">94%</span>
+                                    </div>
+                                    <div style="background: #e2e8f0; height: 8px; border-radius: 4px;">
+                                        <div style="background: #f59e0b; height: 8px; border-radius: 4px; width: 94%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                        <span style="font-size: 0.9rem;">Low (≤ 72 hours)</span>
+                                        <span style="font-size: 0.9rem; font-weight: 600;">98%</span>
+                                    </div>
+                                    <div style="background: #e2e8f0; height: 8px; border-radius: 4px;">
+                                        <div style="background: #10b981; height: 8px; border-radius: 4px; width: 98%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Monthly Trends -->
                 <div class="chart-container">
-                    <h3 style="margin-bottom: 1rem;">Response Time Distribution</h3>
-                    <div class="chart-placeholder">
-                        Response time histogram will appear here
+                    <h3 style="margin-bottom: 1rem;">📈 Monthly Trends & Insights</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1.5rem; border-radius: 12px;">
+                            <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem;">+18%</div>
+                            <div style="opacity: 0.9;">New student enrollments seeking support</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1.5rem; border-radius: 12px;">
+                            <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem;">-23%</div>
+                            <div style="opacity: 0.9;">Average resolution time improved</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 1.5rem; border-radius: 12px;">
+                            <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem;">95.8%</div>
+                            <div style="opacity: 0.9;">Cases closed within SLA targets</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Management Page -->
+            <div id="users" class="page">
+                <div class="page-header">
+                    <h1 class="page-title">User Management</h1>
+                    <p class="page-subtitle">Manage system users and permissions</p>
+                </div>
+
+                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 2rem;">
+                    <div style="display: flex; gap: 1rem;">
+                        <select id="roleFilter" class="form-input" style="width: auto;">
+                            <option value="all">All Roles</option>
+                            <option value="admin">Administrators</option>
+                            <option value="user">Staff Users</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="showAddUserModal()" style="margin-left: auto;">
+                        ➕ Add User
+                    </button>
+                </div>
+
+                <div id="usersContainer" class="tickets-grid">
+                    <!-- Users will be populated by JavaScript -->
+                </div>
+
+                <!-- Add User Modal -->
+                <div id="addUserModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title">Add New User</h2>
+                            <button class="close-modal" onclick="closeAddUserModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="addUserForm">
+                                <div class="form-group">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" id="newUsername" class="form-input" placeholder="Enter username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" id="newUserName" class="form-input" placeholder="Enter full name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" id="newPassword" class="form-input" placeholder="Enter password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Role</label>
+                                    <select id="newUserRole" class="form-input">
+                                        <option value="user">Staff User</option>
+                                        <option value="admin">Administrator</option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                                    <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">👤 Add User</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -927,6 +1271,13 @@
                         page.classList.remove('active');
                         if (page.id === targetPage) {
                             page.classList.add('active');
+                            
+                            // Load specific data when pages are opened
+                            if (targetPage === 'analytics') {
+                                // Load analytics data
+                            } else if (targetPage === 'users') {
+                                renderUsers();
+                            }
                         }
                     });
                 });
@@ -949,8 +1300,168 @@
             }
         }
 
+        // User Management Functions
+        function renderUsers() {
+            const container = document.getElementById('usersContainer');
+            const roleFilter = document.getElementById('roleFilter').value;
+            
+            container.innerHTML = '';
+            
+            Object.entries(authSystem.users).forEach(([username, user]) => {
+                if (roleFilter === 'all' || user.role === roleFilter) {
+                    const userCard = document.createElement('div');
+                    userCard.className = 'ticket-card'; // Reuse ticket card styling
+                    userCard.innerHTML = `
+                        <div class="ticket-header">
+                            <div>
+                                <div class="ticket-subject">${user.name}</div>
+                                <div class="ticket-meta">
+                                    <span>@${username}</span>
+                                    <span>Role: ${user.role}</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <span class="ticket-status ${user.role === 'admin' ? 'status-new' : 'status-open'}">${user.role.toUpperCase()}</span>
+                                ${username !== 'admin' ? `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="removeUser('${username}')">🗑️</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(userCard);
+                }
+            });
+        }
+
+        function showAddUserModal() {
+            const modal = document.getElementById('addUserModal');
+            modal.classList.add('active');
+        }
+
+        function closeAddUserModal() {
+            const modal = document.getElementById('addUserModal');
+            modal.classList.remove('active');
+            document.getElementById('addUserForm').reset();
+        }
+
+        function removeUser(username) {
+            if (confirm(`Are you sure you want to remove user "${username}"?`)) {
+                delete authSystem.users[username];
+                renderUsers();
+                alert(`✅ User "${username}" has been removed.`);
+            }
+        }
+
+        // Add user form handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const addUserForm = document.getElementById('addUserForm');
+            if (addUserForm) {
+                addUserForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const username = document.getElementById('newUsername').value.trim();
+                    const name = document.getElementById('newUserName').value.trim();
+                    const password = document.getElementById('newPassword').value;
+                    const role = document.getElementById('newUserRole').value;
+                    
+                    if (authSystem.users[username]) {
+                        alert('❌ Username already exists. Please choose a different username.');
+                        return;
+                    }
+                    
+                    authSystem.users[username] = {
+                        password: password,
+                        role: role,
+                        name: name
+                    };
+                    
+                    closeAddUserModal();
+                    renderUsers();
+                    alert(`✅ User "${username}" has been added successfully.`);
+                });
+            }
+
+            // Role filter handler
+            const roleFilter = document.getElementById('roleFilter');
+            if (roleFilter) {
+                roleFilter.addEventListener('change', renderUsers);
+            }
+        });
+
+        // Authentication System
+        const authSystem = {
+            users: {
+                'admin': { password: 'admin123', role: 'admin', name: 'Administrator' },
+                'user': { password: 'user123', role: 'user', name: 'Staff User' }
+            },
+            currentUser: null,
+
+            login(username, password) {
+                const user = this.users[username];
+                if (user && user.password === password) {
+                    this.currentUser = { username, ...user };
+                    sessionStorage.setItem('ticketmail_user', JSON.stringify(this.currentUser));
+                    this.showMainApp();
+                    return true;
+                }
+                return false;
+            },
+
+            logout() {
+                this.currentUser = null;
+                sessionStorage.removeItem('ticketmail_user');
+                this.showLoginScreen();
+            },
+
+            checkAuth() {
+                const savedUser = sessionStorage.getItem('ticketmail_user');
+                if (savedUser) {
+                    this.currentUser = JSON.parse(savedUser);
+                    this.showMainApp();
+                    return true;
+                }
+                return false;
+            },
+
+            showLoginScreen() {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+            },
+
+            showMainApp() {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                this.updateUserInfo();
+                init(); // Initialize the main app
+            },
+
+            updateUserInfo() {
+                if (this.currentUser) {
+                    document.getElementById('currentUserName').textContent = this.currentUser.name;
+                    document.getElementById('currentUserRole').textContent = this.currentUser.role.toUpperCase();
+                }
+            }
+        };
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (authSystem.login(username, password)) {
+                console.log('Login successful for:', username);
+            } else {
+                alert('❌ Invalid credentials. Please try again.');
+            }
+        });
+
         // Start the application
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is already logged in
+            if (!authSystem.checkAuth()) {
+                authSystem.showLoginScreen();
+            }
+        });
     </script>
+    </div> <!-- End mainApp -->
 </body>
 </html>
