@@ -1136,31 +1136,31 @@
             <ul class="nav-menu">
                 <li class="nav-item">
                     <a href="#" class="nav-link active" data-page="dashboard">
-                        <span class="nav-icon">���</span>
+                        <span class="nav-icon">📊</span>
                         Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link" data-page="tickets">
-                        <span class="nav-icon">���</span>
+                        <span class="nav-icon">🎫</span>
                         Tickets
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link" data-page="analytics">
-                        <span class="nav-icon">📈</span>
+                        <span class="nav-icon">�</span>
                         Analytics
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link" data-page="users">
-                        <span class="nav-icon">���</span>
+                        <span class="nav-icon">👥</span>
                         User Management
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link" data-page="settings">
-                        <span class="nav-icon">��️</span>
+                        <span class="nav-icon">⚙️</span>
                         Settings
                     </a>
                 </li>
@@ -1594,6 +1594,264 @@
             </div>
         </main>
     </div>
+                    <h1 class="page-title">Student Affairs Dashboard</h1>
+                    <p class="page-subtitle">Overview of student services and support requests</p>
+                </div>
+
+                <div id="connectionStatus" class="connection-status status-disconnected">
+                    <span class="status-dot dot-red"></span>
+                    <span>Gmail: Not Connected</span>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalRequests">1,245</div>
+                        <div class="stat-label">Total Requests</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="activeAccommodations">342</div>
+                        <div class="stat-label">Active Accommodations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="campusAccessIssues">156</div>
+                        <div class="stat-label">Campus Access Issues</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="avgResponseTime">2.4</div>
+                        <div class="stat-label">Avg Response Time (hrs)</div>
+                    </div>
+                </div>
+
+                <!-- Request Categories Overview -->
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 1rem;">📊 Request Categories This Month</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div style="text-align: center; padding: 1rem;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #667eea;">89</div>
+                            <div style="color: #64748b; font-size: 0.9rem;">Accessibility Services</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #764ba2;">67</div>
+                            <div style="color: #64748b; font-size: 0.9rem;">Academic Support</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #10b981;">45</div>
+                            <div style="color: #64748b; font-size: 0.9rem;">Housing Inquiries</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #f59e0b;">32</div>
+                            <div style="color: #64748b; font-size: 0.9rem;">Financial Aid</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #ef4444;">28</div>
+                            <div style="color: #64748b; font-size: 0.9rem;">General Support</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 1rem;">📈 Recent Activity Trends</h3>
+                    <div style="background: #f8fafc; border-radius: 8px; padding: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span style="color: #64748b;">Week-over-week change:</span>
+                            <span style="color: #10b981; font-weight: 600;">↗ +12.5%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span style="color: #64748b;">Average resolution time:</span>
+                            <span style="color: #667eea; font-weight: 600;">2.4 hours</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #64748b;">Student satisfaction:</span>
+                            <span style="color: #10b981; font-weight: 600;">94.2%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tickets Page -->
+            <div id="tickets" class="page">
+                <div class="page-header">
+                    <h1 class="page-title">Student Support Tickets</h1>
+                    <p class="page-subtitle">Manage and track student service requests</p>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <select id="categoryFilter" class="form-input" style="width: auto;">
+                            <option value="all">All Categories</option>
+                            <option value="access">Access Requests</option>
+                            <option value="service">Service Requests</option>
+                            <option value="technical">Technical Issues</option>
+                            <option value="billing">Billing Questions</option>
+                            <option value="general">General Inquiries</option>
+                        </select>
+                        <select id="priorityFilter" class="form-input" style="width: auto;">
+                            <option value="all">All Priorities</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                        <select id="statusFilter" class="form-input" style="width: auto;">
+                            <option value="all">All Status</option>
+                            <option value="open">Open</option>
+                            <option value="in-review">In Review</option>
+                            <option value="approved">Approved</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="fetchEmails()">🔄 Refresh Emails</button>
+                    </div>
+                    <button class="btn btn-success" onclick="showNewTicketModal()">➕ New Ticket</button>
+                </div>
+
+                <div id="ticketsContainer" class="tickets-grid">
+                    <div class="ticket-card">
+                        <div class="ticket-header">
+                            <div>
+                                <div class="ticket-subject">Sample Support Request</div>
+                                <div class="ticket-meta">
+                                    <span>From: customer@example.com</span>
+                                    <span>2 hours ago</span>
+                                </div>
+                            </div>
+                            <span class="ticket-status status-new">New</span>
+                        </div>
+                        <p style="color: #64748b; margin-top: 1rem;">
+                            This is a sample ticket. Real tickets will appear here once you connect your Gmail account and configure the settings.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Management Page -->
+            <div id="users" class="page">
+                <div class="page-header">
+                    <h1 class="page-title">User Management</h1>
+                    <p class="page-subtitle">Manage system users and permissions</p>
+                </div>
+
+                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 2rem;">
+                    <div style="display: flex; gap: 1rem;">
+                        <select id="roleFilter" class="form-input" style="width: auto;">
+                            <option value="all">All Roles</option>
+                            <option value="admin">Administrators</option>
+                            <option value="user">Staff Users</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="showAddUserModal()" style="margin-left: auto;">
+                        ➕ Add User
+                    </button>
+                </div>
+
+                <div id="usersContainer" class="tickets-grid">
+                    <!-- Users will be populated by JavaScript -->
+                </div>
+
+                <!-- Add User Modal -->
+                <div id="addUserModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title">Add New User</h2>
+                            <button class="close-modal" onclick="closeAddUserModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="addUserForm">
+                                <div class="form-group">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" id="newUsername" class="form-input" placeholder="Enter username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" id="newUserName" class="form-input" placeholder="Enter full name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" id="newPassword" class="form-input" placeholder="Enter password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Role</label>
+                                    <select id="newUserRole" class="form-input">
+                                        <option value="user">Staff User</option>
+                                        <option value="admin">Administrator</option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                                    <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">👤 Add User</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings" class="page">
+                <div class="page-header">
+                    <h1 class="page-title">Settings</h1>
+                    <p class="page-subtitle">Configure your Gmail integration and system preferences</p>
+                </div>
+
+                <form id="settingsForm">
+                    <div class="form-group">
+                        <label class="form-label">Gmail Address</label>
+                        <input type="email" id="gmailAddress" class="form-input" placeholder="emailticket4@gmail.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">App Password</label>
+                        <input type="password" id="appPassword" class="form-input" placeholder="Enter your Gmail app password">
+                        <small style="color: #64748b;">Use the app password you generated in Gmail settings</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">IMAP Server</label>
+                        <input type="text" id="imapServer" class="form-input" value="imap.gmail.com" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">IMAP Port</label>
+                        <input type="number" id="imapPort" class="form-input" value="993" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Auto-refresh Interval (minutes)</label>
+                        <input type="number" id="refreshInterval" class="form-input" value="5" min="1" max="60">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Default Ticket Status</label>
+                        <select id="defaultStatus" class="form-input">
+                            <option value="new">New</option>
+                            <option value="open">Open</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+                        <button type="button" class="btn btn-secondary" onclick="testConnection()">🔗 Test Connection</button>
+                        <button type="button" class="btn btn-secondary" onclick="testNetlifyFunctions()">🧪 Test Functions</button>
+                        <button type="button" class="btn btn-success" onclick="validateEnvironment()">✅ Validate Environment</button>
+                        <button type="button" class="btn btn-info" onclick="testSavedSettings()">🔍 Test Saved Settings</button>
+                    </div>
+                </form>
+
+                <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
+                    <h3 style="margin-bottom: 1rem; color: #374151;">Integration Instructions</h3>
+                    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; color: #64748b; line-height: 1.6;">
+                        <p><strong>To set up Gmail integration:</strong></p>
+                        <ol style="margin: 1rem 0; padding-left: 2rem;">
+                            <li>Enable 2-step verification in your Gmail account</li>
+                            <li>Generate an App Password in Gmail Security settings</li>
+                            <li>Enter your Gmail address and app password above</li>
+                            <li>Click "Test Connection" to verify the setup</li>
+                            <li>Save settings and start managing tickets!</li>
+                        </ol>
+                        <p><em>Note: This demo uses client-side storage. For production, consider using a secure backend service.</em></p>
+        </main>
+    </div>
+
     <!-- New Ticket Modal -->
     <div id="newTicketModal" class="modal">
         <div class="modal-content">
