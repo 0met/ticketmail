@@ -1665,11 +1665,11 @@
                     
                     console.log('🎯 DIRECT SETTINGS CLICK HANDLER');
                     
-                    // Hide all pages first
+                    // Hide all pages first (but don't use inline styles)
                     const pages = document.querySelectorAll('.page');
                     pages.forEach(page => {
                         page.classList.remove('active');
-                        page.style.display = 'none';
+                        // Don't use inline display:none - use CSS class system instead
                     });
                     
                     // Update nav links
@@ -1677,7 +1677,7 @@
                     navLinks.forEach(link => link.classList.remove('active'));
                     settingsLink.classList.add('active');
                     
-                    // Get settings page and apply working fix
+                    // Get settings page and apply comprehensive fix
                     const settingsPage = document.getElementById('settings');
                     const mainContent = document.querySelector('.main-content');
                     
@@ -1688,7 +1688,7 @@
                             mainContent.appendChild(settingsPage);
                         }
                         
-                        // Apply comprehensive styles to prevent dimension collapse
+                        // Remove any inline display:none and apply comprehensive fix
                         settingsPage.style.cssText = `
                             display: block !important;
                             position: relative !important;
@@ -1705,35 +1705,19 @@
                             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
                             overflow: visible !important;
                             box-sizing: border-box !important;
+                            z-index: 1000 !important;
                         `;
                         
-                        // Force child elements to have proper layout
-                        const children = settingsPage.querySelectorAll('*');
-                        children.forEach(child => {
-                            if (child.offsetHeight === 0) {
-                                child.style.minHeight = 'auto';
-                                child.style.height = 'auto';
-                                if (child.classList.contains('form-group')) {
-                                    child.style.marginBottom = '1.5rem';
-                                }
-                                if (child.classList.contains('form-input')) {
-                                    child.style.minHeight = '44px';
-                                }
-                            }
-                        });
-                        
-                        // Add active class
+                        // Add active class and force layout
                         settingsPage.classList.add('active');
                         
-                        // Populate settings form
-                        try {
-                            populateSettingsForm();
-                        } catch(e) {
-                            console.error('Error populating form:', e);
-                        }
+                        // Force browser to recalculate layout
+                        settingsPage.offsetHeight;
                         
-                        console.log('✅ DIRECT SETTINGS HANDLER COMPLETE');
+                        console.log('✅ COMPREHENSIVE SETTINGS FIX APPLIED');
                         console.log('Settings dimensions:', settingsPage.getBoundingClientRect());
+                        console.log('Settings display:', window.getComputedStyle(settingsPage).display);
+                        console.log('Settings height:', settingsPage.offsetHeight);
                     } else {
                         console.error('❌ Settings elements not found');
                     }
