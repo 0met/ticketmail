@@ -524,31 +524,25 @@
             
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="#" class="nav-link active" data-page="dashboard">
+                    <a href="#" class="nav-link active" onclick="showPage('dashboard')">
                         <span class="nav-icon">📊</span>
                         Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="tickets">
+                    <a href="#" class="nav-link" onclick="showPage('tickets')">
                         <span class="nav-icon">🎫</span>
                         Tickets
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="analytics">
+                    <a href="#" class="nav-link" onclick="showPage('analytics')">
                         <span class="nav-icon">📈</span>
                         Analytics
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="users">
-                        <span class="nav-icon">👥</span>
-                        User Management
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="settings">
+                    <a href="#" class="nav-link" onclick="showPage('settings')">
                         <span class="nav-icon">⚙️</span>
                         Settings
                     </a>
@@ -877,68 +871,6 @@
                                 <button type="submit" class="btn btn-primary">🎫 Create Ticket</button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- User Management Page -->
-            <div id="users" class="page">
-                <div class="page-header">
-                    <h1 class="page-title">User Management</h1>
-                    <p class="page-subtitle">Manage system users and permissions</p>
-                </div>
-
-                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 2rem;">
-                    <div style="display: flex; gap: 1rem;">
-                        <select id="roleFilter" class="form-input" style="width: auto;">
-                            <option value="all">All Roles</option>
-                            <option value="admin">Administrators</option>
-                            <option value="user">Staff Users</option>
-                        </select>
-                    </div>
-                    <button type="button" class="btn btn-primary" onclick="showAddUserModal()" style="margin-left: auto;">
-                        ➕ Add User
-                    </button>
-                </div>
-
-                <div id="usersContainer" class="tickets-grid">
-                    <!-- Users will be populated by JavaScript -->
-                </div>
-
-                <!-- Add User Modal -->
-                <div id="addUserModal" class="modal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h2 class="modal-title">Add New User</h2>
-                            <button class="close-modal" onclick="closeAddUserModal()">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="addUserForm">
-                                <div class="form-group">
-                                    <label class="form-label">Username</label>
-                                    <input type="text" id="newUsername" class="form-input" placeholder="Enter username" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Full Name</label>
-                                    <input type="text" id="newUserName" class="form-input" placeholder="Enter full name" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Password</label>
-                                    <input type="password" id="newPassword" class="form-input" placeholder="Enter password" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Role</label>
-                                    <select id="newUserRole" class="form-input">
-                                        <option value="user">Staff User</option>
-                                        <option value="admin">Administrator</option>
-                                    </select>
-                                </div>
-                                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
-                                    <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
-                                    <button type="submit" class="btn btn-primary">👤 Add User</button>
-                                </div>
-                            </form>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1397,174 +1329,49 @@
             return `${days} days ago`;
         }
 
-        // Navigation functionality
-        function initNavigation() {
-            console.log('initNavigation called');
-            const navLinks = document.querySelectorAll('.nav-link');
-            const pages = document.querySelectorAll('.page');
+        // Simple, clean navigation system
+        function showPage(pageId) {
+            console.log('Showing page:', pageId);
             
-            // Debug: List all pages found
-            pages.forEach(page => {
-                console.log('Found page:', page.id, page.classList.contains('page'));
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
             });
             
-            console.log('Found nav links:', navLinks.length);
-            console.log('Found pages:', pages.length);
-
-            navLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const targetPage = link.dataset.page;
-                    console.log('🔄 NAVIGATION CLICKED - Target page:', targetPage);
-
-                    // Update active nav link
-                    navLinks.forEach(l => l.classList.remove('active'));
-                    link.classList.add('active');
-                    console.log('✅ Updated active nav link');
-
-                    // Show target page
-                    pages.forEach(page => {
-                        const wasActive = page.classList.contains('active');
-                        page.classList.remove('active');
-                        
-                        if (page.id === targetPage) {
-                            console.log(`🎯 Activating page: ${page.id}`);
-                            page.classList.add('active');
-                            
-                            // Immediate fix for settings page
-                            if (targetPage === 'settings') {
-                                console.log('🔧 APPLYING IMMEDIATE SETTINGS DISPLAY FIX');
-                                page.style.cssText = `
-                                    display: block !important;
-                                    position: relative !important;
-                                    width: 100% !important;
-                                    height: auto !important;
-                                    min-height: 500px !important;
-                                    visibility: visible !important;
-                                    opacity: 1 !important;
-                                    background: white !important;
-                                    padding: 2rem !important;
-                                    border-radius: 12px !important;
-                                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-                                    z-index: 1000 !important;
-                                `;
-                                console.log('✅ Settings display fix applied immediately');
-                            }
-                            
-                            console.log(`✅ Page ${page.id} activated`);
-                            console.log(`Page display:`, window.getComputedStyle(page).display);
-                            console.log(`Page dimensions:`, page.getBoundingClientRect());
-                            
-                            // Load specific data when pages are opened
-                            if (targetPage === 'analytics') {
-                                console.log('Loading analytics data');
-                                // Load analytics data
-                            } else if (targetPage === 'users') {
-                                console.log('Rendering users');
-                                renderUsers();
-                            } else if (targetPage === 'tickets') {
-                                console.log('Rendering tickets');
-                                renderTickets();
-                            } else if (targetPage === 'settings') {
-                                console.log('🔧 LOADING SETTINGS PAGE...');
-                                try {
-                                    // Ensure proper page structure and display
-                                    const settingsPage = document.getElementById('settings');
-                                    console.log('Settings page element:', settingsPage);
-                                    
-                                    if (settingsPage) {
-                                        console.log('Settings current parent:', settingsPage.parentElement);
-                                        console.log('Settings classes:', settingsPage.className);
-                                        
-                                        // Ensure it's not nested inside another page
-                                        const mainContent = document.querySelector('.main-content');
-                                        if (settingsPage.parentElement !== mainContent) {
-                                            console.log('🔄 Moving settings page to correct parent');
-                                            mainContent.appendChild(settingsPage);
-                                        }
-                                        
-                                        // Apply the same comprehensive styles that worked in the console
-                                        settingsPage.style.cssText = `
-                                            display: block !important;
-                                            position: relative !important;
-                                            width: 100% !important;
-                                            height: auto !important;
-                                            min-height: calc(100vh - 4rem) !important;
-                                            visibility: visible !important;
-                                            opacity: 1 !important;
-                                            background: white !important;
-                                            padding: 2rem !important;
-                                            border-radius: 12px !important;
-                                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-                                            z-index: 1 !important;
-                                        `;
-                                        
-                                        console.log('✅ Applied comprehensive styles to settings page');
-                                        console.log('New display:', window.getComputedStyle(settingsPage).display);
-                                        console.log('New dimensions:', settingsPage.getBoundingClientRect());
-                                    } else {
-                                        console.error('❌ Settings page element not found!');
-                                    }
-                                    
-                                    // Populate settings form
-                                    populateSettingsForm();
-                                    console.log('✅ Settings page loaded successfully');
-                                } catch (error) {
-                                    console.error('❌ Error loading settings page:', error);
-                                }
-                            }
-                        }
-                    });
-                });
+            // Add active class to clicked nav link
+            document.querySelector(`[onclick="showPage('${pageId}')"]`).classList.add('active');
+            
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
             });
+            
+            // Show target page
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                
+                // Load data when needed
+                if (pageId === 'tickets') {
+                    renderTickets();
+                } else if (pageId === 'analytics') {
+                    // Load analytics data if needed
+                } else if (pageId === 'settings') {
+                    populateSettingsForm();
+                }
+                
+                console.log('✅ Page switched to:', pageId);
+            } else {
+                console.error('❌ Page not found:', pageId);
+            }
         }
 
-        // Immediate settings page fix - runs as soon as DOM is ready
+        // Clean DOM initialization
         document.addEventListener('DOMContentLoaded', function() {
-            // Apply immediate fix for settings page
-            setTimeout(() => {
-                console.log('🚨 APPLYING IMMEDIATE SETTINGS FIX');
-                const settingsPage = document.getElementById('settings');
-                const mainContent = document.querySelector('.main-content');
-                
-                if (settingsPage && mainContent) {
-                    // Force move to correct parent
-                    if (settingsPage.parentElement !== mainContent) {
-                        console.log('📦 Moving settings to main-content immediately');
-                        mainContent.appendChild(settingsPage);
-                    }
-                    
-                    // Apply the exact working CSS from console
-                    settingsPage.style.cssText = `
-                        display: none;
-                        position: relative !important;
-                        width: 100% !important;
-                        height: auto !important;
-                        min-height: 500px !important;
-                        visibility: visible !important;
-                        opacity: 1 !important;
-                        background: white !important;
-                        padding: 2rem !important;
-                        border-radius: 12px !important;
-                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-                        z-index: 1000 !important;
-                    `;
-                    
-                    // When settings becomes active, ensure it shows
-                    if (settingsPage.classList.contains('active')) {
-                        settingsPage.style.display = 'block !important';
-                    }
-                    
-                    console.log('✅ Immediate settings fix applied');
-                    console.log('Settings dimensions:', settingsPage.getBoundingClientRect());
-                } else {
-                    console.error('❌ Settings elements not found for immediate fix');
-                }
-            }, 100);
-        });
-
-        // Consolidated DOM Content Loaded Handler
-        document.addEventListener('DOMContentLoaded', function() {
+            console.log('TicketMail system initializing...');
+            
+            // Initialize default page
+            showPage('dashboard');
             // New ticket form handler
             const newTicketForm = document.getElementById('newTicketForm');
             if (newTicketForm) {
