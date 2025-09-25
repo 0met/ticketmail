@@ -1404,8 +1404,31 @@
                                     // Debug: Check if settings page is visible
                                     const settingsPage = document.getElementById('settings');
                                     const isActive = settingsPage.classList.contains('active');
-                                    const display = window.getComputedStyle(settingsPage).display;
-                                    console.log('Settings page debug:', { isActive, display, element: settingsPage });
+                                    const computedStyle = window.getComputedStyle(settingsPage);
+                                    const display = computedStyle.display;
+                                    const visibility = computedStyle.visibility;
+                                    const opacity = computedStyle.opacity;
+                                    const height = computedStyle.height;
+                                    const overflow = computedStyle.overflow;
+                                    
+                                    console.log('Settings page debug:', { 
+                                        isActive, 
+                                        display, 
+                                        visibility, 
+                                        opacity, 
+                                        height, 
+                                        overflow,
+                                        element: settingsPage 
+                                    });
+                                    
+                                    // Debug: Check if form elements exist
+                                    const form = document.getElementById('settingsForm');
+                                    const gmailField = document.getElementById('gmailAddress');
+                                    console.log('Form elements debug:', { 
+                                        form: !!form, 
+                                        gmailField: !!gmailField,
+                                        formVisible: form ? window.getComputedStyle(form).display : 'N/A'
+                                    });
                                 } catch (error) {
                                     console.error('Error loading settings page:', error);
                                 }
