@@ -908,33 +908,33 @@
 
                 <form id="settingsForm">
                     <div class="form-group">
-                        <label class="form-label">Gmail Address</label>
-                        <input type="email" id="gmailAddress" class="form-input" placeholder="emailticket4@gmail.com">
+                        <label class="form-label" for="gmailAddress">Gmail Address</label>
+                        <input type="email" id="gmailAddress" class="form-input" placeholder="emailticket4@gmail.com" autocomplete="email">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">App Password</label>
-                        <input type="password" id="appPassword" class="form-input" placeholder="Enter your Gmail app password">
+                        <label class="form-label" for="appPassword">App Password</label>
+                        <input type="password" id="appPassword" class="form-input" placeholder="Enter your Gmail app password" autocomplete="current-password">
                         <small style="color: #64748b;">Use the app password you generated in Gmail settings</small>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">IMAP Server</label>
+                        <label class="form-label" for="imapServer">IMAP Server</label>
                         <input type="text" id="imapServer" class="form-input" value="imap.gmail.com" readonly>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">IMAP Port</label>
+                        <label class="form-label" for="imapPort">IMAP Port</label>
                         <input type="number" id="imapPort" class="form-input" value="993" readonly>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Auto-refresh Interval (minutes)</label>
-                        <input type="number" id="refreshInterval" class="form-input" value="5" min="1" max="60">
+                        <label class="form-label" for="refreshInterval">Auto-refresh Interval (minutes)</label>
+                        <input type="number" id="refreshInterval" class="form-input" value="5" min="1" max="60" autocomplete="off">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Default Ticket Status</label>
+                        <label class="form-label" for="defaultStatus">Default Ticket Status</label>
                         <select id="defaultStatus" class="form-input">
                             <option value="new">New</option>
                             <option value="open">Open</option>
@@ -1400,6 +1400,12 @@
                                     // Ensure settings are populated
                                     populateSettingsForm();
                                     console.log('Settings page loaded successfully');
+                                    
+                                    // Debug: Check if settings page is visible
+                                    const settingsPage = document.getElementById('settings');
+                                    const isActive = settingsPage.classList.contains('active');
+                                    const display = window.getComputedStyle(settingsPage).display;
+                                    console.log('Settings page debug:', { isActive, display, element: settingsPage });
                                 } catch (error) {
                                     console.error('Error loading settings page:', error);
                                 }
