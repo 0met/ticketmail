@@ -992,10 +992,22 @@
 
         // Populate settings form with saved data
         function populateSettingsForm() {
-            document.getElementById('gmailAddress').value = appState.settings.gmailAddress || '';
-            document.getElementById('appPassword').value = appState.settings.appPassword || '';
-            document.getElementById('refreshInterval').value = appState.settings.refreshInterval || 5;
-            document.getElementById('defaultStatus').value = appState.settings.defaultStatus || 'new';
+            try {
+                console.log('Populating settings form...');
+                const gmailField = document.getElementById('gmailAddress');
+                const passwordField = document.getElementById('appPassword');
+                const refreshField = document.getElementById('refreshInterval');
+                const statusField = document.getElementById('defaultStatus');
+                
+                if (gmailField) gmailField.value = appState.settings.gmailAddress || '';
+                if (passwordField) passwordField.value = appState.settings.appPassword || '';
+                if (refreshField) refreshField.value = appState.settings.refreshInterval || 5;
+                if (statusField) statusField.value = appState.settings.defaultStatus || 'new';
+                
+                console.log('Settings form populated successfully');
+            } catch (error) {
+                console.error('Error populating settings form:', error);
+            }
         }
 
         // Save settings to localStorage and database
@@ -1384,8 +1396,13 @@
                                 renderTickets();
                             } else if (targetPage === 'settings') {
                                 console.log('Loading settings page');
-                                // Ensure settings are populated
-                                populateSettingsForm();
+                                try {
+                                    // Ensure settings are populated
+                                    populateSettingsForm();
+                                    console.log('Settings page loaded successfully');
+                                } catch (error) {
+                                    console.error('Error loading settings page:', error);
+                                }
                             }
                         }
                     });
