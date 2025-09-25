@@ -1347,6 +1347,11 @@
             const navLinks = document.querySelectorAll('.nav-link');
             const pages = document.querySelectorAll('.page');
             
+            // Debug: List all pages found
+            pages.forEach(page => {
+                console.log('Found page:', page.id, page.classList.contains('page'));
+            });
+            
             console.log('Found nav links:', navLinks.length);
             console.log('Found pages:', pages.length);
 
@@ -1377,6 +1382,10 @@
                             } else if (targetPage === 'tickets') {
                                 console.log('Rendering tickets');
                                 renderTickets();
+                            } else if (targetPage === 'settings') {
+                                console.log('Loading settings page');
+                                // Ensure settings are populated
+                                populateSettingsForm();
                             }
                         }
                     });
