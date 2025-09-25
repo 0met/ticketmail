@@ -1579,6 +1579,41 @@
             initPageStructure(); // Initialize page structure first
             initNavigation();
             
+            // TEMPORARY FIX: Force settings page to be visible and properly structured
+            setTimeout(() => {
+                console.log('🚨 APPLYING EMERGENCY SETTINGS PAGE FIX');
+                const settingsPage = document.getElementById('settings');
+                const mainContent = document.querySelector('.main-content');
+                
+                if (settingsPage && mainContent) {
+                    // Ensure it's in the right place
+                    if (settingsPage.parentElement !== mainContent) {
+                        console.log('📦 Moving settings to main-content');
+                        mainContent.appendChild(settingsPage);
+                    }
+                    
+                    // Force visibility styles
+                    settingsPage.style.cssText = `
+                        display: block !important;
+                        position: relative !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        min-height: calc(100vh - 4rem) !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        background: white !important;
+                        padding: 2rem !important;
+                        border-radius: 12px !important;
+                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+                    `;
+                    
+                    console.log('✅ Emergency fix applied to settings page');
+                    console.log('Settings dimensions:', settingsPage.getBoundingClientRect());
+                } else {
+                    console.error('❌ Settings page or main content not found!');
+                }
+            }, 1000);
+            
             // Set up auto-refresh if connected
             if (appState.isConnected) {
                 setInterval(() => {
