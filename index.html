@@ -1411,23 +1411,22 @@
                                     const height = computedStyle.height;
                                     const overflow = computedStyle.overflow;
                                     
-                                    console.log('Settings page debug:', { 
-                                        isActive, 
-                                        display, 
-                                        visibility, 
-                                        opacity, 
-                                        height, 
-                                        overflow,
-                                        element: settingsPage 
-                                    });
+                                    console.log('Settings page debug:');
+                                    console.log('  isActive:', isActive);
+                                    console.log('  display:', display);
+                                    console.log('  visibility:', visibility);
+                                    console.log('  opacity:', opacity);
+                                    console.log('  height:', height);
+                                    console.log('  overflow:', overflow);
+                                    console.log('  element:', settingsPage);
                                     
                                     // Debug: Check if form elements exist
                                     const form = document.getElementById('settingsForm');
                                     const gmailField = document.getElementById('gmailAddress');
-                                    console.log('Form elements debug:', { 
-                                        form: !!form, 
-                                        gmailField: !!gmailField,
-                                        formVisible: form ? window.getComputedStyle(form).display : 'N/A'
+                                    console.log('Form elements debug:');
+                                    console.log('  form exists:', !!form);
+                                    console.log('  gmailField exists:', !!gmailField);
+                                    console.log('  form display:', form ? window.getComputedStyle(form).display : 'N/A');
                                     });
                                 } catch (error) {
                                     console.error('Error loading settings page:', error);
