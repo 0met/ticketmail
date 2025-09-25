@@ -1400,6 +1400,27 @@
                         if (page.id === targetPage) {
                             console.log(`🎯 Activating page: ${page.id}`);
                             page.classList.add('active');
+                            
+                            // Immediate fix for settings page
+                            if (targetPage === 'settings') {
+                                console.log('🔧 APPLYING IMMEDIATE SETTINGS DISPLAY FIX');
+                                page.style.cssText = `
+                                    display: block !important;
+                                    position: relative !important;
+                                    width: 100% !important;
+                                    height: auto !important;
+                                    min-height: 500px !important;
+                                    visibility: visible !important;
+                                    opacity: 1 !important;
+                                    background: white !important;
+                                    padding: 2rem !important;
+                                    border-radius: 12px !important;
+                                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+                                    z-index: 1000 !important;
+                                `;
+                                console.log('✅ Settings display fix applied immediately');
+                            }
+                            
                             console.log(`✅ Page ${page.id} activated`);
                             console.log(`Page display:`, window.getComputedStyle(page).display);
                             console.log(`Page dimensions:`, page.getBoundingClientRect());
@@ -1467,6 +1488,50 @@
                 });
             });
         }
+
+        // Immediate settings page fix - runs as soon as DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Apply immediate fix for settings page
+            setTimeout(() => {
+                console.log('🚨 APPLYING IMMEDIATE SETTINGS FIX');
+                const settingsPage = document.getElementById('settings');
+                const mainContent = document.querySelector('.main-content');
+                
+                if (settingsPage && mainContent) {
+                    // Force move to correct parent
+                    if (settingsPage.parentElement !== mainContent) {
+                        console.log('📦 Moving settings to main-content immediately');
+                        mainContent.appendChild(settingsPage);
+                    }
+                    
+                    // Apply the exact working CSS from console
+                    settingsPage.style.cssText = `
+                        display: none;
+                        position: relative !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        min-height: 500px !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        background: white !important;
+                        padding: 2rem !important;
+                        border-radius: 12px !important;
+                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+                        z-index: 1000 !important;
+                    `;
+                    
+                    // When settings becomes active, ensure it shows
+                    if (settingsPage.classList.contains('active')) {
+                        settingsPage.style.display = 'block !important';
+                    }
+                    
+                    console.log('✅ Immediate settings fix applied');
+                    console.log('Settings dimensions:', settingsPage.getBoundingClientRect());
+                } else {
+                    console.error('❌ Settings elements not found for immediate fix');
+                }
+            }, 100);
+        });
 
         // Consolidated DOM Content Loaded Handler
         document.addEventListener('DOMContentLoaded', function() {
