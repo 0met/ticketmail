@@ -1622,6 +1622,81 @@
             }
         });
 
+        // Direct settings page handler - bypasses navigation system
+        function addDirectSettingsHandler() {
+            console.log('🔧 Adding direct settings handler');
+            const settingsLink = document.querySelector('a[data-page="settings"]');
+            
+            if (settingsLink) {
+                // Add direct click handler that overrides everything else
+                settingsLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('🎯 DIRECT SETTINGS CLICK HANDLER');
+                    
+                    // Hide all pages first
+                    const pages = document.querySelectorAll('.page');
+                    pages.forEach(page => {
+                        page.classList.remove('active');
+                        page.style.display = 'none';
+                    });
+                    
+                    // Update nav links
+                    const navLinks = document.querySelectorAll('.nav-link');
+                    navLinks.forEach(link => link.classList.remove('active'));
+                    settingsLink.classList.add('active');
+                    
+                    // Get settings page and apply working fix
+                    const settingsPage = document.getElementById('settings');
+                    const mainContent = document.querySelector('.main-content');
+                    
+                    if (settingsPage && mainContent) {
+                        // Ensure correct parent
+                        if (settingsPage.parentElement !== mainContent) {
+                            console.log('📦 Moving settings to main-content');
+                            mainContent.appendChild(settingsPage);
+                        }
+                        
+                        // Apply exact working styles immediately
+                        settingsPage.style.cssText = `
+                            display: block !important;
+                            position: relative !important;
+                            width: 100% !important;
+                            height: auto !important;
+                            min-height: 500px !important;
+                            visibility: visible !important;
+                            opacity: 1 !important;
+                            background: white !important;
+                            padding: 2rem !important;
+                            border-radius: 12px !important;
+                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+                            z-index: 1000 !important;
+                        `;
+                        
+                        // Add active class
+                        settingsPage.classList.add('active');
+                        
+                        // Populate settings form
+                        try {
+                            populateSettingsForm();
+                        } catch(e) {
+                            console.error('Error populating form:', e);
+                        }
+                        
+                        console.log('✅ DIRECT SETTINGS HANDLER COMPLETE');
+                        console.log('Settings dimensions:', settingsPage.getBoundingClientRect());
+                    } else {
+                        console.error('❌ Settings elements not found');
+                    }
+                }, true); // Use capture phase to ensure it runs first
+                
+                console.log('✅ Direct settings handler added');
+            } else {
+                console.error('❌ Settings link not found');
+            }
+        }
+
         // Initialize page structure to prevent nesting issues
         function initPageStructure() {
             console.log('🔧 INITIALIZING PAGE STRUCTURE...');
@@ -1682,6 +1757,7 @@
             loadSettings();
             updateConnectionStatus();
             initPageStructure(); // Initialize page structure first
+            addDirectSettingsHandler(); // Add direct settings handler
             initNavigation();
             
             // Set up auto-refresh if connected
