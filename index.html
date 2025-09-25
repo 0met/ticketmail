@@ -1371,18 +1371,24 @@
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const targetPage = link.dataset.page;
-                    console.log('Navigating to page:', targetPage);
+                    console.log('🔄 NAVIGATION CLICKED - Target page:', targetPage);
 
                     // Update active nav link
                     navLinks.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
+                    console.log('✅ Updated active nav link');
 
                     // Show target page
                     pages.forEach(page => {
+                        const wasActive = page.classList.contains('active');
                         page.classList.remove('active');
+                        
                         if (page.id === targetPage) {
-                            console.log('Activating page:', page.id);
+                            console.log(`🎯 Activating page: ${page.id}`);
                             page.classList.add('active');
+                            console.log(`✅ Page ${page.id} activated`);
+                            console.log(`Page display:`, window.getComputedStyle(page).display);
+                            console.log(`Page dimensions:`, page.getBoundingClientRect());
                             
                             // Load specific data when pages are opened
                             if (targetPage === 'analytics') {
@@ -1395,17 +1401,21 @@
                                 console.log('Rendering tickets');
                                 renderTickets();
                             } else if (targetPage === 'settings') {
-                                console.log('Loading settings page');
+                                console.log('🔧 LOADING SETTINGS PAGE...');
                                 try {
                                     // Ensure proper page structure and display
                                     const settingsPage = document.getElementById('settings');
+                                    console.log('Settings page element:', settingsPage);
                                     
-                                    // Force proper positioning and display for settings page
                                     if (settingsPage) {
+                                        console.log('Settings current parent:', settingsPage.parentElement);
+                                        console.log('Settings classes:', settingsPage.className);
+                                        console.log('Settings display:', window.getComputedStyle(settingsPage).display);
+                                        
                                         // Ensure it's not nested inside another page
                                         const mainContent = document.querySelector('.main-content');
                                         if (settingsPage.parentElement !== mainContent) {
-                                            console.log('Moving settings page to correct parent');
+                                            console.log('🔄 Moving settings page to correct parent');
                                             mainContent.appendChild(settingsPage);
                                         }
                                         
@@ -1415,13 +1425,19 @@
                                         settingsPage.style.width = '100%';
                                         settingsPage.style.height = 'auto';
                                         settingsPage.style.minHeight = 'calc(100vh - 4rem)';
+                                        
+                                        console.log('✅ Applied styles to settings page');
+                                        console.log('New display:', window.getComputedStyle(settingsPage).display);
+                                        console.log('New dimensions:', settingsPage.getBoundingClientRect());
+                                    } else {
+                                        console.error('❌ Settings page element not found!');
                                     }
                                     
                                     // Populate settings form
                                     populateSettingsForm();
-                                    console.log('Settings page loaded successfully');
+                                    console.log('✅ Settings page loaded successfully');
                                 } catch (error) {
-                                    console.error('Error loading settings page:', error);
+                                    console.error('❌ Error loading settings page:', error);
                                 }
                             }
                         }
@@ -1521,27 +1537,39 @@
 
         // Initialize page structure to prevent nesting issues
         function initPageStructure() {
-            console.log('Initializing page structure...');
+            console.log('🔧 INITIALIZING PAGE STRUCTURE...');
             
             const mainContent = document.querySelector('.main-content');
+            console.log('Main content container:', mainContent);
+            
             const pages = ['dashboard', 'tickets', 'analytics', 'users', 'settings'];
             
             pages.forEach(pageId => {
                 const page = document.getElementById(pageId);
-                if (page && page.parentElement !== mainContent) {
-                    console.log(`Moving ${pageId} page to correct parent`);
-                    mainContent.appendChild(page);
-                }
+                console.log(`📄 Checking page: ${pageId}`, page);
                 
-                // Ensure proper base styles for all pages
                 if (page) {
+                    console.log(`  Current parent:`, page.parentElement);
+                    console.log(`  Should be in main-content:`, page.parentElement === mainContent);
+                    
+                    if (page.parentElement !== mainContent) {
+                        console.log(`🔄 Moving ${pageId} page to correct parent`);
+                        mainContent.appendChild(page);
+                        console.log(`✅ Moved ${pageId} to main-content`);
+                    }
+                    
+                    // Ensure proper base styles for all pages
                     page.style.position = 'relative';
                     page.style.width = '100%';
                     page.style.height = 'auto';
+                    
+                    console.log(`✅ Applied base styles to ${pageId}`);
+                } else {
+                    console.error(`❌ Page ${pageId} not found!`);
                 }
             });
             
-            console.log('Page structure initialized successfully');
+            console.log('✅ PAGE STRUCTURE INITIALIZED SUCCESSFULLY');
         }
 
         // Initialize application
