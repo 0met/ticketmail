@@ -98,12 +98,42 @@
             opacity: 1 !important;
         }
 
-        /* Special handling for settings page */
+        /* Special handling for settings page to prevent dimension collapse */
+        #settings.page {
+            min-height: 600px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+        
         #settings.page.active {
+            display: block !important;
+            position: relative !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 600px !important;
+            max-width: 100% !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             background: white !important;
             padding: 2rem !important;
+            margin: 0 !important;
             border-radius: 12px !important;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+            overflow: visible !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Ensure settings form elements have proper dimensions */
+        #settings .form-group {
+            min-height: auto !important;
+            height: auto !important;
+            margin-bottom: 1.5rem !important;
+        }
+
+        #settings .form-input {
+            min-height: 44px !important;
+            height: auto !important;
         }
 
         @keyframes fadeIn {
@@ -1658,21 +1688,39 @@
                             mainContent.appendChild(settingsPage);
                         }
                         
-                        // Apply exact working styles immediately
+                        // Apply comprehensive styles to prevent dimension collapse
                         settingsPage.style.cssText = `
                             display: block !important;
                             position: relative !important;
                             width: 100% !important;
                             height: auto !important;
-                            min-height: 500px !important;
+                            min-height: 600px !important;
+                            max-width: 100% !important;
                             visibility: visible !important;
                             opacity: 1 !important;
                             background: white !important;
                             padding: 2rem !important;
+                            margin: 0 !important;
                             border-radius: 12px !important;
                             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-                            z-index: 1000 !important;
+                            overflow: visible !important;
+                            box-sizing: border-box !important;
                         `;
+                        
+                        // Force child elements to have proper layout
+                        const children = settingsPage.querySelectorAll('*');
+                        children.forEach(child => {
+                            if (child.offsetHeight === 0) {
+                                child.style.minHeight = 'auto';
+                                child.style.height = 'auto';
+                                if (child.classList.contains('form-group')) {
+                                    child.style.marginBottom = '1.5rem';
+                                }
+                                if (child.classList.contains('form-input')) {
+                                    child.style.minHeight = '44px';
+                                }
+                            }
+                        });
                         
                         // Add active class
                         settingsPage.classList.add('active');
