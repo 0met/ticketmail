@@ -88,8 +88,22 @@
         }
 
         .page.active {
-            display: block;
+            display: block !important;
             animation: fadeIn 0.3s ease-in-out;
+            position: relative !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: calc(100vh - 4rem) !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* Special handling for settings page */
+        #settings.page.active {
+            background: white !important;
+            padding: 2rem !important;
+            border-radius: 12px !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
         }
 
         @keyframes fadeIn {
@@ -1410,7 +1424,6 @@
                                     if (settingsPage) {
                                         console.log('Settings current parent:', settingsPage.parentElement);
                                         console.log('Settings classes:', settingsPage.className);
-                                        console.log('Settings display:', window.getComputedStyle(settingsPage).display);
                                         
                                         // Ensure it's not nested inside another page
                                         const mainContent = document.querySelector('.main-content');
@@ -1419,14 +1432,23 @@
                                             mainContent.appendChild(settingsPage);
                                         }
                                         
-                                        // Ensure proper display properties
-                                        settingsPage.style.display = 'block';
-                                        settingsPage.style.position = 'relative';
-                                        settingsPage.style.width = '100%';
-                                        settingsPage.style.height = 'auto';
-                                        settingsPage.style.minHeight = 'calc(100vh - 4rem)';
+                                        // Apply the same comprehensive styles that worked in the console
+                                        settingsPage.style.cssText = `
+                                            display: block !important;
+                                            position: relative !important;
+                                            width: 100% !important;
+                                            height: auto !important;
+                                            min-height: calc(100vh - 4rem) !important;
+                                            visibility: visible !important;
+                                            opacity: 1 !important;
+                                            background: white !important;
+                                            padding: 2rem !important;
+                                            border-radius: 12px !important;
+                                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+                                            z-index: 1 !important;
+                                        `;
                                         
-                                        console.log('✅ Applied styles to settings page');
+                                        console.log('✅ Applied comprehensive styles to settings page');
                                         console.log('New display:', window.getComputedStyle(settingsPage).display);
                                         console.log('New dimensions:', settingsPage.getBoundingClientRect());
                                     } else {
@@ -1558,10 +1580,28 @@
                         console.log(`✅ Moved ${pageId} to main-content`);
                     }
                     
-                    // Ensure proper base styles for all pages
+                    // Apply comprehensive base styles for all pages
                     page.style.position = 'relative';
                     page.style.width = '100%';
                     page.style.height = 'auto';
+                    
+                    // Special handling for settings page to ensure visibility
+                    if (pageId === 'settings') {
+                        page.style.cssText = `
+                            display: none;
+                            position: relative !important;
+                            width: 100% !important;
+                            height: auto !important;
+                            min-height: calc(100vh - 4rem) !important;
+                            visibility: visible !important;
+                            opacity: 1 !important;
+                            background: white !important;
+                            padding: 2rem !important;
+                            border-radius: 12px !important;
+                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+                        `;
+                        console.log(`✅ Applied enhanced styles to settings page`);
+                    }
                     
                     console.log(`✅ Applied base styles to ${pageId}`);
                 } else {
@@ -1578,41 +1618,6 @@
             updateConnectionStatus();
             initPageStructure(); // Initialize page structure first
             initNavigation();
-            
-            // TEMPORARY FIX: Force settings page to be visible and properly structured
-            setTimeout(() => {
-                console.log('🚨 APPLYING EMERGENCY SETTINGS PAGE FIX');
-                const settingsPage = document.getElementById('settings');
-                const mainContent = document.querySelector('.main-content');
-                
-                if (settingsPage && mainContent) {
-                    // Ensure it's in the right place
-                    if (settingsPage.parentElement !== mainContent) {
-                        console.log('📦 Moving settings to main-content');
-                        mainContent.appendChild(settingsPage);
-                    }
-                    
-                    // Force visibility styles
-                    settingsPage.style.cssText = `
-                        display: block !important;
-                        position: relative !important;
-                        width: 100% !important;
-                        height: auto !important;
-                        min-height: calc(100vh - 4rem) !important;
-                        visibility: visible !important;
-                        opacity: 1 !important;
-                        background: white !important;
-                        padding: 2rem !important;
-                        border-radius: 12px !important;
-                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-                    `;
-                    
-                    console.log('✅ Emergency fix applied to settings page');
-                    console.log('Settings dimensions:', settingsPage.getBoundingClientRect());
-                } else {
-                    console.error('❌ Settings page or main content not found!');
-                }
-            }, 1000);
             
             // Set up auto-refresh if connected
             if (appState.isConnected) {
