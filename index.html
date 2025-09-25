@@ -1419,40 +1419,6 @@
                 }
             });
             
-            // Add user form handler
-            const addUserForm = document.getElementById('addUserForm');
-            if (addUserForm) {
-                addUserForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const username = document.getElementById('newUsername').value.trim();
-                    const name = document.getElementById('newUserName').value.trim();
-                    const password = document.getElementById('newPassword').value;
-                    const role = document.getElementById('newUserRole').value;
-                    
-                    if (authSystem.users[username]) {
-                        alert('❌ Username already exists. Please choose a different username.');
-                        return;
-                    }
-                    
-                    authSystem.users[username] = {
-                        password: password,
-                        role: role,
-                        name: name
-                    };
-                    
-                    closeAddUserModal();
-                    renderUsers();
-                    alert(`✅ User "${username}" has been added successfully.`);
-                });
-            }
-
-            // Role filter handler
-            const roleFilter = document.getElementById('roleFilter');
-            if (roleFilter) {
-                roleFilter.addEventListener('change', renderUsers);
-            }
-            
             // Check if user is already logged in
             if (!authSystem.checkAuth()) {
                 authSystem.showLoginScreen();
@@ -1545,7 +1511,7 @@
             const mainContent = document.querySelector('.main-content');
             console.log('Main content container:', mainContent);
             
-            const pages = ['dashboard', 'tickets', 'analytics', 'users', 'settings'];
+            const pages = ['dashboard', 'tickets', 'analytics', 'settings'];
             
             pages.forEach(pageId => {
                 const page = document.getElementById(pageId);
@@ -1783,66 +1749,10 @@
             }
         }
 
-        // User Management Functions
-        function renderUsers() {
-            console.log('renderUsers called');
-            const container = document.getElementById('usersContainer');
-            const roleFilterElement = document.getElementById('roleFilter');
-            const roleFilter = roleFilterElement ? roleFilterElement.value : 'all';
-            
-            console.log('usersContainer:', container);
-            console.log('roleFilter:', roleFilter);
-            
-            if (!container) {
-                console.error('usersContainer not found');
-                return;
-            }
-            
-            container.innerHTML = '';
-            
-            console.log('authSystem.users:', authSystem.users);
-            
-            Object.entries(authSystem.users).forEach(([username, user]) => {
-                if (roleFilter === 'all' || user.role === roleFilter) {
-                    const userCard = document.createElement('div');
-                    userCard.className = 'ticket-card'; // Reuse ticket card styling
-                    userCard.innerHTML = `
-                        <div class="ticket-header">
-                            <div>
-                                <div class="ticket-subject">${user.name}</div>
-                                <div class="ticket-meta">
-                                    <span>@${username}</span>
-                                    <span>Role: ${user.role}</span>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <span class="ticket-status ${user.role === 'admin' ? 'status-new' : 'status-open'}">${user.role.toUpperCase()}</span>
-                                ${username !== 'admin' ? `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="removeUser('${username}')">🗑️</button>` : ''}
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(userCard);
-                }
-            });
-        }
-
-        function showAddUserModal() {
-            const modal = document.getElementById('addUserModal');
-            modal.classList.add('active');
-        }
-
-        function closeAddUserModal() {
-            const modal = document.getElementById('addUserModal');
-            modal.classList.remove('active');
-            document.getElementById('addUserForm').reset();
-        }
-
-        function removeUser(username) {
-            if (confirm(`Are you sure you want to remove user "${username}"?`)) {
-                delete authSystem.users[username];
-                renderUsers();
-                alert(`✅ User "${username}" has been removed.`);
-            }
+        // Analytics Functions (placeholder for future implementation)
+        function loadAnalyticsData() {
+            console.log('Analytics data loading...');
+            // Future analytics implementation will go here
         }
 
         // Add user form handler
