@@ -901,11 +901,6 @@
 
             <!-- Settings Page -->
             <div id="settings" class="page">
-                <!-- TEST: Visible element to debug display -->
-                <div style="background: red; color: white; padding: 20px; margin: 10px; font-size: 24px; z-index: 9999; position: relative;">
-                    TEST: If you can see this red box, the settings page is displaying!
-                </div>
-                
                 <div class="page-header">
                     <h1 class="page-title">Settings</h1>
                     <p class="page-subtitle">Configure your Gmail integration and system preferences</p>
@@ -1402,37 +1397,29 @@
                             } else if (targetPage === 'settings') {
                                 console.log('Loading settings page');
                                 try {
-                                    // Ensure settings are populated
+                                    // Ensure proper page structure and display
+                                    const settingsPage = document.getElementById('settings');
+                                    
+                                    // Force proper positioning and display for settings page
+                                    if (settingsPage) {
+                                        // Ensure it's not nested inside another page
+                                        const mainContent = document.querySelector('.main-content');
+                                        if (settingsPage.parentElement !== mainContent) {
+                                            console.log('Moving settings page to correct parent');
+                                            mainContent.appendChild(settingsPage);
+                                        }
+                                        
+                                        // Ensure proper display properties
+                                        settingsPage.style.display = 'block';
+                                        settingsPage.style.position = 'relative';
+                                        settingsPage.style.width = '100%';
+                                        settingsPage.style.height = 'auto';
+                                        settingsPage.style.minHeight = 'calc(100vh - 4rem)';
+                                    }
+                                    
+                                    // Populate settings form
                                     populateSettingsForm();
                                     console.log('Settings page loaded successfully');
-                                    
-                                    // Debug: Check if settings page is visible
-                                    const settingsPage = document.getElementById('settings');
-                                    const isActive = settingsPage.classList.contains('active');
-                                    const computedStyle = window.getComputedStyle(settingsPage);
-                                    const display = computedStyle.display;
-                                    const visibility = computedStyle.visibility;
-                                    const opacity = computedStyle.opacity;
-                                    const height = computedStyle.height;
-                                    const overflow = computedStyle.overflow;
-                                    
-                                    console.log('Settings page debug:');
-                                    console.log('  isActive:', isActive);
-                                    console.log('  display:', display);
-                                    console.log('  visibility:', visibility);
-                                    console.log('  opacity:', opacity);
-                                    console.log('  height:', height);
-                                    console.log('  overflow:', overflow);
-                                    console.log('  element:', settingsPage);
-                                    
-                                    // Debug: Check if form elements exist
-                                    const form = document.getElementById('settingsForm');
-                                    const gmailField = document.getElementById('gmailAddress');
-                                    console.log('Form elements debug:');
-                                    console.log('  form exists:', !!form);
-                                    console.log('  gmailField exists:', !!gmailField);
-                                    console.log('  form display:', form ? window.getComputedStyle(form).display : 'N/A');
-                                    });
                                 } catch (error) {
                                     console.error('Error loading settings page:', error);
                                 }
@@ -1532,10 +1519,36 @@
             }
         });
 
+        // Initialize page structure to prevent nesting issues
+        function initPageStructure() {
+            console.log('Initializing page structure...');
+            
+            const mainContent = document.querySelector('.main-content');
+            const pages = ['dashboard', 'tickets', 'analytics', 'users', 'settings'];
+            
+            pages.forEach(pageId => {
+                const page = document.getElementById(pageId);
+                if (page && page.parentElement !== mainContent) {
+                    console.log(`Moving ${pageId} page to correct parent`);
+                    mainContent.appendChild(page);
+                }
+                
+                // Ensure proper base styles for all pages
+                if (page) {
+                    page.style.position = 'relative';
+                    page.style.width = '100%';
+                    page.style.height = 'auto';
+                }
+            });
+            
+            console.log('Page structure initialized successfully');
+        }
+
         // Initialize application
         function init() {
             loadSettings();
             updateConnectionStatus();
+            initPageStructure(); // Initialize page structure first
             initNavigation();
             
             // Set up auto-refresh if connected
