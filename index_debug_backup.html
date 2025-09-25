@@ -88,52 +88,8 @@
         }
 
         .page.active {
-            display: block !important;
+            display: block;
             animation: fadeIn 0.3s ease-in-out;
-            position: relative !important;
-            width: 100% !important;
-            height: auto !important;
-            min-height: calc(100vh - 4rem) !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
-        /* Special handling for settings page to prevent dimension collapse */
-        #settings.page {
-            min-height: 600px !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            overflow: visible !important;
-        }
-        
-        #settings.page.active {
-            display: block !important;
-            position: relative !important;
-            width: 100% !important;
-            height: auto !important;
-            min-height: 600px !important;
-            max-width: 100% !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            background: white !important;
-            padding: 2rem !important;
-            margin: 0 !important;
-            border-radius: 12px !important;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-            overflow: visible !important;
-            box-sizing: border-box !important;
-        }
-
-        /* Ensure settings form elements have proper dimensions */
-        #settings .form-group {
-            min-height: auto !important;
-            height: auto !important;
-            margin-bottom: 1.5rem !important;
-        }
-
-        #settings .form-input {
-            min-height: 44px !important;
-            height: auto !important;
         }
 
         @keyframes fadeIn {
@@ -952,33 +908,33 @@
 
                 <form id="settingsForm">
                     <div class="form-group">
-                        <label class="form-label" for="gmailAddress">Gmail Address</label>
-                        <input type="email" id="gmailAddress" class="form-input" placeholder="emailticket4@gmail.com" autocomplete="email">
+                        <label class="form-label">Gmail Address</label>
+                        <input type="email" id="gmailAddress" class="form-input" placeholder="emailticket4@gmail.com">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="appPassword">App Password</label>
-                        <input type="password" id="appPassword" class="form-input" placeholder="Enter your Gmail app password" autocomplete="current-password">
+                        <label class="form-label">App Password</label>
+                        <input type="password" id="appPassword" class="form-input" placeholder="Enter your Gmail app password">
                         <small style="color: #64748b;">Use the app password you generated in Gmail settings</small>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="imapServer">IMAP Server</label>
+                        <label class="form-label">IMAP Server</label>
                         <input type="text" id="imapServer" class="form-input" value="imap.gmail.com" readonly>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="imapPort">IMAP Port</label>
+                        <label class="form-label">IMAP Port</label>
                         <input type="number" id="imapPort" class="form-input" value="993" readonly>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="refreshInterval">Auto-refresh Interval (minutes)</label>
-                        <input type="number" id="refreshInterval" class="form-input" value="5" min="1" max="60" autocomplete="off">
+                        <label class="form-label">Auto-refresh Interval (minutes)</label>
+                        <input type="number" id="refreshInterval" class="form-input" value="5" min="1" max="60">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="defaultStatus">Default Ticket Status</label>
+                        <label class="form-label">Default Ticket Status</label>
                         <select id="defaultStatus" class="form-input">
                             <option value="new">New</option>
                             <option value="open">Open</option>
@@ -1036,22 +992,10 @@
 
         // Populate settings form with saved data
         function populateSettingsForm() {
-            try {
-                console.log('Populating settings form...');
-                const gmailField = document.getElementById('gmailAddress');
-                const passwordField = document.getElementById('appPassword');
-                const refreshField = document.getElementById('refreshInterval');
-                const statusField = document.getElementById('defaultStatus');
-                
-                if (gmailField) gmailField.value = appState.settings.gmailAddress || '';
-                if (passwordField) passwordField.value = appState.settings.appPassword || '';
-                if (refreshField) refreshField.value = appState.settings.refreshInterval || 5;
-                if (statusField) statusField.value = appState.settings.defaultStatus || 'new';
-                
-                console.log('Settings form populated successfully');
-            } catch (error) {
-                console.error('Error populating settings form:', error);
-            }
+            document.getElementById('gmailAddress').value = appState.settings.gmailAddress || '';
+            document.getElementById('appPassword').value = appState.settings.appPassword || '';
+            document.getElementById('refreshInterval').value = appState.settings.refreshInterval || 5;
+            document.getElementById('defaultStatus').value = appState.settings.defaultStatus || 'new';
         }
 
         // Save settings to localStorage and database
@@ -1403,11 +1347,6 @@
             const navLinks = document.querySelectorAll('.nav-link');
             const pages = document.querySelectorAll('.page');
             
-            // Debug: List all pages found
-            pages.forEach(page => {
-                console.log('Found page:', page.id, page.classList.contains('page'));
-            });
-            
             console.log('Found nav links:', navLinks.length);
             console.log('Found pages:', pages.length);
 
@@ -1415,45 +1354,18 @@
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const targetPage = link.dataset.page;
-                    console.log('🔄 NAVIGATION CLICKED - Target page:', targetPage);
+                    console.log('Navigating to page:', targetPage);
 
                     // Update active nav link
                     navLinks.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
-                    console.log('✅ Updated active nav link');
 
                     // Show target page
                     pages.forEach(page => {
-                        const wasActive = page.classList.contains('active');
                         page.classList.remove('active');
-                        
                         if (page.id === targetPage) {
-                            console.log(`🎯 Activating page: ${page.id}`);
+                            console.log('Activating page:', page.id);
                             page.classList.add('active');
-                            
-                            // Immediate fix for settings page
-                            if (targetPage === 'settings') {
-                                console.log('🔧 APPLYING IMMEDIATE SETTINGS DISPLAY FIX');
-                                page.style.cssText = `
-                                    display: block !important;
-                                    position: relative !important;
-                                    width: 100% !important;
-                                    height: auto !important;
-                                    min-height: 500px !important;
-                                    visibility: visible !important;
-                                    opacity: 1 !important;
-                                    background: white !important;
-                                    padding: 2rem !important;
-                                    border-radius: 12px !important;
-                                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-                                    z-index: 1000 !important;
-                                `;
-                                console.log('✅ Settings display fix applied immediately');
-                            }
-                            
-                            console.log(`✅ Page ${page.id} activated`);
-                            console.log(`Page display:`, window.getComputedStyle(page).display);
-                            console.log(`Page dimensions:`, page.getBoundingClientRect());
                             
                             // Load specific data when pages are opened
                             if (targetPage === 'analytics') {
@@ -1465,103 +1377,12 @@
                             } else if (targetPage === 'tickets') {
                                 console.log('Rendering tickets');
                                 renderTickets();
-                            } else if (targetPage === 'settings') {
-                                console.log('🔧 LOADING SETTINGS PAGE...');
-                                try {
-                                    // Ensure proper page structure and display
-                                    const settingsPage = document.getElementById('settings');
-                                    console.log('Settings page element:', settingsPage);
-                                    
-                                    if (settingsPage) {
-                                        console.log('Settings current parent:', settingsPage.parentElement);
-                                        console.log('Settings classes:', settingsPage.className);
-                                        
-                                        // Ensure it's not nested inside another page
-                                        const mainContent = document.querySelector('.main-content');
-                                        if (settingsPage.parentElement !== mainContent) {
-                                            console.log('🔄 Moving settings page to correct parent');
-                                            mainContent.appendChild(settingsPage);
-                                        }
-                                        
-                                        // Apply the same comprehensive styles that worked in the console
-                                        settingsPage.style.cssText = `
-                                            display: block !important;
-                                            position: relative !important;
-                                            width: 100% !important;
-                                            height: auto !important;
-                                            min-height: calc(100vh - 4rem) !important;
-                                            visibility: visible !important;
-                                            opacity: 1 !important;
-                                            background: white !important;
-                                            padding: 2rem !important;
-                                            border-radius: 12px !important;
-                                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-                                            z-index: 1 !important;
-                                        `;
-                                        
-                                        console.log('✅ Applied comprehensive styles to settings page');
-                                        console.log('New display:', window.getComputedStyle(settingsPage).display);
-                                        console.log('New dimensions:', settingsPage.getBoundingClientRect());
-                                    } else {
-                                        console.error('❌ Settings page element not found!');
-                                    }
-                                    
-                                    // Populate settings form
-                                    populateSettingsForm();
-                                    console.log('✅ Settings page loaded successfully');
-                                } catch (error) {
-                                    console.error('❌ Error loading settings page:', error);
-                                }
                             }
                         }
                     });
                 });
             });
         }
-
-        // Immediate settings page fix - runs as soon as DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            // Apply immediate fix for settings page
-            setTimeout(() => {
-                console.log('🚨 APPLYING IMMEDIATE SETTINGS FIX');
-                const settingsPage = document.getElementById('settings');
-                const mainContent = document.querySelector('.main-content');
-                
-                if (settingsPage && mainContent) {
-                    // Force move to correct parent
-                    if (settingsPage.parentElement !== mainContent) {
-                        console.log('📦 Moving settings to main-content immediately');
-                        mainContent.appendChild(settingsPage);
-                    }
-                    
-                    // Apply the exact working CSS from console
-                    settingsPage.style.cssText = `
-                        display: none;
-                        position: relative !important;
-                        width: 100% !important;
-                        height: auto !important;
-                        min-height: 500px !important;
-                        visibility: visible !important;
-                        opacity: 1 !important;
-                        background: white !important;
-                        padding: 2rem !important;
-                        border-radius: 12px !important;
-                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-                        z-index: 1000 !important;
-                    `;
-                    
-                    // When settings becomes active, ensure it shows
-                    if (settingsPage.classList.contains('active')) {
-                        settingsPage.style.display = 'block !important';
-                    }
-                    
-                    console.log('✅ Immediate settings fix applied');
-                    console.log('Settings dimensions:', settingsPage.getBoundingClientRect());
-                } else {
-                    console.error('❌ Settings elements not found for immediate fix');
-                }
-            }, 100);
-        });
 
         // Consolidated DOM Content Loaded Handler
         document.addEventListener('DOMContentLoaded', function() {
@@ -1652,146 +1473,10 @@
             }
         });
 
-        // Direct settings page handler - bypasses navigation system
-        function addDirectSettingsHandler() {
-            console.log('🔧 Adding direct settings handler');
-            const settingsLink = document.querySelector('a[data-page="settings"]');
-            
-            if (settingsLink) {
-                // Add direct click handler that overrides everything else
-                settingsLink.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    console.log('🎯 DIRECT SETTINGS CLICK HANDLER');
-                    
-                    // Hide all pages first (but don't use inline styles)
-                    const pages = document.querySelectorAll('.page');
-                    pages.forEach(page => {
-                        page.classList.remove('active');
-                        // Don't use inline display:none - use CSS class system instead
-                    });
-                    
-                    // Update nav links
-                    const navLinks = document.querySelectorAll('.nav-link');
-                    navLinks.forEach(link => link.classList.remove('active'));
-                    settingsLink.classList.add('active');
-                    
-                    // Get settings page and apply comprehensive fix
-                    const settingsPage = document.getElementById('settings');
-                    const mainContent = document.querySelector('.main-content');
-                    
-                    if (settingsPage && mainContent) {
-                        // Ensure correct parent
-                        if (settingsPage.parentElement !== mainContent) {
-                            console.log('📦 Moving settings to main-content');
-                            mainContent.appendChild(settingsPage);
-                        }
-                        
-                        // Apply nuclear positioning fix - bypass all layout issues
-                        document.body.appendChild(settingsPage);
-                        
-                        settingsPage.style.cssText = `
-                            position: fixed !important;
-                            top: 60px !important;
-                            left: 200px !important;
-                            right: 20px !important;
-                            bottom: 20px !important;
-                            width: auto !important;
-                            height: auto !important;
-                            background: white !important;
-                            padding: 2rem !important;
-                            border-radius: 12px !important;
-                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-                            z-index: 99999 !important;
-                            overflow: auto !important;
-                            display: block !important;
-                            visibility: visible !important;
-                            opacity: 1 !important;
-                        `;
-                        
-                        // Add active class and force layout
-                        settingsPage.classList.add('active');
-                        
-                        // Force browser to recalculate layout
-                        settingsPage.offsetHeight;
-                        
-                        console.log('✅ COMPREHENSIVE SETTINGS FIX APPLIED');
-                        console.log('Settings dimensions:', settingsPage.getBoundingClientRect());
-                        console.log('Settings display:', window.getComputedStyle(settingsPage).display);
-                        console.log('Settings height:', settingsPage.offsetHeight);
-                    } else {
-                        console.error('❌ Settings elements not found');
-                    }
-                }, true); // Use capture phase to ensure it runs first
-                
-                console.log('✅ Direct settings handler added');
-            } else {
-                console.error('❌ Settings link not found');
-            }
-        }
-
-        // Initialize page structure to prevent nesting issues
-        function initPageStructure() {
-            console.log('🔧 INITIALIZING PAGE STRUCTURE...');
-            
-            const mainContent = document.querySelector('.main-content');
-            console.log('Main content container:', mainContent);
-            
-            const pages = ['dashboard', 'tickets', 'analytics', 'users', 'settings'];
-            
-            pages.forEach(pageId => {
-                const page = document.getElementById(pageId);
-                console.log(`📄 Checking page: ${pageId}`, page);
-                
-                if (page) {
-                    console.log(`  Current parent:`, page.parentElement);
-                    console.log(`  Should be in main-content:`, page.parentElement === mainContent);
-                    
-                    if (page.parentElement !== mainContent) {
-                        console.log(`🔄 Moving ${pageId} page to correct parent`);
-                        mainContent.appendChild(page);
-                        console.log(`✅ Moved ${pageId} to main-content`);
-                    }
-                    
-                    // Apply comprehensive base styles for all pages
-                    page.style.position = 'relative';
-                    page.style.width = '100%';
-                    page.style.height = 'auto';
-                    
-                    // Special handling for settings page to ensure visibility
-                    if (pageId === 'settings') {
-                        page.style.cssText = `
-                            display: none;
-                            position: relative !important;
-                            width: 100% !important;
-                            height: auto !important;
-                            min-height: calc(100vh - 4rem) !important;
-                            visibility: visible !important;
-                            opacity: 1 !important;
-                            background: white !important;
-                            padding: 2rem !important;
-                            border-radius: 12px !important;
-                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-                        `;
-                        console.log(`✅ Applied enhanced styles to settings page`);
-                    }
-                    
-                    console.log(`✅ Applied base styles to ${pageId}`);
-                } else {
-                    console.error(`❌ Page ${pageId} not found!`);
-                }
-            });
-            
-            console.log('✅ PAGE STRUCTURE INITIALIZED SUCCESSFULLY');
-        }
-
         // Initialize application
         function init() {
             loadSettings();
             updateConnectionStatus();
-            initPageStructure(); // Initialize page structure first
-            addDirectSettingsHandler(); // Add direct settings handler
             initNavigation();
             
             // Set up auto-refresh if connected
