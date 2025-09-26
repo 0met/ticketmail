@@ -114,6 +114,28 @@ exports.handler = async (event, context) => {
             console.log('closed_at column handling:', error.message);
         }
 
+        // Add is_manual column for tracking manual ticket entries
+        try {
+            await sql`
+                ALTER TABLE tickets 
+                ADD COLUMN IF NOT EXISTS is_manual BOOLEAN DEFAULT FALSE
+            `;
+            console.log('Added is_manual column to tickets table');
+        } catch (error) {
+            console.log('is_manual column handling:', error.message);
+        }
+
+        // Add source column for tracking ticket origin
+        try {
+            await sql`
+                ALTER TABLE tickets 
+                ADD COLUMN IF NOT EXISTS source VARCHAR(50) DEFAULT 'email'
+            `;
+            console.log('Added source column to tickets table');
+        } catch (error) {
+            console.log('source column handling:', error.message);
+        }
+
         // Generate ticket numbers for existing tickets that don't have them
         const ticketsWithoutNumbers = await sql`
             SELECT id, created_at 

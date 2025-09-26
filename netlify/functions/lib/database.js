@@ -169,12 +169,38 @@ async function saveTicket(ticket) {
         const sql = getDatabase();
         
         await sql`
-            INSERT INTO tickets (subject, from_email, to_email, body_text, status, email_id, received_at)
-            VALUES (${ticket.subject}, ${ticket.from}, ${ticket.to}, ${ticket.body}, ${ticket.status}, ${ticket.messageId}, ${ticket.date})
+            INSERT INTO tickets (
+                subject, 
+                from_email, 
+                to_email, 
+                body_text, 
+                status, 
+                email_id, 
+                received_at, 
+                priority, 
+                category,
+                is_manual,
+                source
+            )
+            VALUES (
+                ${ticket.subject}, 
+                ${ticket.from}, 
+                ${ticket.to}, 
+                ${ticket.body}, 
+                ${ticket.status}, 
+                ${ticket.messageId}, 
+                ${ticket.date},
+                ${ticket.priority || 'medium'},
+                ${ticket.category || 'general'},
+                ${ticket.isManual || false},
+                ${ticket.source || 'email'}
+            )
             ON CONFLICT (email_id) DO UPDATE SET
                 subject = EXCLUDED.subject,
                 body_text = EXCLUDED.body_text,
                 status = EXCLUDED.status,
+                priority = EXCLUDED.priority,
+                category = EXCLUDED.category,
                 updated_at = CURRENT_TIMESTAMP
         `;
         
@@ -191,7 +217,8 @@ async function getTickets(limit = 100) {
         const sql = getDatabase();
         
         const result = await sql`
-            SELECT id, subject, from_email, to_email, body_text, status, received_at, created_at
+            SELECT id, subject, from_email, to_email, body_text, status, received_at, created_at, updated_at,
+                   ticket_number, priority, category, resolution_time, closed_at, is_manual, source
             FROM tickets 
             ORDER BY received_at DESC 
             LIMIT ${limit}
@@ -211,7 +238,9 @@ async function getTickets(limit = 100) {
             createdAt: ticket.created_at,
             updatedAt: ticket.updated_at,
             resolutionTime: ticket.resolution_time,
-            closedAt: ticket.closed_at
+            closedAt: ticket.closed_at,
+            isManual: ticket.is_manual || false,
+            source: ticket.source || 'email'
         }));
     } catch (error) {
         console.error('Error getting tickets:', error);

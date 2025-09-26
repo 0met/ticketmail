@@ -777,13 +777,17 @@
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <button class="btn btn-primary" onclick="fetchEmails()">🔄 Refresh Emails</button>
-                    <div style="display: flex; gap: 1rem;">
-                        <select id="statusFilter" class="form-input" style="width: auto;" onchange="applyFilters()">
-                            <option value="all">All Status</option>
-                            <option value="new">New</option>
-                            <option value="open">Open</option>
-                            <option value="closed">Closed</option>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <button class="btn btn-success" onclick="openNewTicketModal()">➕ New Ticket</button>
+                        <select id="categoryFilter" class="form-input" style="width: auto;" onchange="applyFilters()">
+                            <option value="all">All Categories</option>
+                            <option value="general">General</option>
+                            <option value="technical">Technical</option>
+                            <option value="billing">Billing</option>
+                            <option value="account">Account</option>
+                            <option value="support">Support</option>
+                            <option value="feature-request">Feature Request</option>
+                            <option value="urgent">Urgent</option>
                         </select>
                         <select id="priorityFilter" class="form-input" style="width: auto;" onchange="applyFilters()">
                             <option value="all">All Priorities</option>
@@ -792,7 +796,14 @@
                             <option value="medium">Medium</option>
                             <option value="low">Low</option>
                         </select>
+                        <select id="statusFilter" class="form-input" style="width: auto;" onchange="applyFilters()">
+                            <option value="all">All Status</option>
+                            <option value="new">New</option>
+                            <option value="open">Open</option>
+                            <option value="closed">Closed</option>
+                        </select>
                     </div>
+                    <button class="btn btn-primary" onclick="fetchEmails()">🔄 Refresh Emails</button>
                 </div>
 
                 <div id="ticketsContainer" class="tickets-grid">
@@ -918,6 +929,74 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Ticket Modal -->
+            <div id="newTicketModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Create New Ticket</h2>
+                        <button class="close-modal" onclick="closeNewTicketModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="newTicketForm" onsubmit="submitNewTicket(event)">
+                            <div class="form-group">
+                                <label for="newTicketSubject" class="form-label">Subject *</label>
+                                <input type="text" id="newTicketSubject" class="form-input" required placeholder="Enter ticket subject">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="newTicketFrom" class="form-label">Customer Email *</label>
+                                <input type="email" id="newTicketFrom" class="form-input" required placeholder="customer@example.com">
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="newTicketPriority" class="form-label">Priority</label>
+                                    <select id="newTicketPriority" class="form-input">
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="critical">Critical</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="newTicketCategory" class="form-label">Category</label>
+                                    <select id="newTicketCategory" class="form-input">
+                                        <option value="general" selected>General</option>
+                                        <option value="technical">Technical</option>
+                                        <option value="billing">Billing</option>
+                                        <option value="account">Account</option>
+                                        <option value="support">Support</option>
+                                        <option value="feature-request">Feature Request</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="newTicketContent" class="form-label">Message Content *</label>
+                                <textarea id="newTicketContent" class="form-input" required placeholder="Enter the ticket content..." style="min-height: 120px; resize: vertical;"></textarea>
+                            </div>
+                            
+                            <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; color: #92400e;">
+                                    <span style="font-size: 1.2rem;">⚠️</span>
+                                    <strong>Manual Ticket Entry</strong>
+                                </div>
+                                <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #92400e;">
+                                    This ticket is being created manually and not from an email. It will be marked accordingly for tracking purposes.
+                                </p>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                                <button type="button" class="btn btn-secondary" onclick="closeNewTicketModal()">Cancel</button>
+                                <button type="submit" class="btn btn-primary">✅ Create Ticket</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -1399,6 +1478,7 @@
                                 <span class="ticket-number" style="background: #3b82f6; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${ticket.ticketNumber || 'TK-XXXX'}</span>
                                 <span class="priority-badge priority-${ticket.priority || 'medium'}" style="padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">${(ticket.priority || 'medium').toUpperCase()}</span>
                                 <span class="category-badge" style="background: #f3f4f6; color: #374151; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">${ticket.category || 'general'}</span>
+                                ${ticket.isManual ? '<span class="manual-badge" style="background: #fbbf24; color: #92400e; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">✏️ MANUAL</span>' : ''}
                             </div>
                             <div class="ticket-subject">${ticket.subject}</div>
                             <div class="ticket-meta">
@@ -1417,6 +1497,7 @@
         function applyFilters() {
             const statusFilter = document.getElementById('statusFilter').value;
             const priorityFilter = document.getElementById('priorityFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
             
             let filteredTickets = appState.tickets;
             
@@ -1428,6 +1509,11 @@
             // Apply priority filter
             if (priorityFilter !== 'all') {
                 filteredTickets = filteredTickets.filter(ticket => (ticket.priority || 'medium') === priorityFilter);
+            }
+            
+            // Apply category filter
+            if (categoryFilter !== 'all') {
+                filteredTickets = filteredTickets.filter(ticket => (ticket.category || 'general') === categoryFilter);
             }
             
             // Sort by priority (critical first)
@@ -1550,12 +1636,15 @@
                         <div style="display: flex; gap: 0.5rem;">
                             <span class="priority-badge priority-${currentTicket.priority || 'medium'}" style="padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">${(currentTicket.priority || 'medium').toUpperCase()}</span>
                             <span style="background: #f3f4f6; color: #374151; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem;">${currentTicket.category || 'general'}</span>
+                            ${currentTicket.isManual ? '<span style="background: #fbbf24; color: #92400e; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">✏️ MANUAL ENTRY</span>' : ''}
                         </div>
                     </div>
+                    ${currentTicket.isManual ? '<div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.875rem; color: #92400e;"><strong>📝 Manual Ticket:</strong> This ticket was created manually and not from an email.</div>' : ''}
                     <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem;">
                         <strong>From:</strong> ${currentTicket.from}<br>
                         <strong>To:</strong> ${currentTicket.to || 'Support'}<br>
-                        <strong>Date:</strong> ${formatDate(currentTicket.date)}
+                        <strong>Date:</strong> ${formatDate(currentTicket.date)}<br>
+                        <strong>Source:</strong> ${currentTicket.isManual ? 'Manual Entry' : 'Email Import'}
                     </div>
                     <div style="white-space: pre-wrap; line-height: 1.6;">${currentTicket.body}</div>
                 </div>
@@ -1590,6 +1679,65 @@
             document.body.style.overflow = 'auto';
             currentTicket = null;
             document.getElementById('responseText').value = '';
+        }
+
+        // New Ticket Modal Functions
+        function openNewTicketModal() {
+            document.getElementById('newTicketModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Clear form
+            document.getElementById('newTicketForm').reset();
+            document.getElementById('newTicketPriority').value = 'medium';
+            document.getElementById('newTicketCategory').value = 'general';
+        }
+
+        function closeNewTicketModal() {
+            document.getElementById('newTicketModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        async function submitNewTicket(event) {
+            event.preventDefault();
+            
+            const subject = document.getElementById('newTicketSubject').value.trim();
+            const from = document.getElementById('newTicketFrom').value.trim();
+            const priority = document.getElementById('newTicketPriority').value;
+            const category = document.getElementById('newTicketCategory').value;
+            const content = document.getElementById('newTicketContent').value.trim();
+            
+            if (!subject || !from || !content) {
+                alert('❌ Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/.netlify/functions/create-manual-ticket', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subject: subject,
+                        from: from,
+                        priority: priority,
+                        category: category,
+                        content: content,
+                        isManual: true
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ Ticket created successfully!');
+                    closeNewTicketModal();
+                    loadTickets(); // Refresh the tickets list
+                } else {
+                    alert('❌ Failed to create ticket: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error creating ticket:', error);
+                alert('❌ Network error: ' + error.message);
+            }
         }
 
         // Status and Priority management
@@ -2058,13 +2206,19 @@
         document.addEventListener('click', function(e) {
             if (e.target.id === 'ticketModal') {
                 closeTicketModal();
+            } else if (e.target.id === 'newTicketModal') {
+                closeNewTicketModal();
             }
         });
 
         // Close modal with Escape key
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && document.getElementById('ticketModal').classList.contains('active')) {
-                closeTicketModal();
+            if (e.key === 'Escape') {
+                if (document.getElementById('ticketModal').classList.contains('active')) {
+                    closeTicketModal();
+                } else if (document.getElementById('newTicketModal').classList.contains('active')) {
+                    closeNewTicketModal();
+                }
             }
         });
 
