@@ -1459,6 +1459,12 @@
                 
                 if (result.success) {
                     appState.tickets = result.tickets || [];
+                    console.log('Loaded tickets with status/priority values:', appState.tickets.map(t => ({
+                        id: t.id,
+                        subject: t.subject,
+                        status: t.status,
+                        priority: t.priority
+                    })));
                     renderTickets();
                     updateDashboardStats();
                 } else {
@@ -1579,9 +1585,11 @@
                         if (page.id === targetPage) {
                             page.classList.add('active');
                             
-                            // Load analytics data when analytics page is opened
+                            // Load data when specific pages are opened
                             if (targetPage === 'analytics') {
                                 refreshAnalytics();
+                            } else if (targetPage === 'tickets') {
+                                loadTickets(); // Refresh tickets when tickets page is opened
                             }
                         }
                     });
@@ -1594,6 +1602,9 @@
             loadSettings();
             updateConnectionStatus();
             initNavigation();
+            
+            // Load tickets when the app initializes
+            loadTickets();
             
             // Set up auto-refresh if connected
             if (appState.isConnected) {
