@@ -43,27 +43,15 @@ exports.handler = async (event, context) => {
 
         console.log(`Generating analytics for last ${timeframe} days`);
 
-        // First, check what columns exist in the tickets table
-        const tableInfo = await sql`
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'tickets'
-        `;
-        
-        const columnNames = tableInfo.map(row => row.column_name);
-        console.log('Available columns:', columnNames);
-
-        // Basic statistics that should work with any ticket table
+        // Basic statistics
         const totalTickets = await sql`
             SELECT COUNT(*) as count FROM tickets
         `;
 
         const ticketsByStatus = await sql`
-            SELECT 
-                COALESCE(status, 'new') as status, 
-                COUNT(*) as count 
+            SELECT status, COUNT(*) as count 
             FROM tickets 
-            GROUP BY COALESCE(status, 'new')
+            GROUP BY status
         `;
 
         const ticketsByCategory = await sql`
@@ -77,47 +65,72 @@ exports.handler = async (event, context) => {
 
         const ticketsByPriority = await sql`
             SELECT 
-                COALESCE(priority, 'normal') as priority, 
+                COALESCE(priority, 'medium') as priority, 
                 COUNT(*) as count 
             FROM tickets 
-            GROUP BY COALESCE(priority, 'normal')
+            GROUP BY COALESCE(priority, 'medium')
             ORDER BY count DESC
         `;
 
-        // Time-based analytics using created_at (should always exist)
+        // Time-based analytics
         const recentTickets = await sql`
             SELECT COUNT(*) as count 
             FROM tickets 
             WHERE created_at >= ${startDate.toISOString()}
         `;
 
-        // Count resolved/closed tickets (using status, not closed_at)
-        const resolvedTickets = await sql`
+        const closedTickets = await sql`
             SELECT COUNT(*) as count 
             FROM tickets 
-            WHERE status IN ('resolved', 'closed')
-            AND created_at >= ${startDate.toISOString()}
+            WHERE status = 'closed' 
+            AND closed_at >= ${startDate.toISOString()}
         `;
 
-        // Daily ticket trends using available columns
+        // Resolution time analytics
+        const avgResolutionTime = await sql`
+            SELECT 
+                AVG(resolution_time) as avg_hours,
+                MIN(resolution_time) as min_hours,
+                MAX(resolution_time) as max_hours
+            FROM tickets 
+            WHERE resolution_time IS NOT NULL
+            AND closed_at >= ${startDate.toISOString()}
+        `;
+
+        // Daily ticket trends (last 30 days)
         const dailyTrends = await sql`
             SELECT 
                 DATE(created_at) as date,
                 COUNT(*) as created,
-                COUNT(CASE WHEN status IN ('resolved', 'closed') THEN 1 END) as resolved
+                COUNT(CASE WHEN status = 'closed' THEN 1 END) as closed
             FROM tickets 
             WHERE created_at >= ${startDate.toISOString()}
             GROUP BY DATE(created_at)
             ORDER BY date ASC
         `;
 
-        // Top categories with basic performance metrics
+        // Monthly analytics for reporting
+        const monthlyStats = await sql`
+            SELECT 
+                DATE_TRUNC('month', created_at) as month,
+                COUNT(*) as total_tickets,
+                COUNT(CASE WHEN status = 'closed' THEN 1 END) as closed_tickets,
+                COUNT(CASE WHEN priority = 'high' THEN 1 END) as high_priority,
+                AVG(CASE WHEN resolution_time IS NOT NULL THEN resolution_time END) as avg_resolution_hours
+            FROM tickets 
+            WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '12 months')
+            GROUP BY DATE_TRUNC('month', created_at)
+            ORDER BY month DESC
+            LIMIT 12
+        `;
+
+        // Top categories by volume (for trend analysis)
         const topCategories = await sql`
             SELECT 
                 COALESCE(category, 'general') as category,
                 COUNT(*) as total_tickets,
                 COUNT(CASE WHEN created_at >= ${startDate.toISOString()} THEN 1 END) as recent_tickets,
-                COUNT(CASE WHEN status IN ('resolved', 'closed') THEN 1 END) as resolved_tickets
+                AVG(CASE WHEN resolution_time IS NOT NULL THEN resolution_time END) as avg_resolution_hours
             FROM tickets 
             GROUP BY COALESCE(category, 'general')
             ORDER BY total_tickets DESC
@@ -125,24 +138,25 @@ exports.handler = async (event, context) => {
         `;
 
         // Performance metrics
-        const totalCount = parseInt(totalTickets[0].count);
-        const resolvedCount = parseInt(resolvedTickets[0].count);
-        const resolutionRate = totalCount > 0 ? Math.round((resolvedCount / totalCount) * 100) : 0;
-
-        // Count urgent open tickets
-        const urgentOpen = await sql`
-            SELECT COUNT(*) as count 
-            FROM tickets 
-            WHERE priority IN ('urgent', 'high') 
-            AND status NOT IN ('resolved', 'closed')
+        const performanceMetrics = await sql`
+            SELECT 
+                COUNT(*) as total_tickets,
+                COUNT(CASE WHEN status = 'closed' THEN 1 END) as resolved_tickets,
+                ROUND(
+                    (COUNT(CASE WHEN status = 'closed' THEN 1 END)::FLOAT / COUNT(*)::FLOAT) * 100, 2
+                ) as resolution_rate,
+                COUNT(CASE WHEN status IN ('new', 'pending') THEN 1 END) as pending_tickets,
+                COUNT(CASE WHEN priority = 'high' AND status != 'closed' THEN 1 END) as urgent_open
+            FROM tickets
         `;
 
         const analytics = {
             summary: {
-                totalTickets: totalCount,
-                recentTickets: parseInt(recentTickets[0].count),
-                resolutionRate: resolutionRate,
-                urgentOpen: parseInt(urgentOpen[0].count)
+                totalTickets: totalTickets[0].count,
+                recentTickets: recentTickets[0].count,
+                closedTickets: closedTickets[0].count,
+                resolutionRate: performanceMetrics[0].resolution_rate || 0,
+                urgentOpen: performanceMetrics[0].urgent_open || 0
             },
             breakdown: {
                 byStatus: ticketsByStatus,
@@ -150,20 +164,20 @@ exports.handler = async (event, context) => {
                 byPriority: ticketsByPriority
             },
             trends: {
-                monthly: dailyTrends // Using daily trends for now
+                daily: dailyTrends,
+                monthly: monthlyStats
             },
             performance: {
-                averageResolution: 24 // Default placeholder since resolution_time may not exist
+                averageResolution: avgResolutionTime[0]?.avg_hours ? 
+                    Math.round(avgResolutionTime[0].avg_hours * 10) / 10 : null,
+                fastestResolution: avgResolutionTime[0]?.min_hours || null,
+                slowestResolution: avgResolutionTime[0]?.max_hours || null
             },
             insights: {
-                topCategories: topCategories.map(cat => ({
-                    category: cat.category,
-                    count: parseInt(cat.total_tickets),
-                    resolutionRate: cat.total_tickets > 0 ? 
-                        Math.round((cat.resolved_tickets / cat.total_tickets) * 100) : 0,
-                    averageTime: 24 // Placeholder
-                }))
-            }
+                topCategories: topCategories,
+                timeframe: timeframe
+            },
+            generatedAt: new Date().toISOString()
         };
 
         return {
