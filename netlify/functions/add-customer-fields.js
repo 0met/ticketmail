@@ -35,23 +35,31 @@ exports.handler = async (event, context) => {
         console.log('Adding customer information columns to tickets table...');
         
         // Add customer information columns if they don't exist
-        const alterQueries = [
-            'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS customer_name TEXT',
-            'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS customer_id TEXT', 
-            'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS customer_phone TEXT',
-            'ALTER TABLE tickets ADD COLUMN IF NOT EXISTS customer_email TEXT'
+        console.log('Checking and adding customer columns...');
+        
+        // Try to add each column individually with error handling
+        const columnDefinitions = [
+            { name: 'customer_name', type: 'VARCHAR(255)' },
+            { name: 'customer_id', type: 'VARCHAR(100)' }, 
+            { name: 'customer_phone', type: 'VARCHAR(20)' },
+            { name: 'customer_email', type: 'VARCHAR(255)' }
         ];
         
-        for (const query of alterQueries) {
+        const results = [];
+        
+        for (const column of columnDefinitions) {
             try {
-                await sql.unsafe(query);
-                console.log('Executed:', query);
+                console.log(`Adding column ${column.name}...`);
+                await sql`ALTER TABLE tickets ADD COLUMN ${sql(column.name)} ${sql.unsafe(column.type)}`;
+                results.push(`${column.name}: added successfully`);
+                console.log(`✅ Added ${column.name}`);
             } catch (error) {
-                if (error.message.includes('already exists')) {
-                    console.log('Column already exists, skipping:', query);
+                if (error.message.includes('already exists') || error.message.includes('duplicate column')) {
+                    results.push(`${column.name}: already exists`);
+                    console.log(`ℹ️ ${column.name} already exists`);
                 } else {
-                    console.error('Error executing query:', query, error);
-                    throw error;
+                    console.error(`❌ Error adding ${column.name}:`, error);
+                    results.push(`${column.name}: error - ${error.message}`);
                 }
             }
         }
@@ -74,7 +82,8 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({
                 success: true,
-                message: 'Customer information columns added successfully',
+                message: 'Customer information columns migration completed',
+                results: results,
                 schema: tableInfo
             })
         };

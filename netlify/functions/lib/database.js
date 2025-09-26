@@ -228,8 +228,7 @@ async function getTickets(limit = 100) {
         
         const result = await sql`
             SELECT id, subject, from_email, to_email, body_text, status, received_at, created_at, updated_at,
-                   ticket_number, priority, category, resolution_time, closed_at, is_manual, source,
-                   customer_name, customer_id, customer_phone, customer_email
+                   ticket_number, priority, category, resolution_time, closed_at, is_manual, source
             FROM tickets 
             ORDER BY received_at DESC 
             LIMIT ${limit}
@@ -252,10 +251,10 @@ async function getTickets(limit = 100) {
             closedAt: ticket.closed_at,
             isManual: ticket.is_manual || false,
             source: ticket.source || 'email',
-            customerName: ticket.customer_name,
-            customerId: ticket.customer_id,
-            customerPhone: ticket.customer_phone,
-            customerEmail: ticket.customer_email
+            customerName: null, // Will be null until database is migrated
+            customerId: null,
+            customerPhone: null,
+            customerEmail: ticket.from_email // Use from_email as fallback
         }));
     } catch (error) {
         console.error('Error getting tickets:', error);
@@ -344,19 +343,21 @@ async function updateTicket(ticketId, updates) {
             } else if (key === 'closedAt') {
                 const result = await sql`UPDATE tickets SET closed_at = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
                 console.log(`Closed at update result:`, result);
-            } else if (key === 'customerName') {
-                const result = await sql`UPDATE tickets SET customer_name = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
-                console.log(`Customer name update result:`, result);
-            } else if (key === 'customerId') {
-                const result = await sql`UPDATE tickets SET customer_id = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
-                console.log(`Customer ID update result:`, result);
-            } else if (key === 'customerPhone') {
-                const result = await sql`UPDATE tickets SET customer_phone = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
-                console.log(`Customer phone update result:`, result);
-            } else if (key === 'customerEmail') {
-                const result = await sql`UPDATE tickets SET customer_email = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
-                console.log(`Customer email update result:`, result);
-            }
+            } 
+            // Customer fields temporarily disabled until database schema is updated
+            // else if (key === 'customerName') {
+            //     const result = await sql`UPDATE tickets SET customer_name = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+            //     console.log(`Customer name update result:`, result);
+            // } else if (key === 'customerId') {
+            //     const result = await sql`UPDATE tickets SET customer_id = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+            //     console.log(`Customer ID update result:`, result);
+            // } else if (key === 'customerPhone') {
+            //     const result = await sql`UPDATE tickets SET customer_phone = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+            //     console.log(`Customer phone update result:`, result);
+            // } else if (key === 'customerEmail') {
+            //     const result = await sql`UPDATE tickets SET customer_email = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+            //     console.log(`Customer email update result:`, result);
+            // }
         }
         
         // Get the updated ticket (without UUID casting)
