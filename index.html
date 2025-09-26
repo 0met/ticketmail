@@ -1821,6 +1821,17 @@
             currentTicket = appState.tickets.find(t => t.id === ticketId);
             if (!currentTicket) return;
 
+            console.log('🎫 Opening ticket modal for ticket:', JSON.stringify({
+                id: currentTicket.id,
+                customer_name: currentTicket.customer_name,
+                customer_id: currentTicket.customer_id,
+                customer_phone: currentTicket.customer_phone,
+                customer_email: currentTicket.customer_email,
+                created_at: currentTicket.created_at,
+                updated_at: currentTicket.updated_at,
+                ticket_number: currentTicket.ticket_number
+            }, null, 2));
+
             // Populate modal content
             document.getElementById('ticketModalTitle').textContent = currentTicket.subject;
             document.getElementById('ticketNumber').textContent = currentTicket.ticket_number || 'TK-XXXX';
@@ -1835,10 +1846,22 @@
             document.getElementById('ticketCategoryDropdown').value = currentTicket.category || 'general';
 
             // Auto-populate customer information from database first, fallback to email parsing
-            document.getElementById('customerEmail').value = currentTicket.customer_email || currentTicket.from_email || '';
-            document.getElementById('customerName').value = currentTicket.customer_name || extractNameFromEmail(currentTicket.from_email) || '';
-            document.getElementById('customerId').value = currentTicket.customer_id || '';
-            document.getElementById('customerPhone').value = currentTicket.customer_phone || '';
+            const customerEmail = currentTicket.customer_email || currentTicket.from_email || '';
+            const customerName = currentTicket.customer_name || extractNameFromEmail(currentTicket.from_email) || '';
+            const customerId = currentTicket.customer_id || '';
+            const customerPhone = currentTicket.customer_phone || '';
+            
+            console.log('🏷️  Populating customer fields:', {
+                customerEmail,
+                customerName,
+                customerId,
+                customerPhone
+            });
+            
+            document.getElementById('customerEmail').value = customerEmail;
+            document.getElementById('customerName').value = customerName;
+            document.getElementById('customerId').value = customerId;
+            document.getElementById('customerPhone').value = customerPhone;
 
             // Show resolution time if ticket is closed
             const resolutionTimeRow = document.getElementById('resolutionTimeRow');
