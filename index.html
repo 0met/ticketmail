@@ -1480,6 +1480,13 @@
             const container = document.getElementById('ticketsContainer');
             const ticketsToRender = filteredTickets || appState.tickets;
             
+            console.log('renderTickets called with tickets:', ticketsToRender.map(t => ({
+                id: t.id.slice(-8),
+                subject: t.subject.slice(0, 20),
+                status: t.status,
+                priority: t.priority
+            })));
+            
             if (ticketsToRender.length === 0) {
                 container.innerHTML = '<div class="ticket-card"><p style="text-align: center; color: #64748b;">No tickets found matching the selected filters.</p></div>';
                 return;
