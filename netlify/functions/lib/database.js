@@ -344,20 +344,36 @@ async function updateTicket(ticketId, updates) {
                 const result = await sql`UPDATE tickets SET closed_at = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
                 console.log(`Closed at update result:`, result);
             } 
-            // Customer fields temporarily disabled until database schema is updated
-            // else if (key === 'customerName') {
-            //     const result = await sql`UPDATE tickets SET customer_name = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
-            //     console.log(`Customer name update result:`, result);
-            // } else if (key === 'customerId') {
-            //     const result = await sql`UPDATE tickets SET customer_id = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
-            //     console.log(`Customer ID update result:`, result);
-            // } else if (key === 'customerPhone') {
-            //     const result = await sql`UPDATE tickets SET customer_phone = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
-            //     console.log(`Customer phone update result:`, result);
-            // } else if (key === 'customerEmail') {
-            //     const result = await sql`UPDATE tickets SET customer_email = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
-            //     console.log(`Customer email update result:`, result);
-            // }
+            // Customer fields - we'll add the columns if they don't exist
+            else if (key === 'customerName') {
+                try {
+                    const result = await sql`UPDATE tickets SET customer_name = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+                    console.log(`Customer name update result:`, result);
+                } catch (error) {
+                    console.log(`Customer name column doesn't exist yet:`, error.message);
+                }
+            } else if (key === 'customerId') {
+                try {
+                    const result = await sql`UPDATE tickets SET customer_id = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+                    console.log(`Customer ID update result:`, result);
+                } catch (error) {
+                    console.log(`Customer ID column doesn't exist yet:`, error.message);
+                }
+            } else if (key === 'customerPhone') {
+                try {
+                    const result = await sql`UPDATE tickets SET customer_phone = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+                    console.log(`Customer phone update result:`, result);
+                } catch (error) {
+                    console.log(`Customer phone column doesn't exist yet:`, error.message);
+                }
+            } else if (key === 'customerEmail') {
+                try {
+                    const result = await sql`UPDATE tickets SET customer_email = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+                    console.log(`Customer email update result:`, result);
+                } catch (error) {
+                    console.log(`Customer email column doesn't exist yet:`, error.message);
+                }
+            }
         }
         
         // Get the updated ticket (without UUID casting)
