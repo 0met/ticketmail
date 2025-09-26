@@ -50,7 +50,7 @@ exports.handler = async (event, context) => {
         }
 
         // Validate status values
-        const validStatuses = ['new', 'pending', 'open', 'closed'];
+        const validStatuses = ['new', 'pending', 'open', 'approved', 'closed'];
         if (!validStatuses.includes(status)) {
             return {
                 statusCode: 400,

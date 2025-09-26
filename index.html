@@ -191,19 +191,24 @@
             color: #1e40af;
         }
 
-        .status-open {
+        .status-pending {
             background: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-closed {
-            background: #d1fae5;
-            color: #065f46;
+            color: #d97706;
         }
 
         .status-open {
             background: #fed7aa;
             color: #c2410c;
+        }
+
+        .status-approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-closed {
+            background: #d1fae5;
+            color: #065f46;
         }
 
         /* Priority badges */
@@ -799,7 +804,9 @@
                         <select id="statusFilter" class="form-input" style="width: auto;" onchange="applyFilters()">
                             <option value="all">All Status</option>
                             <option value="new">New</option>
+                            <option value="pending">Pending</option>
                             <option value="open">Open</option>
+                            <option value="approved">Approved</option>
                             <option value="closed">Closed</option>
                         </select>
                     </div>
@@ -873,7 +880,9 @@
                                     <h3>Ticket Status</h3>
                                     <div class="status-buttons">
                                         <button class="status-btn" data-status="new">New</button>
+                                        <button class="status-btn" data-status="pending">Pending</button>
                                         <button class="status-btn" data-status="open">Open</button>
+                                        <button class="status-btn" data-status="approved">Approved</button>
                                         <button class="status-btn" data-status="closed">Closed</button>
                                     </div>
                                 </div>
