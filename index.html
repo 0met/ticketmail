@@ -1543,6 +1543,7 @@
                     } else {
                         alert(`✅ ${result.message}`);
                     }
+                    console.log('📧 Email sync completed, calling loadTickets() to refresh from database...');
                     await loadTickets(); // Load the updated tickets
                 } else {
                     if (silent) {
@@ -1581,13 +1582,41 @@
                 console.log('Load tickets result:', result);
                 
                 if (result.success) {
+                    console.log('📊 Tickets loaded from database. Comparing with current state...');
+                    
+                    // Log current state before overwriting
+                    if (currentTicket) {
+                        console.log('Current ticket before reload:', JSON.stringify({
+                            id: currentTicket.id,
+                            status: currentTicket.status,
+                            priority: currentTicket.priority,
+                            category: currentTicket.category
+                        }, null, 2));
+                    }
+                    
                     appState.tickets = result.tickets || [];
                     console.log('Loaded tickets with status/priority values:', appState.tickets.map(t => ({
                         id: t.id,
-                        subject: t.subject,
+                        subject: t.subject.substring(0, 30) + '...',
                         status: t.status,
-                        priority: t.priority
+                        priority: t.priority,
+                        category: t.category
                     })));
+                    
+                    // Update currentTicket if it exists
+                    if (currentTicket) {
+                        const updatedTicket = appState.tickets.find(t => t.id === currentTicket.id);
+                        if (updatedTicket) {
+                            console.log('Found updated ticket from database:', JSON.stringify({
+                                id: updatedTicket.id,
+                                status: updatedTicket.status,
+                                priority: updatedTicket.priority,
+                                category: updatedTicket.category
+                            }, null, 2));
+                            Object.assign(currentTicket, updatedTicket);
+                        }
+                    }
+                    
                     renderTickets();
                     updateDashboardStats();
                 } else {
@@ -1906,6 +1935,12 @@
                 }
 
                 console.log('Saving ticket changes:', updates);
+                console.log('Current ticket before save:', JSON.stringify({
+                    id: currentTicket.id,
+                    status: currentTicket.status,
+                    priority: currentTicket.priority,
+                    category: currentTicket.category
+                }, null, 2));
 
                 // Use the existing updateTicket function
                 const response = await fetch('/.netlify/functions/update-ticket', {
@@ -1917,14 +1952,33 @@
                     })
                 });
 
+                console.log('Update response status:', response.status);
                 const result = await response.json();
+                console.log('Update result:', JSON.stringify(result, null, 2));
                 
                 if (result.success) {
+                    console.log('✅ Backend confirmed ticket update successful');
+                    
                     // Update local state
                     const ticket = appState.tickets.find(t => t.id === currentTicket.id);
                     if (ticket) {
+                        console.log('Found ticket in appState, updating local copy...');
+                        console.log('Before local update:', JSON.stringify({
+                            status: ticket.status,
+                            priority: ticket.priority,
+                            category: ticket.category
+                        }, null, 2));
+                        
                         Object.assign(ticket, updates);
                         Object.assign(currentTicket, updates);
+                        
+                        console.log('After local update:', JSON.stringify({
+                            status: ticket.status,
+                            priority: ticket.priority,
+                            category: ticket.category
+                        }, null, 2));
+                    } else {
+                        console.warn('❌ Ticket not found in appState for local update');
                     }
 
                     // Refresh the tickets list to show updated values
