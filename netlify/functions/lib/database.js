@@ -253,13 +253,37 @@ async function updateTicketStatus(ticketId, status) {
     try {
         const sql = getDatabase();
         
-        await sql`
-            UPDATE tickets 
-            SET status = ${status}, updated_at = CURRENT_TIMESTAMP 
-            WHERE id = ${ticketId}
+        console.log(`Updating ticket ${ticketId} to status ${status}`);
+        
+        // First, let's check if the ticket exists
+        const existingTicket = await sql`
+            SELECT id, status FROM tickets WHERE id = ${ticketId}::uuid
         `;
         
-        return { success: true };
+        console.log('Existing ticket:', existingTicket);
+        
+        if (existingTicket.length === 0) {
+            console.log('Ticket not found!');
+            return { success: false, error: 'Ticket not found' };
+        }
+        
+        // Now update with explicit UUID casting
+        const result = await sql`
+            UPDATE tickets 
+            SET status = ${status}, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = ${ticketId}::uuid
+        `;
+        
+        console.log('Update result:', result);
+        
+        // Verify the update worked
+        const updatedTicket = await sql`
+            SELECT id, status, updated_at FROM tickets WHERE id = ${ticketId}::uuid
+        `;
+        
+        console.log('After update:', updatedTicket);
+        
+        return { success: true, updatedTicket: updatedTicket[0] };
     } catch (error) {
         console.error('Error updating ticket status:', error);
         return { success: false, error: error.message };
