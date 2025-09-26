@@ -207,9 +207,16 @@
         }
 
         /* Priority badges */
-        .priority-high {
-            background: #fee2e2;
+        .priority-critical {
+            background: #fecaca;
             color: #dc2626;
+            border: 1px solid #dc2626;
+            font-weight: 600;
+        }
+
+        .priority-high {
+            background: #fed7aa;
+            color: #ea580c;
         }
 
         .priority-medium {
@@ -220,6 +227,77 @@
         .priority-low {
             background: #f0f9ff;
             color: #0369a1;
+        }
+
+        /* Priority controls */
+        .priority-controls {
+            margin-bottom: 2rem;
+        }
+
+        .priority-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .priority-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            background: #e5e7eb;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .priority-btn.active {
+            border-color: currentColor;
+        }
+
+        .priority-btn:hover:not(.active) {
+            background: #d1d5db;
+        }
+
+        .priority-btn.priority-critical {
+            background: #fecaca;
+            color: #dc2626;
+        }
+
+        .priority-btn.priority-critical.active {
+            background: #dc2626;
+            color: white;
+        }
+
+        .priority-btn.priority-high {
+            background: #fed7aa;
+            color: #ea580c;
+        }
+
+        .priority-btn.priority-high.active {
+            background: #ea580c;
+            color: white;
+        }
+
+        .priority-btn.priority-medium {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .priority-btn.priority-medium.active {
+            background: #d97706;
+            color: white;
+        }
+
+        .priority-btn.priority-low {
+            background: #f0f9ff;
+            color: #0369a1;
+        }
+
+        .priority-btn.priority-low.active {
+            background: #0369a1;
+            color: white;
         }
 
         /* Ticket Detail Modal */
@@ -700,12 +778,19 @@
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <button class="btn btn-primary" onclick="fetchEmails()">🔄 Refresh Emails</button>
-                    <div>
-                        <select id="statusFilter" class="form-input" style="width: auto; margin-right: 1rem;">
+                    <div style="display: flex; gap: 1rem;">
+                        <select id="statusFilter" class="form-input" style="width: auto;" onchange="applyFilters()">
                             <option value="all">All Status</option>
                             <option value="new">New</option>
                             <option value="open">Open</option>
                             <option value="closed">Closed</option>
+                        </select>
+                        <select id="priorityFilter" class="form-input" style="width: auto;" onchange="applyFilters()">
+                            <option value="all">All Priorities</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
                         </select>
                     </div>
                 </div>
@@ -778,8 +863,17 @@
                                     <div class="status-buttons">
                                         <button class="status-btn" data-status="new">New</button>
                                         <button class="status-btn" data-status="open">Open</button>
-                                        <button class="status-btn" data-status="open">Open</button>
                                         <button class="status-btn" data-status="closed">Closed</button>
+                                    </div>
+                                </div>
+
+                                <div class="priority-controls">
+                                    <h3>Priority Level</h3>
+                                    <div class="priority-buttons">
+                                        <button class="priority-btn priority-critical" data-priority="critical">Critical</button>
+                                        <button class="priority-btn priority-high" data-priority="high">High</button>
+                                        <button class="priority-btn priority-medium" data-priority="medium">Medium</button>
+                                        <button class="priority-btn priority-low" data-priority="low">Low</button>
                                     </div>
                                 </div>
 
@@ -1288,15 +1382,16 @@
         }
 
         // Render tickets in the tickets page
-        function renderTickets() {
+        function renderTickets(filteredTickets = null) {
             const container = document.getElementById('ticketsContainer');
+            const ticketsToRender = filteredTickets || appState.tickets;
             
-            if (appState.tickets.length === 0) {
-                container.innerHTML = '<div class="ticket-card"><p style="text-align: center; color: #64748b;">No tickets found. Click "Refresh Emails" to fetch new tickets.</p></div>';
+            if (ticketsToRender.length === 0) {
+                container.innerHTML = '<div class="ticket-card"><p style="text-align: center; color: #64748b;">No tickets found matching the selected filters.</p></div>';
                 return;
             }
 
-            container.innerHTML = appState.tickets.map(ticket => `
+            container.innerHTML = ticketsToRender.map(ticket => `
                 <div class="ticket-card" onclick="openTicketModal('${ticket.id}')" style="cursor: pointer;">
                     <div class="ticket-header">
                         <div>
@@ -1316,6 +1411,34 @@
                     <p style="color: #64748b; margin-top: 1rem;">${truncateText(ticket.body, 100)}</p>
                 </div>
             `).join('');
+        }
+
+        // Apply filters to tickets
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            
+            let filteredTickets = appState.tickets;
+            
+            // Apply status filter
+            if (statusFilter !== 'all') {
+                filteredTickets = filteredTickets.filter(ticket => ticket.status === statusFilter);
+            }
+            
+            // Apply priority filter
+            if (priorityFilter !== 'all') {
+                filteredTickets = filteredTickets.filter(ticket => (ticket.priority || 'medium') === priorityFilter);
+            }
+            
+            // Sort by priority (critical first)
+            const priorityOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
+            filteredTickets.sort((a, b) => {
+                const priorityA = priorityOrder[a.priority || 'medium'];
+                const priorityB = priorityOrder[b.priority || 'medium'];
+                return priorityB - priorityA; // Higher priority first
+            });
+            
+            renderTickets(filteredTickets);
         }
 
         // Update dashboard statistics
@@ -1446,6 +1569,14 @@
                 }
             });
 
+            // Update priority buttons
+            document.querySelectorAll('.priority-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.priority === (currentTicket.priority || 'medium')) {
+                    btn.classList.add('active');
+                }
+            });
+
             // Load conversation history
             loadConversationHistory(ticketId);
 
@@ -1461,11 +1592,14 @@
             document.getElementById('responseText').value = '';
         }
 
-        // Status management
+        // Status and Priority management
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('status-btn')) {
                 const newStatus = e.target.dataset.status;
                 updateTicketStatus(currentTicket.id, newStatus);
+            } else if (e.target.classList.contains('priority-btn')) {
+                const newPriority = e.target.dataset.priority;
+                updateTicketPriority(currentTicket.id, newPriority);
             }
         });
 
@@ -1506,6 +1640,45 @@
             } catch (error) {
                 console.error('Error updating ticket status:', error);
                 alert('❌ Error updating ticket status: ' + error.message);
+            }
+        }
+
+        async function updateTicketPriority(ticketId, newPriority) {
+            try {
+                const response = await fetch('/.netlify/functions/update-ticket-priority', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticketId, priority: newPriority })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update local state
+                    const ticket = appState.tickets.find(t => t.id === ticketId);
+                    if (ticket) {
+                        ticket.priority = newPriority;
+                        currentTicket.priority = newPriority;
+                    }
+
+                    // Update UI
+                    document.querySelectorAll('.priority-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.dataset.priority === newPriority) {
+                            btn.classList.add('active');
+                        }
+                    });
+
+                    renderTickets();
+                    
+                    // Add to conversation history
+                    addToConversationHistory(ticketId, 'system', `Priority changed to: ${newPriority}`, new Date());
+                } else {
+                    alert('❌ Failed to update ticket priority: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error updating ticket priority:', error);
+                alert('❌ Error updating ticket priority: ' + error.message);
             }
         }
 

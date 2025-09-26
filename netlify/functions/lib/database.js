@@ -199,13 +199,19 @@ async function getTickets(limit = 100) {
         
         return result.map(ticket => ({
             id: ticket.id,
+            ticketNumber: ticket.ticket_number,
             subject: ticket.subject,
             from: ticket.from_email,
             to: ticket.to_email,
             body: ticket.body_text,
             status: ticket.status,
+            priority: ticket.priority || 'medium',
+            category: ticket.category || 'general',
             date: new Date(ticket.received_at),
-            createdAt: ticket.created_at
+            createdAt: ticket.created_at,
+            updatedAt: ticket.updated_at,
+            resolutionTime: ticket.resolution_time,
+            closedAt: ticket.closed_at
         }));
     } catch (error) {
         console.error('Error getting tickets:', error);
@@ -224,10 +230,62 @@ async function updateTicketStatus(ticketId, status) {
             WHERE id = ${ticketId}
         `;
         
-        return true;
+        return { success: true };
     } catch (error) {
         console.error('Error updating ticket status:', error);
-        throw error;
+        return { success: false, error: error.message };
+    }
+}
+
+// Generic update ticket function
+async function updateTicket(ticketId, updates) {
+    try {
+        const sql = getDatabase();
+        
+        // Build dynamic update query
+        const updateFields = [];
+        const updateValues = {};
+        
+        for (const [key, value] of Object.entries(updates)) {
+            if (key === 'priority') {
+                updateFields.push('priority = ${priority}');
+                updateValues.priority = value;
+            } else if (key === 'category') {
+                updateFields.push('category = ${category}');
+                updateValues.category = value;
+            } else if (key === 'status') {
+                updateFields.push('status = ${status}');
+                updateValues.status = value;
+            } else if (key === 'updatedAt') {
+                updateFields.push('updated_at = ${updatedAt}');
+                updateValues.updatedAt = value;
+            } else if (key === 'resolutionTime') {
+                updateFields.push('resolution_time = ${resolutionTime}');
+                updateValues.resolutionTime = value;
+            } else if (key === 'closedAt') {
+                updateFields.push('closed_at = ${closedAt}');
+                updateValues.closedAt = value;
+            }
+        }
+        
+        if (updateFields.length === 0) {
+            return { success: false, error: 'No valid fields to update' };
+        }
+        
+        const query = `UPDATE tickets SET ${updateFields.join(', ')} WHERE id = ${ticketId}`;
+        
+        if (updateValues.priority) {
+            await sql`UPDATE tickets SET priority = ${updateValues.priority}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+        } else if (updateValues.category) {
+            await sql`UPDATE tickets SET category = ${updateValues.category}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+        } else if (updateValues.status) {
+            await sql`UPDATE tickets SET status = ${updateValues.status}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+        }
+        
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating ticket:', error);
+        return { success: false, error: error.message };
     }
 }
 
@@ -238,6 +296,7 @@ module.exports = {
     saveTicket,
     getTickets,
     updateTicketStatus,
+    updateTicket,
     encryptData,
     decryptData
 };
