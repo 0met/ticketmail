@@ -947,7 +947,6 @@
                                                 <option value="low">Low</option>
                                                 <option value="medium">Medium</option>
                                                 <option value="high">High</option>
-                                                <option value="critical">Critical</option>
                                             </select>
                                         </div>
                                         <div>
@@ -1891,6 +1890,20 @@
                     customerPhone: document.getElementById('customerPhone').value,
                     customerEmail: document.getElementById('customerEmail').value
                 };
+
+                // Validate values against database constraints
+                const validStatuses = ['new', 'open', 'closed'];
+                const validPriorities = ['low', 'medium', 'high'];
+                
+                if (!validStatuses.includes(updates.status)) {
+                    alert('❌ Invalid status value. Please select a valid status.');
+                    return;
+                }
+                
+                if (!validPriorities.includes(updates.priority)) {
+                    alert('❌ Invalid priority value. Please select a valid priority.');
+                    return;
+                }
 
                 console.log('Saving ticket changes:', updates);
 
