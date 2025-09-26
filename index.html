@@ -1823,22 +1823,22 @@
 
             // Populate modal content
             document.getElementById('ticketModalTitle').textContent = currentTicket.subject;
-            document.getElementById('ticketNumber').textContent = currentTicket.ticketNumber || 'TK-XXXX';
+            document.getElementById('ticketNumber').textContent = currentTicket.ticket_number || 'TK-XXXX';
             document.getElementById('ticketId').textContent = currentTicket.id;
-            document.getElementById('ticketCreated').textContent = formatDate(currentTicket.date);
-            document.getElementById('ticketUpdated').textContent = formatDate(currentTicket.updatedAt || currentTicket.createdAt);
-            document.getElementById('ticketSource').textContent = currentTicket.isManual ? 'Manual Entry' : 'Email Import';
+            document.getElementById('ticketCreated').textContent = formatDate(currentTicket.created_at || currentTicket.date);
+            document.getElementById('ticketUpdated').textContent = formatDate(currentTicket.updated_at || currentTicket.updatedAt || currentTicket.createdAt);
+            document.getElementById('ticketSource').textContent = currentTicket.source === 'email' ? 'Email Import' : (currentTicket.is_manual ? 'Manual Entry' : 'Email Import');
 
             // Populate dropdown fields
             document.getElementById('ticketStatusDropdown').value = currentTicket.status || 'new';
             document.getElementById('ticketPriorityDropdown').value = currentTicket.priority || 'medium';
             document.getElementById('ticketCategoryDropdown').value = currentTicket.category || 'general';
 
-            // Auto-populate customer information from email
-            document.getElementById('customerEmail').value = currentTicket.from || '';
-            document.getElementById('customerName').value = extractNameFromEmail(currentTicket.from) || '';
-            document.getElementById('customerId').value = currentTicket.customerId || '';
-            document.getElementById('customerPhone').value = currentTicket.customerPhone || '';
+            // Auto-populate customer information from database first, fallback to email parsing
+            document.getElementById('customerEmail').value = currentTicket.customer_email || currentTicket.from_email || '';
+            document.getElementById('customerName').value = currentTicket.customer_name || extractNameFromEmail(currentTicket.from_email) || '';
+            document.getElementById('customerId').value = currentTicket.customer_id || '';
+            document.getElementById('customerPhone').value = currentTicket.customer_phone || '';
 
             // Show resolution time if ticket is closed
             const resolutionTimeRow = document.getElementById('resolutionTimeRow');
@@ -1857,17 +1857,17 @@
                         <div style="display: flex; gap: 0.5rem;">
                             <span class="priority-badge priority-${currentTicket.priority || 'medium'}" style="padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">${(currentTicket.priority || 'medium').toUpperCase()}</span>
                             <span style="background: #f3f4f6; color: #374151; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem;">${currentTicket.category || 'general'}</span>
-                            ${currentTicket.isManual ? '<span style="background: #fbbf24; color: #92400e; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">✏️ MANUAL ENTRY</span>' : ''}
+                            ${currentTicket.is_manual ? '<span style="background: #fbbf24; color: #92400e; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">✏️ MANUAL ENTRY</span>' : ''}
                         </div>
                     </div>
-                    ${currentTicket.isManual ? '<div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.875rem; color: #92400e;"><strong>📝 Manual Ticket:</strong> This ticket was created manually and not from an email.</div>' : ''}
+                    ${currentTicket.is_manual ? '<div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.875rem; color: #92400e;"><strong>📝 Manual Ticket:</strong> This ticket was created manually and not from an email.</div>' : ''}
                     <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem;">
-                        <strong>From:</strong> ${currentTicket.from}<br>
-                        <strong>To:</strong> ${currentTicket.to || 'Support'}<br>
-                        <strong>Date:</strong> ${formatDate(currentTicket.date)}<br>
-                        <strong>Source:</strong> ${currentTicket.isManual ? 'Manual Entry' : 'Email Import'}
+                        <strong>From:</strong> ${currentTicket.from_email || currentTicket.from}<br>
+                        <strong>To:</strong> ${currentTicket.to_email || currentTicket.to || 'Support'}<br>
+                        <strong>Date:</strong> ${formatDate(currentTicket.created_at || currentTicket.date)}<br>
+                        <strong>Source:</strong> ${currentTicket.source === 'email' ? 'Email Import' : (currentTicket.is_manual ? 'Manual Entry' : 'Email Import')}
                     </div>
-                    <div style="white-space: pre-wrap; line-height: 1.6;">${currentTicket.body}</div>
+                    <div style="white-space: pre-wrap; line-height: 1.6;">${currentTicket.body_text || currentTicket.body}</div>
                 </div>
             `;
 
