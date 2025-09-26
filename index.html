@@ -1764,14 +1764,17 @@
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('status-btn')) {
                 const newStatus = e.target.dataset.status;
+                console.log('Status button clicked! New status:', newStatus, 'for ticket:', currentTicket?.id);
                 updateTicketStatus(currentTicket.id, newStatus);
             } else if (e.target.classList.contains('priority-btn')) {
                 const newPriority = e.target.dataset.priority;
+                console.log('Priority button clicked! New priority:', newPriority, 'for ticket:', currentTicket?.id);
                 updateTicketPriority(currentTicket.id, newPriority);
             }
         });
 
         async function updateTicketStatus(ticketId, newStatus) {
+            console.log('updateTicketStatus called with:', ticketId, newStatus);
             try {
                 const response = await fetch('/.netlify/functions/update-ticket-status', {
                     method: 'POST',
@@ -1780,11 +1783,13 @@
                 });
 
                 const result = await response.json();
+                console.log('Update status API response:', result);
                 
                 if (result.success) {
                     // Update local state
                     const ticket = appState.tickets.find(t => t.id === ticketId);
                     if (ticket) {
+                        console.log('Updating local ticket status from', ticket.status, 'to', newStatus);
                         ticket.status = newStatus;
                         currentTicket.status = newStatus;
                     }
@@ -1802,7 +1807,10 @@
                     
                     // Add to conversation history
                     addToConversationHistory(ticketId, 'system', `Status changed to: ${newStatus}`, new Date());
+                    
+                    console.log('Status update completed successfully');
                 } else {
+                    console.error('Status update failed:', result.error);
                     alert('❌ Failed to update ticket status: ' + result.error);
                 }
             } catch (error) {
@@ -1812,6 +1820,7 @@
         }
 
         async function updateTicketPriority(ticketId, newPriority) {
+            console.log('updateTicketPriority called with:', ticketId, newPriority);
             try {
                 const response = await fetch('/.netlify/functions/update-ticket-priority', {
                     method: 'POST',
@@ -1820,11 +1829,13 @@
                 });
 
                 const result = await response.json();
+                console.log('Update priority API response:', result);
                 
                 if (result.success) {
                     // Update local state
                     const ticket = appState.tickets.find(t => t.id === ticketId);
                     if (ticket) {
+                        console.log('Updating local ticket priority from', ticket.priority, 'to', newPriority);
                         ticket.priority = newPriority;
                         currentTicket.priority = newPriority;
                     }
@@ -1841,7 +1852,10 @@
                     
                     // Add to conversation history
                     addToConversationHistory(ticketId, 'system', `Priority changed to: ${newPriority}`, new Date());
+                    
+                    console.log('Priority update completed successfully');
                 } else {
+                    console.error('Priority update failed:', result.error);
                     alert('❌ Failed to update ticket priority: ' + result.error);
                 }
             } catch (error) {
