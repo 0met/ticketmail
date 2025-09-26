@@ -141,17 +141,29 @@ function fetchEmails(imap, searchCriteria = ['UNSEEN'], maxEmails = 10) {
 function isTicketEmail(email) {
     const subject = (email.subject || '').toLowerCase();
     const body = (email.body || '').toLowerCase();
+    const from = (email.from || '').toLowerCase();
     
-    // Common support/ticket keywords
-    const ticketKeywords = [
-        'support', 'help', 'issue', 'problem', 'bug', 'error',
-        'question', 'inquiry', 'request', 'ticket', 'complaint',
-        'feedback', 'assistance', 'urgent', 'emergency'
+    // Skip automated/system emails
+    const skipKeywords = [
+        'noreply', 'no-reply', 'donotreply', 'do-not-reply',
+        'automated', 'notification', 'mailer-daemon', 
+        'postmaster', 'delivery-status', 'bounced',
+        'unsubscribe', 'newsletter', 'marketing'
     ];
     
-    return ticketKeywords.some(keyword => 
-        subject.includes(keyword) || body.includes(keyword)
+    // Check if it's an automated email we should skip
+    const isAutomated = skipKeywords.some(keyword => 
+        from.includes(keyword) || subject.includes(keyword) || body.includes(keyword)
     );
+    
+    if (isAutomated) {
+        console.log(`Skipping automated email: ${subject}`);
+        return false;
+    }
+    
+    // Convert all other emails to tickets (inclusive approach)
+    // This is more appropriate for a customer support system
+    return true;
 }
 
 // Helper function to categorize ticket
@@ -159,19 +171,58 @@ function categorizeTicket(email) {
     const subject = (email.subject || '').toLowerCase();
     const body = (email.body || '').toLowerCase();
     
+    if (subject.includes('password') || subject.includes('login') || subject.includes('access') || body.includes('password')) {
+        return 'account';
+    }
+    
+    if (subject.includes('payment') || subject.includes('billing') || subject.includes('invoice') || body.includes('billing')) {
+        return 'billing';
+    }
+    
+    if (subject.includes('bug') || subject.includes('error') || subject.includes('issue') || subject.includes('problem') || body.includes('bug')) {
+        return 'technical';
+    }
+    
+    if (subject.includes('feature') || subject.includes('request') || subject.includes('enhancement') || body.includes('feature')) {
+        return 'feature-request';
+    }
+    
+    if (subject.includes('help') || subject.includes('how to') || subject.includes('tutorial') || body.includes('help')) {
+        return 'support';
+    }
+    
     if (subject.includes('urgent') || subject.includes('emergency') || body.includes('urgent')) {
         return 'urgent';
     }
     
-    if (subject.includes('bug') || subject.includes('error') || body.includes('bug')) {
-        return 'bug';
-    }
-    
-    if (subject.includes('question') || subject.includes('inquiry')) {
-        return 'question';
-    }
-    
     return 'general';
+}
+
+// Helper function to determine ticket priority
+function determinePriority(email) {
+    const subject = (email.subject || '').toLowerCase();
+    const body = (email.body || '').toLowerCase();
+    
+    // Check for critical indicators
+    if (subject.includes('critical') || subject.includes('down') || subject.includes('emergency') || 
+        body.includes('critical') || body.includes('emergency') || body.includes('system down')) {
+        return 'critical';
+    }
+    
+    // Check for high priority indicators
+    if (subject.includes('urgent') || subject.includes('asap') || subject.includes('high priority') ||
+        body.includes('urgent') || body.includes('asap') || subject.includes('!!!')) {
+        return 'high';
+    }
+    
+    // Check for low priority indicators
+    if (subject.includes('low priority') || subject.includes('when you have time') ||
+        body.includes('low priority') || body.includes('no rush')) {
+        return 'low';
+    }
+    
+    // Default to medium priority
+    return 'medium';
 }
 
 // Helper function to determine ticket status
@@ -311,8 +362,12 @@ exports.handler = async (event, context) => {
                         to: email.to,
                         body: email.body.substring(0, 1000), // Limit description length
                         status: getTicketStatus(email),
+                        priority: determinePriority(email),
+                        category: categorizeTicket(email),
                         messageId: email.messageId,
-                        date: email.date
+                        date: email.date,
+                        isManual: false,
+                        source: 'email'
                     };
 
                     await saveTicket(ticket);
