@@ -255,9 +255,9 @@ async function updateTicketStatus(ticketId, status) {
         
         console.log(`Updating ticket ${ticketId} to status ${status}`);
         
-        // First, let's check if the ticket exists
+        // First, let's check if the ticket exists (without UUID casting)
         const existingTicket = await sql`
-            SELECT id, status FROM tickets WHERE id = ${ticketId}::uuid
+            SELECT id, status FROM tickets WHERE id = ${ticketId}
         `;
         
         console.log('Existing ticket:', existingTicket);
@@ -267,18 +267,19 @@ async function updateTicketStatus(ticketId, status) {
             return { success: false, error: 'Ticket not found' };
         }
         
-        // Now update with explicit UUID casting
+        // Now update without UUID casting
         const result = await sql`
             UPDATE tickets 
             SET status = ${status}, updated_at = CURRENT_TIMESTAMP 
-            WHERE id = ${ticketId}::uuid
+            WHERE id = ${ticketId}
         `;
         
         console.log('Update result:', result);
+        console.log('Update result count:', result.count);
         
         // Verify the update worked
         const updatedTicket = await sql`
-            SELECT id, status, updated_at FROM tickets WHERE id = ${ticketId}::uuid
+            SELECT id, status, updated_at FROM tickets WHERE id = ${ticketId}
         `;
         
         console.log('After update:', updatedTicket);
@@ -297,33 +298,43 @@ async function updateTicket(ticketId, updates) {
         
         console.log(`Updating ticket ${ticketId} with updates:`, updates);
         
-        // Check if ticket exists first
+        // Check if ticket exists first (without UUID casting)
         const existingTicket = await sql`
-            SELECT id FROM tickets WHERE id = ${ticketId}::uuid
+            SELECT id FROM tickets WHERE id = ${ticketId}
         `;
         
+        console.log('Existing ticket check:', existingTicket);
+        
         if (existingTicket.length === 0) {
+            console.log('Ticket not found!');
             return { success: false, error: 'Ticket not found' };
         }
         
-        // Handle each field individually to ensure proper parameter binding
+        // Handle each field individually to ensure proper parameter binding (without UUID casting)
         for (const [key, value] of Object.entries(updates)) {
+            console.log(`Updating ${key} to ${value} for ticket ${ticketId}`);
+            
             if (key === 'priority') {
-                await sql`UPDATE tickets SET priority = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}::uuid`;
+                const result = await sql`UPDATE tickets SET priority = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+                console.log(`Priority update result:`, result);
             } else if (key === 'category') {
-                await sql`UPDATE tickets SET category = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}::uuid`;
+                const result = await sql`UPDATE tickets SET category = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+                console.log(`Category update result:`, result);
             } else if (key === 'status') {
-                await sql`UPDATE tickets SET status = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}::uuid`;
+                const result = await sql`UPDATE tickets SET status = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+                console.log(`Status update result:`, result);
             } else if (key === 'resolutionTime') {
-                await sql`UPDATE tickets SET resolution_time = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}::uuid`;
+                const result = await sql`UPDATE tickets SET resolution_time = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+                console.log(`Resolution time update result:`, result);
             } else if (key === 'closedAt') {
-                await sql`UPDATE tickets SET closed_at = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}::uuid`;
+                const result = await sql`UPDATE tickets SET closed_at = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
+                console.log(`Closed at update result:`, result);
             }
         }
         
-        // Get the updated ticket
+        // Get the updated ticket (without UUID casting)
         const updatedTicket = await sql`
-            SELECT * FROM tickets WHERE id = ${ticketId}::uuid
+            SELECT * FROM tickets WHERE id = ${ticketId}
         `;
         
         console.log('Update completed. Updated ticket:', updatedTicket[0]);
