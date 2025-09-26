@@ -168,6 +168,14 @@ async function saveTicket(ticket) {
     try {
         const sql = getDatabase();
         
+        // Generate ticket number
+        const year = new Date().getFullYear();
+        const timestamp = Date.now().toString().slice(-4); // Last 4 digits of timestamp
+        const randomNum = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+        const ticketNumber = `TK-${year}-${timestamp}${randomNum}`;
+        
+        console.log('Saving ticket with generated number:', ticketNumber);
+        
         await sql`
             INSERT INTO tickets (
                 subject, 
@@ -177,6 +185,7 @@ async function saveTicket(ticket) {
                 status, 
                 email_id, 
                 received_at, 
+                ticket_number,
                 priority, 
                 category,
                 is_manual,
@@ -190,6 +199,7 @@ async function saveTicket(ticket) {
                 ${ticket.status}, 
                 ${ticket.messageId}, 
                 ${ticket.date},
+                ${ticketNumber},
                 ${ticket.priority || 'medium'},
                 ${ticket.category || 'general'},
                 ${ticket.isManual || false},

@@ -616,6 +616,36 @@
             background: #ef4444;
         }
 
+        /* Discrete notification system */
+        .discrete-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #10b981;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+            max-width: 300px;
+        }
+
+        .discrete-notification.show {
+            transform: translateX(0);
+        }
+
+        .discrete-notification.error {
+            border-left-color: #ef4444;
+        }
+
+        .discrete-notification.info {
+            border-left-color: #3b82f6;
+        }
+
         .chart-container {
             background: white;
             border-radius: 8px;
@@ -1164,6 +1194,13 @@
             if (savedSettings) {
                 appState.settings = { ...appState.settings, ...JSON.parse(savedSettings) };
                 populateSettingsForm();
+                
+                // Auto-test connection if we have saved credentials
+                const hasCredentials = appState.settings.gmailAddress && appState.settings.appPassword;
+                if (hasCredentials) {
+                    console.log('Found saved Gmail credentials, auto-testing connection...');
+                    testConnection(true); // Pass true for silent mode
+                }
             }
         }
 
@@ -1218,27 +1255,48 @@
         }
 
         // Test Gmail connection
-        async function testConnection() {
+        async function testConnection(silent = false) {
             const gmail = document.getElementById('gmailAddress').value;
             const password = document.getElementById('appPassword').value;
 
             if (!gmail || !password) {
-                alert('❌ Please enter both Gmail address and app password');
-                return;
+                if (!silent) {
+                    alert('❌ Please enter both Gmail address and app password');
+                }
+                return false;
             }
 
-            // Simulate connection test (in real implementation, this would test IMAP connection)
-            alert('🔄 Testing connection...');
+            // Show progress only if not silent
+            if (!silent) {
+                alert('🔄 Testing connection...');
+            } else {
+                console.log('🔄 Auto-testing Gmail connection...');
+            }
             
-            setTimeout(() => {
-                if (gmail.includes('@gmail.com') && password.length >= 16) {
-                    appState.isConnected = true;
-                    updateConnectionStatus();
-                    alert('✅ Connection successful!');
-                } else {
-                    alert('❌ Connection failed. Please check your credentials.');
-                }
-            }, 2000);
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    if (gmail.includes('@gmail.com') && password.length >= 16) {
+                        appState.isConnected = true;
+                        updateConnectionStatus();
+                        
+                        if (!silent) {
+                            alert('✅ Connection successful!');
+                        } else {
+                            console.log('✅ Gmail connection restored automatically');
+                            // Show discrete notification
+                            showDiscreteNotification('Gmail connection restored', 'success');
+                        }
+                        resolve(true);
+                    } else {
+                        if (!silent) {
+                            alert('❌ Connection failed. Please check your credentials.');
+                        } else {
+                            console.log('❌ Auto-connection failed');
+                        }
+                        resolve(false);
+                    }
+                }, silent ? 500 : 2000); // Faster for silent mode
+            });
         }
 
         // Test Netlify Functions
@@ -1405,14 +1463,20 @@
         }
 
         // Fetch emails using Netlify function
-        async function fetchEmails() {
+        async function fetchEmails(silent = false) {
             if (!appState.isConnected) {
-                alert('❌ Please configure and test your Gmail connection first');
+                if (!silent) {
+                    alert('❌ Please configure and test your Gmail connection first');
+                }
                 return;
             }
 
             try {
-                console.log('Attempting to sync emails...');
+                if (!silent) {
+                    console.log('Attempting to sync emails...');
+                } else {
+                    console.log('Auto-syncing emails...');
+                }
                 
                 const response = await fetch('/.netlify/functions/tickets-sync', {
                     method: 'POST'
@@ -1428,14 +1492,33 @@
                 console.log('Sync result:', result);
                 
                 if (result.success) {
-                    alert(`✅ ${result.message}`);
+                    if (silent) {
+                        // Show discrete notification for auto-refresh
+                        const processed = result.processed || 0;
+                        if (processed > 0) {
+                            showDiscreteNotification(`📧 ${processed} new emails processed`, 'info');
+                        } else {
+                            showDiscreteNotification('📧 Email sync completed', 'info');
+                        }
+                    } else {
+                        alert(`✅ ${result.message}`);
+                    }
                     await loadTickets(); // Load the updated tickets
                 } else {
-                    alert('❌ Error syncing emails: ' + (result.error || 'Unknown error'));
+                    if (silent) {
+                        console.error('Auto-sync failed:', result.error);
+                        showDiscreteNotification('Email sync failed', 'error');
+                    } else {
+                        alert('❌ Error syncing emails: ' + (result.error || 'Unknown error'));
+                    }
                 }
             } catch (error) {
                 console.error('Full sync error:', error);
-                alert('❌ Network error: ' + error.message);
+                if (silent) {
+                    showDiscreteNotification('Email sync error', 'error');
+                } else {
+                    alert('❌ Network error: ' + error.message);
+                }
             }
         }
 
@@ -1572,6 +1655,35 @@
             return `${days} days ago`;
         }
 
+        // Show discrete notification
+        function showDiscreteNotification(message, type = 'success') {
+            // Remove existing notifications
+            const existing = document.querySelectorAll('.discrete-notification');
+            existing.forEach(n => n.remove());
+
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = `discrete-notification ${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
         // Navigation functionality
         function initNavigation() {
             const navLinks = document.querySelectorAll('.nav-link');
@@ -1605,7 +1717,7 @@
         }
 
         // Initialize application
-        function init() {
+        async function init() {
             loadSettings();
             updateConnectionStatus();
             initNavigation();
@@ -1613,14 +1725,18 @@
             // Load tickets when the app initializes
             loadTickets();
             
-            // Set up auto-refresh if connected
-            if (appState.isConnected) {
-                setInterval(() => {
-                    if (appState.isConnected) {
-                        fetchEmails();
-                    }
-                }, appState.settings.refreshInterval * 60 * 1000);
-            }
+            // Wait a moment for settings to load, then set up auto-refresh if connected
+            setTimeout(() => {
+                if (appState.isConnected) {
+                    console.log('Setting up auto-refresh interval:', appState.settings.refreshInterval, 'minutes');
+                    setInterval(() => {
+                        if (appState.isConnected) {
+                            console.log('Auto-refreshing emails...');
+                            fetchEmails(true); // Pass true for silent mode
+                        }
+                    }, appState.settings.refreshInterval * 60 * 1000);
+                }
+            }, 3000); // Give time for auto-connection to complete
         }
 
         // Utility function to truncate text
