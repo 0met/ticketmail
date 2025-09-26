@@ -1,4 +1,4 @@
-const { getUserSettings, saveTicket, getTickets } = require('./lib/database');
+const { getUserSettings, saveTicket, getTickets, getDatabase } = require('./lib/database');
 
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
@@ -81,6 +81,45 @@ exports.handler = async (event, context) => {
             };
         } catch (error) {
             results.tests.getTickets = {
+                success: false,
+                error: error.message
+            };
+        }
+
+        // Test 5: Add customer columns to tickets table
+        try {
+            console.log('Adding customer columns to tickets table...');
+            const sql = getDatabase();
+            
+            // Check if columns already exist
+            const existingColumns = await sql`
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'tickets' 
+                AND column_name IN ('customer_name', 'customer_id', 'customer_phone', 'customer_email')
+            `;
+            
+            if (existingColumns.length === 0) {
+                await sql`
+                    ALTER TABLE tickets 
+                    ADD COLUMN customer_name TEXT,
+                    ADD COLUMN customer_id TEXT,
+                    ADD COLUMN customer_phone TEXT,
+                    ADD COLUMN customer_email TEXT
+                `;
+                results.tests.addCustomerColumns = {
+                    success: true,
+                    message: 'Customer columns added successfully'
+                };
+            } else {
+                results.tests.addCustomerColumns = {
+                    success: true,
+                    message: 'Customer columns already exist',
+                    existingColumns: existingColumns.map(c => c.column_name)
+                };
+            }
+        } catch (error) {
+            results.tests.addCustomerColumns = {
                 success: false,
                 error: error.message
             };
