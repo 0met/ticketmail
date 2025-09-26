@@ -906,27 +906,68 @@
                             </div>
                             
                             <div class="ticket-sidebar">
-                                <div class="status-controls">
-                                    <h3>Ticket Status</h3>
-                                    <div class="status-buttons">
-                                        <button class="status-btn" data-status="new">New</button>
-                                        <button class="status-btn" data-status="pending">Pending</button>
-                                        <button class="status-btn" data-status="open">Open</button>
-                                        <button class="status-btn" data-status="approved">Approved</button>
-                                        <button class="status-btn" data-status="closed">Closed</button>
+                                <!-- Customer Information Section -->
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="margin-bottom: 1rem; color: #1f2937;">Customer Information</h3>
+                                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Full Name</label>
+                                            <input type="text" id="customerName" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" placeholder="Customer full name">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Customer ID</label>
+                                            <input type="text" id="customerId" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" placeholder="Customer ID">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Phone Number</label>
+                                            <input type="tel" id="customerPhone" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" placeholder="Phone number">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Email Address</label>
+                                            <input type="email" id="customerEmail" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" placeholder="Email address">
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="priority-controls">
-                                    <h3>Priority Level</h3>
-                                    <div class="priority-buttons">
-                                        <button class="priority-btn priority-critical" data-priority="critical">Critical</button>
-                                        <button class="priority-btn priority-high" data-priority="high">High</button>
-                                        <button class="priority-btn priority-medium" data-priority="medium">Medium</button>
-                                        <button class="priority-btn priority-low" data-priority="low">Low</button>
+                                <!-- Ticket Management Section -->
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h3 style="margin-bottom: 1rem; color: #1f2937;">Ticket Management</h3>
+                                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Status</label>
+                                            <select id="ticketStatusDropdown" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;">
+                                                <option value="new">New</option>
+                                                <option value="pending">Pending</option>
+                                                <option value="open">Open</option>
+                                                <option value="approved">Approved</option>
+                                                <option value="closed">Closed</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Priority</label>
+                                            <select id="ticketPriorityDropdown" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;">
+                                                <option value="low">Low</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="high">High</option>
+                                                <option value="critical">Critical</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Category</label>
+                                            <select id="ticketCategoryDropdown" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;">
+                                                <option value="general">General</option>
+                                                <option value="technical">Technical</option>
+                                                <option value="billing">Billing</option>
+                                                <option value="support">Support</option>
+                                                <option value="account">Account</option>
+                                                <option value="bug">Bug Report</option>
+                                                <option value="feature">Feature Request</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
 
+                                <!-- Ticket Information Section -->
                                 <div style="margin-bottom: 1.5rem;">
                                     <h3 style="margin-bottom: 1rem; color: #1f2937;">Ticket Information</h3>
                                     <div style="font-size: 0.875rem; color: #6b7280;">
@@ -934,16 +975,10 @@
                                             <strong>Ticket Number:</strong> <span id="ticketNumber" style="color: #3b82f6; font-weight: 600;">-</span>
                                         </div>
                                         <div style="margin-bottom: 0.5rem;">
-                                            <strong>ID:</strong> <span id="ticketId">-</span>
+                                            <strong>Ticket ID:</strong> <span id="ticketId" style="font-family: monospace; font-size: 0.75rem;">-</span>
                                         </div>
                                         <div style="margin-bottom: 0.5rem;">
-                                            <strong>From:</strong> <span id="ticketFrom">-</span>
-                                        </div>
-                                        <div style="margin-bottom: 0.5rem;">
-                                            <strong>Category:</strong> <span id="ticketCategory">-</span>
-                                        </div>
-                                        <div style="margin-bottom: 0.5rem;">
-                                            <strong>Priority:</strong> <span id="ticketPriority">-</span>
+                                            <strong>Source:</strong> <span id="ticketSource">-</span>
                                         </div>
                                         <div style="margin-bottom: 0.5rem;">
                                             <strong>Created:</strong> <span id="ticketCreated">-</span>
@@ -957,6 +992,14 @@
                                     </div>
                                 </div>
 
+                                <!-- Save Button -->
+                                <div style="margin-bottom: 1.5rem;">
+                                    <button id="saveTicketBtn" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 600;" onclick="saveTicketChanges()">
+                                        💾 Save Changes
+                                    </button>
+                                </div>
+
+                                <!-- Quick Actions Section -->
                                 <div>
                                     <h3 style="margin-bottom: 1rem; color: #1f2937;">Quick Actions</h3>
                                     <button class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;" onclick="markAsSpam()">
@@ -1756,11 +1799,20 @@
             document.getElementById('ticketModalTitle').textContent = currentTicket.subject;
             document.getElementById('ticketNumber').textContent = currentTicket.ticketNumber || 'TK-XXXX';
             document.getElementById('ticketId').textContent = currentTicket.id;
-            document.getElementById('ticketFrom').textContent = currentTicket.from;
-            document.getElementById('ticketCategory').textContent = currentTicket.category || 'general';
-            document.getElementById('ticketPriority').textContent = (currentTicket.priority || 'medium').toUpperCase();
             document.getElementById('ticketCreated').textContent = formatDate(currentTicket.date);
             document.getElementById('ticketUpdated').textContent = formatDate(currentTicket.updatedAt || currentTicket.createdAt);
+            document.getElementById('ticketSource').textContent = currentTicket.isManual ? 'Manual Entry' : 'Email Import';
+
+            // Populate dropdown fields
+            document.getElementById('ticketStatusDropdown').value = currentTicket.status || 'new';
+            document.getElementById('ticketPriorityDropdown').value = currentTicket.priority || 'medium';
+            document.getElementById('ticketCategoryDropdown').value = currentTicket.category || 'general';
+
+            // Auto-populate customer information from email
+            document.getElementById('customerEmail').value = currentTicket.from || '';
+            document.getElementById('customerName').value = extractNameFromEmail(currentTicket.from) || '';
+            document.getElementById('customerId').value = currentTicket.customerId || '';
+            document.getElementById('customerPhone').value = currentTicket.customerPhone || '';
 
             // Show resolution time if ticket is closed
             const resolutionTimeRow = document.getElementById('resolutionTimeRow');
@@ -1793,22 +1845,6 @@
                 </div>
             `;
 
-            // Update status buttons
-            document.querySelectorAll('.status-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.status === currentTicket.status) {
-                    btn.classList.add('active');
-                }
-            });
-
-            // Update priority buttons
-            document.querySelectorAll('.priority-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.priority === (currentTicket.priority || 'medium')) {
-                    btn.classList.add('active');
-                }
-            });
-
             // Load conversation history
             loadConversationHistory(ticketId);
 
@@ -1822,6 +1858,88 @@
             document.body.style.overflow = 'auto';
             currentTicket = null;
             document.getElementById('responseText').value = '';
+        }
+
+        // Extract name from email string like "John Doe <john@example.com>"
+        function extractNameFromEmail(emailString) {
+            if (!emailString) return '';
+            const match = emailString.match(/^"?([^"<]+)"?\s*<.*>$/);
+            if (match && match[1]) {
+                return match[1].trim();
+            }
+            return '';
+        }
+
+        // Save ticket changes
+        async function saveTicketChanges() {
+            if (!currentTicket) {
+                alert('❌ No ticket selected');
+                return;
+            }
+
+            const saveBtn = document.getElementById('saveTicketBtn');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = '💾 Saving...';
+            saveBtn.disabled = true;
+
+            try {
+                // Collect all changes
+                const updates = {
+                    status: document.getElementById('ticketStatusDropdown').value,
+                    priority: document.getElementById('ticketPriorityDropdown').value,
+                    category: document.getElementById('ticketCategoryDropdown').value,
+                    customerName: document.getElementById('customerName').value,
+                    customerId: document.getElementById('customerId').value,
+                    customerPhone: document.getElementById('customerPhone').value,
+                    customerEmail: document.getElementById('customerEmail').value
+                };
+
+                console.log('Saving ticket changes:', updates);
+
+                // Use the existing updateTicket function
+                const response = await fetch('/.netlify/functions/update-ticket', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ticketId: currentTicket.id,
+                        updates: updates
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update local state
+                    const ticket = appState.tickets.find(t => t.id === currentTicket.id);
+                    if (ticket) {
+                        Object.assign(ticket, updates);
+                        Object.assign(currentTicket, updates);
+                    }
+
+                    // Refresh the tickets list to show updated values
+                    renderTickets();
+                    updateDashboardStats();
+                    
+                    // Show success message
+                    showDiscreteNotification('✅ Ticket updated successfully', 'success');
+                    
+                    // Add to conversation history
+                    addToConversationHistory(currentTicket.id, 'system', 
+                        `Ticket updated: Status: ${updates.status}, Priority: ${updates.priority}, Category: ${updates.category}`, 
+                        new Date());
+
+                    console.log('Ticket save completed successfully');
+                } else {
+                    console.error('Ticket save failed:', result.error);
+                    alert('❌ Failed to save ticket changes: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error saving ticket:', error);
+                alert('❌ Error saving ticket: ' + error.message);
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
         }
 
         // New Ticket Modal Functions
@@ -1883,18 +2001,7 @@
             }
         }
 
-        // Status and Priority management
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('status-btn')) {
-                const newStatus = e.target.dataset.status;
-                console.log('Status button clicked! New status:', newStatus, 'for ticket:', currentTicket?.id);
-                updateTicketStatus(currentTicket.id, newStatus);
-            } else if (e.target.classList.contains('priority-btn')) {
-                const newPriority = e.target.dataset.priority;
-                console.log('Priority button clicked! New priority:', newPriority, 'for ticket:', currentTicket?.id);
-                updateTicketPriority(currentTicket.id, newPriority);
-            }
-        });
+        // Old button-based status/priority handlers removed - now using Save button with dropdowns
 
         async function updateTicketStatus(ticketId, newStatus) {
             console.log('updateTicketStatus called with:', ticketId, newStatus);
