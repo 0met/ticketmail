@@ -208,10 +208,9 @@ async function saveTicket(ticket) {
             ON CONFLICT (email_id) DO UPDATE SET
                 subject = EXCLUDED.subject,
                 body_text = EXCLUDED.body_text,
-                status = EXCLUDED.status,
-                priority = EXCLUDED.priority,
-                category = EXCLUDED.category,
                 updated_at = CURRENT_TIMESTAMP
+                -- Don't overwrite status, priority, category on email sync
+                -- These should only be updated via manual ticket updates
         `;
         
         return true;
