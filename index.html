@@ -1858,10 +1858,23 @@
                 customerPhone
             });
             
-            document.getElementById('customerEmail').value = customerEmail;
-            document.getElementById('customerName').value = customerName;
-            document.getElementById('customerId').value = customerId;
-            document.getElementById('customerPhone').value = customerPhone;
+            // Check if elements exist before setting values
+            const customerEmailEl = document.getElementById('customerEmail');
+            const customerNameEl = document.getElementById('customerName');
+            const customerIdEl = document.getElementById('customerId');
+            const customerPhoneEl = document.getElementById('customerPhone');
+            
+            console.log('🔍 Customer field elements found:', {
+                customerEmailEl: !!customerEmailEl,
+                customerNameEl: !!customerNameEl,
+                customerIdEl: !!customerIdEl,
+                customerPhoneEl: !!customerPhoneEl
+            });
+            
+            if (customerEmailEl) customerEmailEl.value = customerEmail;
+            if (customerNameEl) customerNameEl.value = customerName;
+            if (customerIdEl) customerIdEl.value = customerId;
+            if (customerPhoneEl) customerPhoneEl.value = customerPhone;
 
             // Show resolution time if ticket is closed
             const resolutionTimeRow = document.getElementById('resolutionTimeRow');
@@ -1897,9 +1910,26 @@
             // Load conversation history
             loadConversationHistory(ticketId);
 
-            // Show modal
+            // Show modal first
             document.getElementById('ticketModal').classList.add('active');
             document.body.style.overflow = 'hidden';
+            
+            // Small delay to ensure DOM is ready, then populate customer fields
+            setTimeout(() => {
+                console.log('🔄 Re-populating customer fields after modal DOM is ready...');
+                
+                const customerEmailEl = document.getElementById('customerEmail');
+                const customerNameEl = document.getElementById('customerName');
+                const customerIdEl = document.getElementById('customerId');
+                const customerPhoneEl = document.getElementById('customerPhone');
+                
+                if (customerEmailEl) customerEmailEl.value = customerEmail;
+                if (customerNameEl) customerNameEl.value = customerName;
+                if (customerIdEl) customerIdEl.value = customerId;
+                if (customerPhoneEl) customerPhoneEl.value = customerPhone;
+                
+                console.log('✅ Customer fields re-populated after DOM ready');
+            }, 100);
         }
 
         function closeTicketModal() {
