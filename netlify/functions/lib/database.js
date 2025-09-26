@@ -295,47 +295,40 @@ async function updateTicket(ticketId, updates) {
     try {
         const sql = getDatabase();
         
-        // Build dynamic update query
-        const updateFields = [];
-        const updateValues = {};
+        console.log(`Updating ticket ${ticketId} with updates:`, updates);
         
+        // Check if ticket exists first
+        const existingTicket = await sql`
+            SELECT id FROM tickets WHERE id = ${ticketId}::uuid
+        `;
+        
+        if (existingTicket.length === 0) {
+            return { success: false, error: 'Ticket not found' };
+        }
+        
+        // Handle each field individually to ensure proper parameter binding
         for (const [key, value] of Object.entries(updates)) {
             if (key === 'priority') {
-                updateFields.push('priority = ${priority}');
-                updateValues.priority = value;
+                await sql`UPDATE tickets SET priority = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}::uuid`;
             } else if (key === 'category') {
-                updateFields.push('category = ${category}');
-                updateValues.category = value;
+                await sql`UPDATE tickets SET category = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}::uuid`;
             } else if (key === 'status') {
-                updateFields.push('status = ${status}');
-                updateValues.status = value;
-            } else if (key === 'updatedAt') {
-                updateFields.push('updated_at = ${updatedAt}');
-                updateValues.updatedAt = value;
+                await sql`UPDATE tickets SET status = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}::uuid`;
             } else if (key === 'resolutionTime') {
-                updateFields.push('resolution_time = ${resolutionTime}');
-                updateValues.resolutionTime = value;
+                await sql`UPDATE tickets SET resolution_time = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}::uuid`;
             } else if (key === 'closedAt') {
-                updateFields.push('closed_at = ${closedAt}');
-                updateValues.closedAt = value;
+                await sql`UPDATE tickets SET closed_at = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}::uuid`;
             }
         }
         
-        if (updateFields.length === 0) {
-            return { success: false, error: 'No valid fields to update' };
-        }
+        // Get the updated ticket
+        const updatedTicket = await sql`
+            SELECT * FROM tickets WHERE id = ${ticketId}::uuid
+        `;
         
-        const query = `UPDATE tickets SET ${updateFields.join(', ')} WHERE id = ${ticketId}`;
+        console.log('Update completed. Updated ticket:', updatedTicket[0]);
         
-        if (updateValues.priority) {
-            await sql`UPDATE tickets SET priority = ${updateValues.priority}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
-        } else if (updateValues.category) {
-            await sql`UPDATE tickets SET category = ${updateValues.category}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
-        } else if (updateValues.status) {
-            await sql`UPDATE tickets SET status = ${updateValues.status}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
-        }
-        
-        return { success: true };
+        return { success: true, ticket: updatedTicket[0] };
     } catch (error) {
         console.error('Error updating ticket:', error);
         return { success: false, error: error.message };
