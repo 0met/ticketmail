@@ -1025,6 +1025,92 @@
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
         }
+
+        /* Role-based styles */
+        .role-hidden {
+            display: none !important;
+        }
+
+        /* Admin mode styles */
+        .admin-mode .admin-only {
+            display: block;
+        }
+
+        .admin-mode .nav-item[data-roles*="admin"] {
+            border-left: 3px solid #f59e0b;
+        }
+
+        /* Agent mode styles */
+        .agent-mode .agent-allowed {
+            display: block;
+        }
+
+        .agent-mode .nav-item[data-roles*="agent"] {
+            border-left: 3px solid #10b981;
+        }
+
+        /* Customer mode styles */
+        .customer-mode .customer-only {
+            display: block;
+        }
+
+        .customer-mode .nav-item[data-roles*="customer"] {
+            border-left: 3px solid #3b82f6;
+        }
+
+        /* Permission-based action buttons */
+        .admin-only {
+            display: none;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .agent-allowed {
+            display: none;
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .customer-only {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        /* Role indicators */
+        .user-dropdown-role {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            margin-top: 0.25rem;
+            font-weight: 600;
+        }
+
+        .user-dropdown-role[data-role="admin"] {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .user-dropdown-role[data-role="agent"] {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .user-dropdown-role[data-role="customer"] {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* Restricted access message */
+        .access-restricted {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin: 1rem;
+        }
+
+        .access-restricted h3 {
+            color: #ef4444;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -1115,25 +1201,37 @@
                 <h1>📧 TicketMail</h1>
             </div>
             <ul class="nav-menu">
-                <li class="nav-item">
+                <li class="nav-item" data-roles="admin,agent,customer">
                     <a href="#" class="nav-link active" data-page="dashboard">
                         <span class="nav-icon">📊</span>
                         Dashboard
                     </a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" data-roles="admin,agent">
                     <a href="#" class="nav-link" data-page="tickets">
                         <span class="nav-icon">🎫</span>
                         Tickets
                     </a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" data-roles="customer">
+                    <a href="#" class="nav-link" data-page="my-tickets">
+                        <span class="nav-icon">🎫</span>
+                        My Tickets
+                    </a>
+                </li>
+                <li class="nav-item" data-roles="admin,agent">
                     <a href="#" class="nav-link" data-page="analytics">
                         <span class="nav-icon">📈</span>
                         Analytics
                     </a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" data-roles="admin">
+                    <a href="#" class="nav-link" data-page="user-management">
+                        <span class="nav-icon">👥</span>
+                        User Management
+                    </a>
+                </li>
+                <li class="nav-item" data-roles="admin,agent,customer">
                     <a href="#" class="nav-link" data-page="settings">
                         <span class="nav-icon">⚙️</span>
                         Settings
@@ -1154,13 +1252,19 @@
                             <div class="user-dropdown-role" id="userRole">Loading...</div>
                         </div>
                         <div class="user-dropdown-menu">
-                            <button class="user-dropdown-item" onclick="openProfileSettings()">
+                            <button class="user-dropdown-item" onclick="openProfileSettings()" data-roles="admin,agent,customer">
                                 👤 Profile Settings
                             </button>
-                            <button class="user-dropdown-item" onclick="openUserManagement()" id="userManagementBtn" style="display: none;">
+                            <button class="user-dropdown-item" onclick="openUserManagement()" data-roles="admin">
                                 👥 User Management
                             </button>
-                            <button class="user-dropdown-item logout" onclick="logout()">
+                            <button class="user-dropdown-item" onclick="openSystemSettings()" data-roles="admin">
+                                �️ System Settings
+                            </button>
+                            <button class="user-dropdown-item" onclick="openReports()" data-roles="admin,agent">
+                                📊 Reports
+                            </button>
+                            <button class="user-dropdown-item logout" onclick="logout()" data-roles="admin,agent,customer">
                                 🚪 Sign Out
                             </button>
                         </div>
@@ -1617,6 +1721,65 @@
                     </div>
                 </div>
             </div>
+
+            <!-- My Tickets Page (Customer View) -->
+            <div id="my-tickets" class="page" data-roles="customer">
+                <div class="page-header">
+                    <h1 class="page-title">My Tickets</h1>
+                    <p class="page-subtitle">View and manage your support requests</p>
+                </div>
+
+                <div class="customer-actions" style="margin-bottom: 2rem;">
+                    <button class="btn btn-primary customer-only" onclick="createNewTicket()">
+                        ➕ Create New Ticket
+                    </button>
+                </div>
+
+                <div class="tickets-grid">
+                    <div id="customerTicketsList" class="tickets-list">
+                        <div style="text-align: center; padding: 3rem; color: #64748b;">
+                            <p>🎫 Your tickets will appear here</p>
+                            <p style="font-size: 0.9rem; margin-top: 1rem;">Create your first ticket to get started!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Management Page (Admin Only) -->
+            <div id="user-management" class="page" data-roles="admin">
+                <div class="page-header">
+                    <h1 class="page-title">User Management</h1>
+                    <p class="page-subtitle">Manage users, roles, and permissions</p>
+                </div>
+
+                <div class="admin-actions" style="margin-bottom: 2rem;">
+                    <button class="btn btn-primary admin-only" onclick="createNewUser()">
+                        👤 Add New User
+                    </button>
+                    <button class="btn btn-secondary admin-only" onclick="exportUsers()">
+                        📊 Export Users
+                    </button>
+                    <button class="btn btn-warning admin-only" onclick="auditUserActivity()">
+                        🔍 User Activity Log
+                    </button>
+                </div>
+
+                <div class="users-grid">
+                    <div id="usersList" class="users-table">
+                        <div style="text-align: center; padding: 3rem; color: #64748b;">
+                            <p>👥 User management interface coming soon!</p>
+                            <p style="font-size: 0.9rem; margin-top: 1rem;">This will show all users, their roles, and allow you to manage permissions.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Access Restricted Message for Non-Admins -->
+                <div class="access-restricted" style="display: none;">
+                    <h3>🔒 Access Restricted</h3>
+                    <p>You don't have permission to access the user management panel.</p>
+                    <p>Contact your administrator if you need access to manage users.</p>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -1830,12 +1993,118 @@
             document.getElementById('userInitials').textContent = initials;
             document.getElementById('userName').textContent = authState.user.fullName || 'User';
             document.getElementById('userEmail').textContent = authState.user.email;
-            document.getElementById('userRole').textContent = authState.user.role;
+            
+            const roleElement = document.getElementById('userRole');
+            const roleText = `${authState.user.role.charAt(0).toUpperCase() + authState.user.role.slice(1)}`;
+            roleElement.textContent = roleText;
+            roleElement.setAttribute('data-role', authState.user.role);
 
-            // Show/hide admin features
-            if (authState.user.role === 'admin' || authState.permissions.includes('manage_users')) {
-                document.getElementById('userManagementBtn').style.display = 'block';
+            // Apply role-based visibility
+            applyRoleBasedPermissions(authState.user.role);
+        }
+
+        // Apply role-based permissions throughout the UI
+        function applyRoleBasedPermissions(userRole) {
+            console.log('Applying permissions for role:', userRole);
+            
+            // Get all elements with data-roles attribute
+            const elementsWithRoles = document.querySelectorAll('[data-roles]');
+            
+            elementsWithRoles.forEach(element => {
+                const allowedRoles = element.getAttribute('data-roles').split(',');
+                if (allowedRoles.includes(userRole)) {
+                    element.style.display = '';
+                    element.classList.remove('role-hidden');
+                } else {
+                    element.style.display = 'none';
+                    element.classList.add('role-hidden');
+                }
+            });
+
+            // Role-specific customizations
+            switch(userRole) {
+                case 'admin':
+                    // Admins see everything, add special admin features
+                    document.body.classList.add('admin-mode');
+                    document.body.classList.remove('agent-mode', 'customer-mode');
+                    break;
+                    
+                case 'agent':
+                    // Agents see ticket management but not user management
+                    document.body.classList.add('agent-mode');
+                    document.body.classList.remove('admin-mode', 'customer-mode');
+                    break;
+                    
+                case 'customer':
+                    // Customers see limited view - only their tickets
+                    document.body.classList.add('customer-mode');
+                    document.body.classList.remove('admin-mode', 'agent-mode');
+                    // Redirect customers to "My Tickets" by default
+                    if (document.querySelector('.nav-link.active')?.getAttribute('data-page') === 'tickets') {
+                        showPage('my-tickets');
+                    }
+                    break;
             }
+
+            // Update available actions based on permissions
+            updateActionPermissions();
+        }
+
+        // Update action permissions (buttons, forms, etc.)
+        function updateActionPermissions() {
+            const userRole = authState.user?.role;
+            const permissions = authState.permissions || [];
+
+            // Admin actions
+            if (userRole === 'admin' || permissions.includes('admin_access')) {
+                enableAdminActions();
+            }
+
+            // Agent actions  
+            if (userRole === 'admin' || userRole === 'agent' || permissions.includes('ticket_management')) {
+                enableAgentActions();
+            }
+
+            // Customer actions
+            if (userRole === 'customer') {
+                enableCustomerActions();
+            }
+        }
+
+        function enableAdminActions() {
+            // Enable all admin-specific buttons and features
+            document.querySelectorAll('.admin-only').forEach(el => {
+                el.style.display = '';
+                el.disabled = false;
+            });
+        }
+
+        function enableAgentActions() {
+            // Enable agent-specific actions
+            document.querySelectorAll('.agent-allowed').forEach(el => {
+                el.style.display = '';
+                el.disabled = false;
+            });
+        }
+
+        function enableCustomerActions() {
+            // Enable only customer-safe actions
+            document.querySelectorAll('.customer-only').forEach(el => {
+                el.style.display = '';
+                el.disabled = false;
+            });
+        }
+
+        // Check if user has specific permission
+        function hasPermission(permission) {
+            if (!authState.user) return false;
+            if (authState.user.role === 'admin') return true; // Admins have all permissions
+            return authState.permissions.includes(permission);
+        }
+
+        // Show permission-based error messages
+        function showPermissionError(action) {
+            alert(`⚠️ You don't have permission to ${action}. Contact your administrator if you need access.`);
         }
 
         // User dropdown toggle
@@ -1880,14 +2149,76 @@
 
         // Profile settings (placeholder)
         function openProfileSettings() {
+            if (!hasPermission('user_management') && authState.user.role !== 'admin' && authState.user.role !== 'agent' && authState.user.role !== 'customer') {
+                showPermissionError('access profile settings');
+                return;
+            }
             alert('🚧 Profile settings coming soon!');
             document.getElementById('userDropdown').classList.remove('show');
         }
 
-        // User management (placeholder)
+        // User management (admin only)
         function openUserManagement() {
-            alert('🚧 User management panel coming soon!');
+            if (!hasPermission('user_management') && authState.user.role !== 'admin') {
+                showPermissionError('manage users');
+                return;
+            }
+            showPage('user-management');
             document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        // System settings (admin only)
+        function openSystemSettings() {
+            if (authState.user.role !== 'admin') {
+                showPermissionError('access system settings');
+                return;
+            }
+            alert('🚧 System settings panel coming soon!');
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        // Reports (admin and agent)
+        function openReports() {
+            if (!hasPermission('ticket_management') && authState.user.role !== 'admin' && authState.user.role !== 'agent') {
+                showPermissionError('view reports');
+                return;
+            }
+            alert('🚧 Reports dashboard coming soon!');
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        // Customer functions
+        function createNewTicket() {
+            if (authState.user.role !== 'customer') {
+                showPermissionError('create tickets as a customer');
+                return;
+            }
+            alert('🚧 Customer ticket creation coming soon!');
+        }
+
+        // Admin functions for user management
+        function createNewUser() {
+            if (authState.user.role !== 'admin') {
+                showPermissionError('create new users');
+                return;
+            }
+            alert('🚧 User creation form coming soon!');
+        }
+
+        function exportUsers() {
+            if (authState.user.role !== 'admin') {
+                showPermissionError('export user data');
+                return;
+            }
+            alert('🚧 User export functionality coming soon!');
+        }
+
+        function auditUserActivity() {
+            if (authState.user.role !== 'admin') {
+                showPermissionError('view user activity logs');
+                return;
+            }
+            alert('🚧 User activity audit coming soon!');
         }
 
         // Database setup functions
