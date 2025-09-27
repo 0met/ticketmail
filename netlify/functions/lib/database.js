@@ -227,7 +227,8 @@ async function getTickets(limit = 100) {
         
         const result = await sql`
             SELECT id, subject, from_email, to_email, body_text, status, received_at, created_at, updated_at,
-                   ticket_number, priority, category, resolution_time, closed_at, is_manual, source
+                   ticket_number, priority, category, resolution_time, closed_at, is_manual, source,
+                   customer_name, customer_id, customer_phone, customer_email
             FROM tickets 
             ORDER BY received_at DESC 
             LIMIT ${limit}
@@ -250,10 +251,10 @@ async function getTickets(limit = 100) {
             closedAt: ticket.closed_at,
             isManual: ticket.is_manual || false,
             source: ticket.source || 'email',
-            customerName: null, // Will be null until database is migrated
-            customerId: null,
-            customerPhone: null,
-            customerEmail: ticket.from_email // Use from_email as fallback
+            customerName: ticket.customer_name || null,
+            customerId: ticket.customer_id || null,
+            customerPhone: ticket.customer_phone || null,
+            customerEmail: ticket.customer_email || ticket.from_email // Use from_email as fallback
         }));
     } catch (error) {
         console.error('Error getting tickets:', error);
