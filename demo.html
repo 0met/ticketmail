@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMail - Demo Mode</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .demo-container {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 1rem;
+        }
+        
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .status-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .status-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .status-list {
+            text-align: left;
+            color: #6b7280;
+            line-height: 1.8;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .status-item.success {
+            color: #065f46;
+        }
+        
+        .status-item.error {
+            color: #991b1b;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 0.5rem;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .info-box {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="logo">📧</div>
+        <h1 class="title">TicketMail System</h1>
+        <p class="subtitle">
+            Your email-based ticket management system is being set up. 
+            The authentication system is ready for deployment!
+        </p>
+        
+        <div class="status-card">
+            <h3 class="status-title">🚀 System Status</h3>
+            <div class="status-list">
+                <div class="status-item success">✅ HTML Interface - Ready</div>
+                <div class="status-item success">✅ Authentication Module - Created</div>
+                <div class="status-item success">✅ Database Schema - Designed</div>
+                <div class="status-item success">✅ API Endpoints - Implemented</div>
+                <div class="status-item error">⚠️ Netlify Functions - Need restart</div>
+                <div class="status-item error">⚠️ Database Setup - Pending</div>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h4 style="margin-top: 0;">🛠️ Next Steps</h4>
+            <p style="margin: 0;">
+                <strong>For full functionality:</strong><br>
+                1. Restart the Netlify dev server<br>
+                2. Run database setup<br>
+                3. Create admin user<br>
+                4. Access the full authenticated system
+            </p>
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <a href="index.html" class="btn">🔄 Try Main App</a>
+            <a href="#" onclick="showTechnicalInfo()" class="btn btn-secondary">🔧 Technical Details</a>
+        </div>
+        
+        <div id="technicalInfo" style="display: none; margin-top: 2rem; text-align: left; background: #f9fafb; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem;">
+            <strong>Authentication System Overview:</strong><br><br>
+            
+            <strong>📁 File Structure:</strong><br>
+            ├── index.html (Main application with login)<br>
+            ├── netlify/functions/<br>
+            │   ├── auth-login.js (User login endpoint)<br>
+            │   ├── auth-register.js (User registration)<br>
+            │   ├── auth-validate.js (Session validation)<br>
+            │   ├── auth-logout.js (Logout endpoint)<br>
+            │   ├── create-admin-user.js (Default admin)<br>
+            │   ├── setup-user-management.js (DB setup)<br>
+            │   └── lib/auth.js (Core auth module)<br><br>
+            
+            <strong>🔐 Features Implemented:</strong><br>
+            • bcrypt password hashing<br>
+            • Session-based authentication<br>
+            • Role-based permissions<br>
+            • User registration/login forms<br>
+            • Automatic session restoration<br>
+            • CORS configuration<br><br>
+            
+            <strong>🎯 Default Admin Credentials:</strong><br>
+            Email: admin@ticketmail.com<br>
+            Password: admin123456<br><br>
+            
+            <strong>📊 Database Tables:</strong><br>
+            • users (user accounts & roles)<br>
+            • user_sessions (authentication sessions)<br>
+            • permissions (role permissions)<br>
+            • role_permissions (permission mappings)<br>
+            • activity_log (audit trail)
+        </div>
+    </div>
+    
+    <script>
+        function showTechnicalInfo() {
+            const info = document.getElementById('technicalInfo');
+            info.style.display = info.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // Check if Netlify functions are accessible
+        fetch('/.netlify/functions/auth-test')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.querySelector('.status-item.error').innerHTML = '✅ Netlify Functions - Working';
+                    document.querySelector('.status-item.error').className = 'status-item success';
+                }
+            })
+            .catch(() => {
+                // Functions not available, show static server mode
+                console.log('Netlify functions not available - running in static mode');
+            });
+    </script>
+</body>
+</html>

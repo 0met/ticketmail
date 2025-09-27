@@ -1,5 +1,9 @@
-const { getDatabase } = require('./lib/database');
+const { neon } = require('@neondatabase/serverless');
 const bcrypt = require('bcryptjs');
+
+function getDatabase() {
+    return neon(process.env.DATABASE_URL);
+}
 const crypto = require('crypto');
 
 // Helper function to generate session token
@@ -163,12 +167,25 @@ async function logActivity(userId, ticketId, action, details, ipAddress) {
     `;
 }
 
+async function invalidateSession(sessionToken) {
+    const sql = getDatabase();
+    
+    await sql`
+        UPDATE user_sessions 
+        SET revoked_at = NOW() 
+        WHERE token = ${sessionToken}
+    `;
+    
+    return true;
+}
+
 module.exports = {
     createUser,
     authenticateUser,
     validateSession,
     getUserPermissions,
     logActivity,
+    invalidateSession,
     hashPassword,
     verifyPassword
 };

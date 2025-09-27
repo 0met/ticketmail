@@ -728,10 +728,388 @@
             font-weight: 600;
             color: #374151;
         }
+
+        /* Login modal styles */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .login-modal {
+            background: white;
+            border-radius: 16px;
+            padding: 2.5rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        .form-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 2rem;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 0.25rem;
+        }
+
+        .form-tab {
+            flex: 1;
+            padding: 0.75rem;
+            text-align: center;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #64748b;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .form-tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-field {
+            position: relative;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-field input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            background: #fafbfc;
+        }
+
+        .form-field input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-field select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #fafbfc;
+            cursor: pointer;
+        }
+
+        .form-field select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .login-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .user-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            min-width: 200px;
+            z-index: 100;
+            display: none;
+            margin-top: 0.5rem;
+        }
+
+        .user-dropdown.show {
+            display: block;
+            animation: dropdownSlide 0.2s ease-out;
+        }
+
+        @keyframes dropdownSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-dropdown-header {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .user-dropdown-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+        }
+
+        .user-dropdown-email {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .user-dropdown-role {
+            font-size: 0.75rem;
+            color: #667eea;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .user-dropdown-menu {
+            padding: 0.5rem 0;
+        }
+
+        .user-dropdown-item {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: #374151;
+            text-decoration: none;
+            transition: background 0.2s ease;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .user-dropdown-item:hover {
+            background: #f9fafb;
+        }
+
+        .user-dropdown-item.logout {
+            color: #dc2626;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 0.5rem;
+        }
+
+        .auth-required {
+            display: none;
+        }
+
+        .auth-not-required {
+            display: block;
+        }
+
+        .sidebar .user-info {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            right: 1rem;
+        }
+
+        .setup-result {
+            margin-top: 0.5rem;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-tab.setup {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login/Register Overlay -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-modal">
+            <div class="login-header">
+                <h2 class="login-title">Welcome to TicketMail</h2>
+                <p class="login-subtitle">Access your ticket management system</p>
+            </div>
+
+            <div class="form-tabs">
+                <button class="form-tab active" data-tab="login">Sign In</button>
+                <button class="form-tab" data-tab="register">Sign Up</button>
+                <button class="form-tab" data-tab="setup">Setup</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="login-form">
+                <div class="form-field">
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" required placeholder="Enter your email">
+                </div>
+                <div class="form-field">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter your password">
+                </div>
+                <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="login-form" style="display: none;">
+                <div class="form-field">
+                    <label for="registerFullName">Full Name</label>
+                    <input type="text" id="registerFullName" required placeholder="Enter your full name">
+                </div>
+                <div class="form-field">
+                    <label for="registerEmail">Email Address</label>
+                    <input type="email" id="registerEmail" required placeholder="Enter your email">
+                </div>
+                <div class="form-field">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" required placeholder="Create a password (min. 8 chars)">
+                </div>
+                <div class="form-field">
+                    <label for="registerRole">Role</label>
+                    <select id="registerRole" required>
+                        <option value="agent">Support Agent</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="registerPhone">Phone Number (Optional)</label>
+                    <input type="tel" id="registerPhone" placeholder="Enter your phone number">
+                </div>
+                <button type="submit" class="login-btn" id="registerBtn">Create Account</button>
+            </form>
+
+            <!-- Database Setup Section -->
+            <div id="setupSection" class="login-form" style="display: none; gap: 1rem;">
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <h3 style="color: #667eea; margin-bottom: 0.5rem;">🛠️ Database Setup</h3>
+                    <p style="font-size: 0.9rem; color: #64748b;">Initialize the authentication system</p>
+                </div>
+                
+                <button type="button" class="login-btn" onclick="setupDatabase()" style="background: #10b981;">
+                    Create Database Tables
+                </button>
+                
+                <button type="button" class="login-btn" onclick="createAdminUser()" style="background: #f59e0b;">
+                    Create Admin User
+                </button>
+                
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 6px; font-size: 0.85rem; color: #374151;">
+                    <strong>Default Admin Credentials:</strong><br>
+                    Email: admin@ticketmail.com<br>
+                    Password: admin123456
+                </div>
+                
+                <div id="setupResults" style="margin-top: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container auth-required">
         <nav class="sidebar">
             <div class="logo">
                 <h1>📧 TicketMail</h1>
@@ -762,6 +1140,33 @@
                     </a>
                 </li>
             </ul>
+            
+            <!-- User Info Section -->
+            <div class="user-info">
+                <div class="user-menu">
+                    <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
+                        <span id="userInitials">?</span>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-dropdown-header">
+                            <div class="user-dropdown-name" id="userName">Loading...</div>
+                            <div class="user-dropdown-email" id="userEmail">Loading...</div>
+                            <div class="user-dropdown-role" id="userRole">Loading...</div>
+                        </div>
+                        <div class="user-dropdown-menu">
+                            <button class="user-dropdown-item" onclick="openProfileSettings()">
+                                👤 Profile Settings
+                            </button>
+                            <button class="user-dropdown-item" onclick="openUserManagement()" id="userManagementBtn" style="display: none;">
+                                👥 User Management
+                            </button>
+                            <button class="user-dropdown-item logout" onclick="logout()">
+                                🚪 Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </nav>
 
         <main class="main-content">
@@ -1216,6 +1621,325 @@
     </div>
 
     <script>
+        // Authentication State
+        let authState = {
+            isAuthenticated: false,
+            user: null,
+            sessionToken: null,
+            permissions: []
+        };
+
+        // Initialize authentication on page load
+        async function initAuth() {
+            const storedToken = localStorage.getItem('ticketmail_session');
+            if (storedToken) {
+                try {
+                    const response = await fetch('/.netlify/functions/auth-validate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionToken: storedToken })
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        authState.isAuthenticated = true;
+                        authState.user = result.user;
+                        authState.sessionToken = storedToken;
+                        authState.permissions = result.permissions;
+                        updateUIForAuthentication();
+                        return true;
+                    } else {
+                        localStorage.removeItem('ticketmail_session');
+                    }
+                } catch (error) {
+                    console.error('Auth validation failed:', error);
+                    localStorage.removeItem('ticketmail_session');
+                }
+            }
+            
+            showLoginOverlay();
+            return false;
+        }
+
+        // Show/hide login overlay
+        function showLoginOverlay() {
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.querySelector('.auth-required').style.display = 'none';
+        }
+
+        function hideLoginOverlay() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.querySelector('.auth-required').style.display = 'flex';
+        }
+
+        // Tab switching in login modal
+        function initLoginTabs() {
+            const tabs = document.querySelectorAll('.form-tab');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const setupSection = document.getElementById('setupSection');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    // Hide all sections first
+                    loginForm.style.display = 'none';
+                    registerForm.style.display = 'none';
+                    setupSection.style.display = 'none';
+
+                    if (tab.dataset.tab === 'login') {
+                        loginForm.style.display = 'flex';
+                    } else if (tab.dataset.tab === 'register') {
+                        registerForm.style.display = 'flex';
+                    } else if (tab.dataset.tab === 'setup') {
+                        setupSection.style.display = 'flex';
+                    }
+                });
+            });
+        }
+
+        // Login form handler
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const loginBtn = document.getElementById('loginBtn');
+            const originalText = loginBtn.textContent;
+            loginBtn.textContent = 'Signing in...';
+            loginBtn.disabled = true;
+
+            try {
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+
+                const response = await fetch('/.netlify/functions/auth-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    authState.isAuthenticated = true;
+                    authState.user = result.user;
+                    authState.sessionToken = result.sessionToken;
+                    
+                    localStorage.setItem('ticketmail_session', result.sessionToken);
+                    
+                    // Get user permissions
+                    await loadUserPermissions();
+                    
+                    updateUIForAuthentication();
+                    hideLoginOverlay();
+                    
+                    // Initialize app after successful login
+                    init();
+                } else {
+                    alert('❌ ' + result.error);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('❌ Network error. Please try again.');
+            } finally {
+                loginBtn.textContent = originalText;
+                loginBtn.disabled = false;
+            }
+        }
+
+        // Register form handler
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const registerBtn = document.getElementById('registerBtn');
+            const originalText = registerBtn.textContent;
+            registerBtn.textContent = 'Creating account...';
+            registerBtn.disabled = true;
+
+            try {
+                const formData = {
+                    fullName: document.getElementById('registerFullName').value,
+                    email: document.getElementById('registerEmail').value,
+                    password: document.getElementById('registerPassword').value,
+                    role: document.getElementById('registerRole').value,
+                    phone: document.getElementById('registerPhone').value
+                };
+
+                const response = await fetch('/.netlify/functions/auth-register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ Account created successfully! Please sign in.');
+                    
+                    // Switch to login tab
+                    document.querySelector('.form-tab[data-tab="login"]').click();
+                    
+                    // Clear forms
+                    document.getElementById('registerForm').reset();
+                    document.getElementById('loginForm').reset();
+                    
+                    // Pre-fill login email
+                    document.getElementById('loginEmail').value = formData.email;
+                } else {
+                    alert('❌ ' + result.error);
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('❌ Network error. Please try again.');
+            } finally {
+                registerBtn.textContent = originalText;
+                registerBtn.disabled = false;
+            }
+        }
+
+        // Load user permissions
+        async function loadUserPermissions() {
+            if (!authState.sessionToken) return;
+
+            try {
+                const response = await fetch('/.netlify/functions/auth-validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: authState.sessionToken })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    authState.permissions = result.permissions || [];
+                }
+            } catch (error) {
+                console.error('Error loading permissions:', error);
+            }
+        }
+
+        // Update UI for authenticated state
+        function updateUIForAuthentication() {
+            if (!authState.user) return;
+
+            // Update user info in sidebar
+            const initials = authState.user.fullName 
+                ? authState.user.fullName.split(' ').map(n => n[0]).join('').toUpperCase()
+                : authState.user.email[0].toUpperCase();
+            
+            document.getElementById('userInitials').textContent = initials;
+            document.getElementById('userName').textContent = authState.user.fullName || 'User';
+            document.getElementById('userEmail').textContent = authState.user.email;
+            document.getElementById('userRole').textContent = authState.user.role;
+
+            // Show/hide admin features
+            if (authState.user.role === 'admin' || authState.permissions.includes('manage_users')) {
+                document.getElementById('userManagementBtn').style.display = 'block';
+            }
+        }
+
+        // User dropdown toggle
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.querySelector('.user-menu');
+            if (!userMenu.contains(event.target)) {
+                document.getElementById('userDropdown').classList.remove('show');
+            }
+        });
+
+        // Logout function
+        async function logout() {
+            try {
+                if (authState.sessionToken) {
+                    await fetch('/.netlify/functions/auth-logout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionToken: authState.sessionToken })
+                    });
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            } finally {
+                // Clear local state
+                authState.isAuthenticated = false;
+                authState.user = null;
+                authState.sessionToken = null;
+                authState.permissions = [];
+                
+                localStorage.removeItem('ticketmail_session');
+                
+                // Show login overlay
+                showLoginOverlay();
+            }
+        }
+
+        // Profile settings (placeholder)
+        function openProfileSettings() {
+            alert('🚧 Profile settings coming soon!');
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        // User management (placeholder)
+        function openUserManagement() {
+            alert('🚧 User management panel coming soon!');
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        // Database setup functions
+        async function setupDatabase() {
+            const resultsDiv = document.getElementById('setupResults');
+            resultsDiv.innerHTML = '<div style="color: #0369a1; padding: 0.5rem; background: #dbeafe; border-radius: 4px;">Setting up database tables...</div>';
+            
+            try {
+                const response = await fetch('/.netlify/functions/setup-user-management', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultsDiv.innerHTML = '<div style="color: #065f46; padding: 0.5rem; background: #d1fae5; border-radius: 4px;">✅ Database tables created successfully!</div>';
+                } else {
+                    resultsDiv.innerHTML = '<div style="color: #991b1b; padding: 0.5rem; background: #fee2e2; border-radius: 4px;">❌ Error: ' + result.error + '</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div style="color: #991b1b; padding: 0.5rem; background: #fee2e2; border-radius: 4px;">❌ Network Error: ' + error.message + '</div>';
+            }
+        }
+
+        async function createAdminUser() {
+            const resultsDiv = document.getElementById('setupResults');
+            resultsDiv.innerHTML = '<div style="color: #0369a1; padding: 0.5rem; background: #dbeafe; border-radius: 4px;">Creating admin user...</div>';
+            
+            try {
+                const response = await fetch('/.netlify/functions/create-admin-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultsDiv.innerHTML = '<div style="color: #065f46; padding: 0.5rem; background: #d1fae5; border-radius: 4px;">✅ Admin user created! You can now sign in with the credentials above.</div>';
+                } else {
+                    if (result.error && result.error.includes('already exists')) {
+                        resultsDiv.innerHTML = '<div style="color: #0369a1; padding: 0.5rem; background: #dbeafe; border-radius: 4px;">ℹ️ Admin user already exists. You can sign in with the credentials above.</div>';
+                    } else {
+                        resultsDiv.innerHTML = '<div style="color: #991b1b; padding: 0.5rem; background: #fee2e2; border-radius: 4px;">❌ Error: ' + result.error + '</div>';
+                    }
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div style="color: #991b1b; padding: 0.5rem; background: #fee2e2; border-radius: 4px;">❌ Network Error: ' + error.message + '</div>';
+            }
+        }
+
         // Application State
         let appState = {
             tickets: [],
@@ -1819,6 +2543,12 @@
 
         // Initialize application
         async function init() {
+            // Only initialize if authenticated
+            if (!authState.isAuthenticated) {
+                const authSuccess = await initAuth();
+                if (!authSuccess) return;
+            }
+
             loadSettings();
             updateConnectionStatus();
             initNavigation();
@@ -2663,7 +3393,21 @@
         });
 
         // Start the application
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Initialize login tabs and form handlers
+            initLoginTabs();
+            
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            
+            // Try to authenticate first
+            const authSuccess = await initAuth();
+            
+            // Only initialize main app if authenticated
+            if (authSuccess) {
+                init();
+            }
+        });
     </script>
 </body>
 </html>

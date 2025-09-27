@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0",
+    "bcryptjs": "^2.4.3",
     "crypto-js": "^4.2.0",
     "imap": "^0.8.19",
     "mailparser": "^3.6.5",
