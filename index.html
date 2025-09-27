@@ -1878,16 +1878,26 @@
             document.getElementById('ticketCategoryDropdown').value = currentTicket.category || 'general';
 
             // Auto-populate customer information from database first, fallback to email parsing
-            const customerEmail = currentTicket.customer_email || currentTicket.from_email || '';
-            const customerName = currentTicket.customer_name || extractNameFromEmail(currentTicket.from_email) || '';
-            const customerId = currentTicket.customer_id || '';
-            const customerPhone = currentTicket.customer_phone || '';
+            const customerEmail = currentTicket.customer_email || currentTicket.customerEmail || currentTicket.from_email || '';
+            const customerName = currentTicket.customer_name || currentTicket.customerName || extractNameFromEmail(currentTicket.from_email) || '';
+            const customerId = currentTicket.customer_id || currentTicket.customerId || '';
+            const customerPhone = currentTicket.customer_phone || currentTicket.customerPhone || '';
             
-            console.log('🏷️  Populating customer fields:', {
+            console.log('🏷️  Populating customer fields (with fallbacks):', {
                 customerEmail,
                 customerName,
                 customerId,
-                customerPhone
+                customerPhone,
+                rawTicketData: {
+                    customer_email: currentTicket.customer_email,
+                    customerEmail: currentTicket.customerEmail,
+                    customer_name: currentTicket.customer_name,
+                    customerName: currentTicket.customerName,
+                    customer_id: currentTicket.customer_id,
+                    customerId: currentTicket.customerId,
+                    customer_phone: currentTicket.customer_phone,
+                    customerPhone: currentTicket.customerPhone
+                }
             });
             
             // Check if elements exist before setting values
