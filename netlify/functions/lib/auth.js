@@ -30,11 +30,10 @@ async function createUser(userData) {
     
     // Create user
     const user = await sql`
-        INSERT INTO users (email, password_hash, full_name, role, phone, timezone)
+        INSERT INTO users (email, password_hash, full_name, role)
         VALUES (${userData.email}, ${passwordHash}, ${userData.fullName}, 
-                ${userData.role || 'agent'}, ${userData.phone || null}, 
-                ${userData.timezone || 'America/New_York'})
-        RETURNING id, email, full_name, role, status, created_at
+                ${userData.role || 'customer'})
+        RETURNING id, email, full_name, role, is_active, created_at
     `;
     
     return user[0];
@@ -45,7 +44,7 @@ async function authenticateUser(email, password) {
     
     // Get user with password
     const users = await sql`
-        SELECT id, email, password_hash, full_name, role, status, login_attempts, locked_until
+        SELECT id, email, password_hash, full_name, role, is_active
         FROM users 
         WHERE email = ${email}
     `;
@@ -56,13 +55,8 @@ async function authenticateUser(email, password) {
     
     const user = users[0];
     
-    // Check if account is locked
-    if (user.locked_until && new Date() < new Date(user.locked_until)) {
-        return { success: false, error: 'Account temporarily locked due to too many failed attempts' };
-    }
-    
     // Check if account is active
-    if (user.status !== 'active') {
+    if (!user.is_active) {
         return { success: false, error: 'Account is not active' };
     }
     
@@ -70,24 +64,13 @@ async function authenticateUser(email, password) {
     const isValidPassword = await verifyPassword(password, user.password_hash);
     
     if (!isValidPassword) {
-        // Increment login attempts
-        const attempts = (user.login_attempts || 0) + 1;
-        const lockUntil = attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null; // Lock for 15 minutes
-        
-        await sql`
-            UPDATE users 
-            SET login_attempts = ${attempts}, 
-                locked_until = ${lockUntil}
-            WHERE id = ${user.id}
-        `;
-        
         return { success: false, error: 'Invalid credentials' };
     }
     
-    // Reset login attempts and update last login
+    // Update last login
     await sql`
         UPDATE users 
-        SET login_attempts = 0, locked_until = NULL, last_login = CURRENT_TIMESTAMP
+        SET last_login = CURRENT_TIMESTAMP
         WHERE id = ${user.id}
     `;
     
@@ -96,7 +79,7 @@ async function authenticateUser(email, password) {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     
     await sql`
-        INSERT INTO user_sessions (user_id, session_token, expires_at)
+        INSERT INTO sessions (user_id, session_token, expires_at)
         VALUES (${user.id}, ${sessionToken}, ${expiresAt})
     `;
     
@@ -117,8 +100,8 @@ async function validateSession(sessionToken) {
     const sql = getDatabase();
     
     const sessions = await sql`
-        SELECT s.user_id, s.expires_at, u.email, u.full_name, u.role, u.status
-        FROM user_sessions s
+        SELECT s.user_id, s.expires_at, u.email, u.full_name, u.role, u.is_active
+        FROM sessions s
         JOIN users u ON s.user_id = u.id
         WHERE s.session_token = ${sessionToken} AND s.expires_at > CURRENT_TIMESTAMP
     `;
@@ -129,7 +112,7 @@ async function validateSession(sessionToken) {
     
     const session = sessions[0];
     
-    if (session.status !== 'active') {
+    if (!session.is_active) {
         return { valid: false, error: 'User account is not active' };
     }
     
@@ -148,22 +131,20 @@ async function getUserPermissions(userId) {
     const sql = getDatabase();
     
     const permissions = await sql`
-        SELECT DISTINCT p.name, p.resource, p.action
-        FROM users u
-        JOIN role_permissions rp ON u.role = rp.role
-        JOIN permissions p ON rp.permission_id = p.id
-        WHERE u.id = ${userId}
+        SELECT permission_type
+        FROM permissions
+        WHERE user_id = ${userId}
     `;
     
-    return permissions.map(p => p.name);
+    return permissions.map(p => p.permission_type);
 }
 
-async function logActivity(userId, ticketId, action, details, ipAddress) {
+async function logActivity(userId, action, resourceType, details, ipAddress) {
     const sql = getDatabase();
     
     await sql`
-        INSERT INTO activity_log (user_id, ticket_id, action, details, ip_address)
-        VALUES (${userId}, ${ticketId}, ${action}, ${details ? JSON.stringify(details) : null}, ${ipAddress})
+        INSERT INTO activity_log (user_id, action, resource_type, details, ip_address)
+        VALUES (${userId}, ${action}, ${resourceType}, ${details ? JSON.stringify(details) : null}, ${ipAddress})
     `;
 }
 

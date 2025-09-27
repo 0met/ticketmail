@@ -69,7 +69,7 @@ exports.handler = async (event, context) => {
         const user = await createUser({ email, password, fullName, role, phone, timezone });
 
         // Log user creation
-        await logActivity(user.id, null, 'user_created', { role, created_by: 'self' }, event.headers['x-forwarded-for'] || event.headers['x-real-ip']);
+        await logActivity(user.id, 'user_created', 'user', { role, created_by: 'self' }, event.headers['x-forwarded-for'] || event.headers['x-real-ip']);
 
         return {
             statusCode: 201,

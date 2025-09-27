@@ -45,7 +45,7 @@ exports.handler = async (event, context) => {
 
         if (result.success) {
             // Log successful login
-            await logActivity(result.user.id, null, 'login', { ip: event.headers['x-forwarded-for'] || event.headers['x-real-ip'] }, event.headers['x-forwarded-for'] || event.headers['x-real-ip']);
+            await logActivity(result.user.id, 'login', 'auth', { ip: event.headers['x-forwarded-for'] || event.headers['x-real-ip'] }, event.headers['x-forwarded-for'] || event.headers['x-real-ip']);
 
             return {
                 statusCode: 200,
