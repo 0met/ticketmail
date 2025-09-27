@@ -1584,6 +1584,22 @@
                 if (result.success) {
                     console.log('📊 Tickets loaded from database. Comparing with current state...');
                     
+                    // Debug: Check if any tickets have customer data
+                    console.log('🔍 DEBUGGING: First few tickets from database:', JSON.stringify(
+                        result.tickets.slice(0, 3).map(t => ({
+                            id: t.id.substring(0, 8) + '...',
+                            subject: t.subject.substring(0, 20) + '...',
+                            customerName: t.customerName,
+                            customer_name: t.customer_name,
+                            customerId: t.customerId,
+                            customer_id: t.customer_id,
+                            customerPhone: t.customerPhone,
+                            customer_phone: t.customer_phone,
+                            customerEmail: t.customerEmail,
+                            customer_email: t.customer_email
+                        })), null, 2
+                    ));
+                    
                     // Log current state before overwriting
                     if (currentTicket) {
                         console.log('Current ticket before reload:', JSON.stringify({
