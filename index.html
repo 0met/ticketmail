@@ -1568,7 +1568,9 @@
             try {
                 console.log('Loading tickets from database...');
                 
-                const response = await fetch('/.netlify/functions/tickets-load', {
+                // Add cache-busting parameter to force fresh data
+                const cacheParam = Date.now();
+                const response = await fetch(`/.netlify/functions/tickets-load?cache=${cacheParam}`, {
                     method: 'GET'
                 });
                 
