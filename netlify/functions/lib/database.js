@@ -234,7 +234,9 @@ async function getTickets(limit = 100) {
             LIMIT ${limit}
         `;
         
-        return result.map(ticket => ({
+        console.log('🔍 Raw database result (first ticket):', JSON.stringify(result[0], null, 2));
+        
+        const mappedTickets = result.map(ticket => ({
             id: ticket.id,
             ticketNumber: ticket.ticket_number,
             subject: ticket.subject,
@@ -256,6 +258,10 @@ async function getTickets(limit = 100) {
             customerPhone: ticket.customer_phone || null,
             customerEmail: ticket.customer_email || ticket.from_email // Use from_email as fallback
         }));
+        
+        console.log('🎯 Mapped ticket (first ticket):', JSON.stringify(mappedTickets[0], null, 2));
+        
+        return mappedTickets;
     } catch (error) {
         console.error('Error getting tickets:', error);
         throw error;
