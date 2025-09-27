@@ -1603,6 +1603,20 @@
                         category: t.category
                     })));
                     
+                    // Log customer field data for debugging
+                    const ticketsWithCustomerData = appState.tickets.filter(t => t.customer_name || t.customer_id || t.customer_phone);
+                    if (ticketsWithCustomerData.length > 0) {
+                        console.log('📋 Tickets with customer data loaded:', ticketsWithCustomerData.map(t => ({
+                            id: t.id.substring(0, 8) + '...',
+                            customer_name: t.customer_name,
+                            customer_id: t.customer_id,
+                            customer_phone: t.customer_phone,
+                            customer_email: t.customer_email
+                        })));
+                    } else {
+                        console.warn('⚠️  No tickets with customer data found in database load');
+                    }
+                    
                     // Update currentTicket if it exists
                     if (currentTicket) {
                         const updatedTicket = appState.tickets.find(t => t.id === currentTicket.id);
@@ -1994,6 +2008,12 @@
                     priority: currentTicket.priority,
                     category: currentTicket.category
                 }, null, 2));
+                console.log('🔄 Customer field values being saved:', {
+                    customerName: updates.customerName,
+                    customerId: updates.customerId,
+                    customerPhone: updates.customerPhone,
+                    customerEmail: updates.customerEmail
+                });
 
                 // Use the existing updateTicket function
                 const response = await fetch('/.netlify/functions/update-ticket', {
@@ -2008,6 +2028,16 @@
                 console.log('Update response status:', response.status);
                 const result = await response.json();
                 console.log('Update result:', JSON.stringify(result, null, 2));
+                if (result.ticket && result.ticket.customer_name) {
+                    console.log('✅ Database confirmed customer fields saved:', {
+                        customer_name: result.ticket.customer_name,
+                        customer_id: result.ticket.customer_id,
+                        customer_phone: result.ticket.customer_phone,
+                        customer_email: result.ticket.customer_email
+                    });
+                } else {
+                    console.warn('⚠️  Database response missing customer fields');
+                }
                 
                 if (result.success) {
                     console.log('✅ Backend confirmed ticket update successful');
