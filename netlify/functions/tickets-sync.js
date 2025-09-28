@@ -273,7 +273,7 @@ exports.handler = async (event, context) => {
         console.log('Settings retrieved:', settings ? 'Found' : 'Not found');
         
         if (!settings) {
-            console.log('No settings found, returning error');
+            console.log('No settings found in database - likely not configured yet');
             return {
                 statusCode: 400,
                 headers: {
@@ -282,7 +282,8 @@ exports.handler = async (event, context) => {
                 },
                 body: JSON.stringify({
                     success: false,
-                    error: 'No Gmail settings found. Please configure your settings first.'
+                    error: 'Gmail settings not found in database. Please save your Gmail settings first.',
+                    hint: 'Go to Settings page and click "Save Settings" to store your Gmail configuration in the database.'
                 })
             };
         }
