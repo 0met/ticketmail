@@ -1195,7 +1195,81 @@
         </div>
     </div>
 
-    <div class="container auth-required">
+    <!-- User Creation Modal -->
+    <div id="userCreationOverlay" class="login-overlay" style="display: none;">
+        <div class="login-modal" style="max-width: 500px;">
+            <div class="login-header">
+                <h2 class="login-title">👤 Create New User</h2>
+                <p class="login-subtitle">Add a new user to the system</p>
+            </div>
+
+            <form id="userCreationForm" class="login-form">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="newUserFirstName" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">First Name</label>
+                        <input type="text" id="newUserFirstName" name="firstName" required
+                               style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div class="form-group">
+                        <label for="newUserLastName" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Last Name</label>
+                        <input type="text" id="newUserLastName" name="lastName" required
+                               style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="newUserEmail" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Email Address</label>
+                    <input type="email" id="newUserEmail" name="email" required
+                           style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;"
+                           placeholder="user@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="newUserPassword" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Password</label>
+                    <input type="password" id="newUserPassword" name="password" required
+                           style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;"
+                           placeholder="Minimum 8 characters" minlength="8">
+                </div>
+
+                <div class="form-group">
+                    <label for="newUserRole" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Role</label>
+                    <select id="newUserRole" name="role" required
+                            style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                        <option value="">Select a role...</option>
+                        <option value="admin">🛡️ Admin - Full system access</option>
+                        <option value="agent">👨‍💼 Agent - Handle tickets and customers</option>
+                        <option value="customer">👤 Customer - Create and manage own tickets</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="newUserActive" name="isActive" checked
+                               style="width: 1rem; height: 1rem;">
+                        <span style="color: #374151; font-weight: 600;">User is active</span>
+                    </label>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
+                        Inactive users cannot login to the system
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" onclick="closeUserCreationModal()" 
+                            style="flex: 1; padding: 0.75rem; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            style="flex: 2; padding: 0.75rem; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">
+                        👤 Create User
+                    </button>
+                </div>
+            </form>
+
+            <div id="userCreationResults" style="margin-top: 1rem;"></div>
+        </div>
+    </div>
+
+    <div class="container auth-required"
         <nav class="sidebar">
             <div class="logo">
                 <h1>📧 TicketMail</h1>
@@ -1765,10 +1839,53 @@
                 </div>
 
                 <div class="users-grid">
-                    <div id="usersList" class="users-table">
-                        <div style="text-align: center; padding: 3rem; color: #64748b;">
-                            <p>👥 User management interface coming soon!</p>
-                            <p style="font-size: 0.9rem; margin-top: 1rem;">This will show all users, their roles, and allow you to manage permissions.</p>
+                    <!-- User Statistics Cards -->
+                    <div class="stats-grid" style="margin-bottom: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div class="stat-card" style="background: #3b82f6; color: white;">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-value" id="totalUsersCount">-</div>
+                            <div class="stat-label">Total Users</div>
+                        </div>
+                        <div class="stat-card" style="background: #10b981; color: white;">
+                            <div class="stat-icon">🛡️</div>
+                            <div class="stat-value" id="adminUsersCount">-</div>
+                            <div class="stat-label">Admins</div>
+                        </div>
+                        <div class="stat-card" style="background: #f59e0b; color: white;">
+                            <div class="stat-icon">👨‍💼</div>
+                            <div class="stat-value" id="agentUsersCount">-</div>
+                            <div class="stat-label">Agents</div>
+                        </div>
+                        <div class="stat-card" style="background: #8b5cf6; color: white;">
+                            <div class="stat-icon">�</div>
+                            <div class="stat-value" id="customerUsersCount">-</div>
+                            <div class="stat-label">Customers</div>
+                        </div>
+                    </div>
+
+                    <!-- User List Table -->
+                    <div id="usersList" class="users-table" style="background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
+                        <div class="table-header" style="background: #f8fafc; padding: 1rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: between; align-items: center;">
+                            <h3 style="margin: 0; color: #374151; font-size: 1.1rem;">👥 All Users</h3>
+                            <div class="table-controls" style="display: flex; gap: 1rem; align-items: center;">
+                                <input type="text" id="userSearch" placeholder="Search users..." 
+                                    style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem;"
+                                    onkeyup="filterUsers()">
+                                <select id="roleFilter" onchange="filterUsers()" 
+                                    style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem;">
+                                    <option value="">All Roles</option>
+                                    <option value="admin">Admins</option>
+                                    <option value="agent">Agents</option>
+                                    <option value="customer">Customers</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="usersTableBody">
+                            <div style="text-align: center; padding: 3rem; color: #64748b;">
+                                <div class="loading-spinner" style="margin: 0 auto 1rem;">⏳</div>
+                                <p>Loading users...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2202,7 +2319,237 @@
                 showPermissionError('create new users');
                 return;
             }
-            alert('🚧 User creation form coming soon!');
+            document.getElementById('userCreationOverlay').style.display = 'flex';
+            // Reset form
+            document.getElementById('userCreationForm').reset();
+            document.getElementById('newUserActive').checked = true;
+            document.getElementById('userCreationResults').innerHTML = '';
+        }
+
+        function closeUserCreationModal() {
+            document.getElementById('userCreationOverlay').style.display = 'none';
+        }
+
+        // Handle user creation form submission
+        document.getElementById('userCreationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultsDiv = document.getElementById('userCreationResults');
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            
+            try {
+                submitButton.innerHTML = '⏳ Creating User...';
+                submitButton.disabled = true;
+                
+                const formData = new FormData(e.target);
+                const userData = {
+                    email: formData.get('email'),
+                    password: formData.get('password'),
+                    firstName: formData.get('firstName'),
+                    lastName: formData.get('lastName'),
+                    role: formData.get('role'),
+                    isActive: formData.get('isActive') === 'on'
+                };
+
+                const response = await fetch('/.netlify/functions/create-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authState.sessionToken}`
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    resultsDiv.innerHTML = `
+                        <div style="padding: 1rem; background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #166534;">✅ User Created Successfully!</h4>
+                            <p style="margin: 0; font-size: 0.9rem;">
+                                User <strong>${userData.email}</strong> has been created with role <strong>${userData.role}</strong>.
+                            </p>
+                        </div>
+                    `;
+                    
+                    // Reset form after 2 seconds and refresh user list
+                    setTimeout(() => {
+                        closeUserCreationModal();
+                        loadUsersList(); // Refresh the user list
+                    }, 2000);
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div style="padding: 1rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #dc2626;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #dc2626;">❌ Error Creating User</h4>
+                            <p style="margin: 0; font-size: 0.9rem;">${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('User creation error:', error);
+                resultsDiv.innerHTML = `
+                    <div style="padding: 1rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #dc2626;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #dc2626;">❌ Network Error</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Failed to connect to server. Please try again.</p>
+                    </div>
+                `;
+            } finally {
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+            }
+        });
+
+        // Load and display users list
+        async function loadUsersList() {
+            if (authState.user.role !== 'admin') {
+                document.getElementById('usersTableBody').innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #dc2626;">
+                        <h3>🔒 Access Denied</h3>
+                        <p>You don't have permission to view the user list.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const response = await fetch('/.netlify/functions/list-users', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authState.sessionToken}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Update statistics
+                    document.getElementById('totalUsersCount').textContent = result.total;
+                    document.getElementById('adminUsersCount').textContent = result.roles.admin;
+                    document.getElementById('agentUsersCount').textContent = result.roles.agent;
+                    document.getElementById('customerUsersCount').textContent = result.roles.customer;
+
+                    // Generate user table
+                    const usersHtml = result.users.map(user => `
+                        <div class="user-row" data-role="${user.role}" data-email="${user.email.toLowerCase()}" 
+                             style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #e2e8f0; hover:background: #f8fafc;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                    <span style="font-weight: 600; color: #374151;">${user.full_name}</span>
+                                    <span style="background: ${getRoleColor(user.role)}; color: white; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">
+                                        ${getRoleIcon(user.role)} ${user.role.toUpperCase()}
+                                    </span>
+                                    ${user.is_active ? 
+                                        '<span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">✓ Active</span>' : 
+                                        '<span style="background: #ef4444; color: white; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">⏸ Inactive</span>'
+                                    }
+                                </div>
+                                <div style="color: #64748b; font-size: 0.9rem;">${user.email}</div>
+                            </div>
+                            <div style="text-align: right; color: #64748b; font-size: 0.85rem;">
+                                <div>Created: ${formatDate(user.created_at)}</div>
+                                ${user.last_login ? `<div>Last Login: ${formatDate(user.last_login)}</div>` : '<div>Never logged in</div>'}
+                                <div>Activity: ${user.activityCount} actions</div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    document.getElementById('usersTableBody').innerHTML = usersHtml;
+                    
+                    // Store all users for filtering
+                    window.allUsers = result.users;
+                } else {
+                    document.getElementById('usersTableBody').innerHTML = `
+                        <div style="text-align: center; padding: 3rem; color: #dc2626;">
+                            <h3>❌ Error Loading Users</h3>
+                            <p>${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Load users error:', error);
+                document.getElementById('usersTableBody').innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #dc2626;">
+                        <h3>❌ Network Error</h3>
+                        <p>Failed to load users. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Helper functions for user management
+        function getRoleColor(role) {
+            switch (role) {
+                case 'admin': return '#10b981';
+                case 'agent': return '#f59e0b';
+                case 'customer': return '#8b5cf6';
+                default: return '#6b7280';
+            }
+        }
+
+        function getRoleIcon(role) {
+            switch (role) {
+                case 'admin': return '�️';
+                case 'agent': return '👨‍💼';
+                case 'customer': return '👤';
+                default: return '❓';
+            }
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Filter users by search term and role
+        function filterUsers() {
+            if (!window.allUsers) return;
+
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+
+            const filteredUsers = window.allUsers.filter(user => {
+                const matchesSearch = user.full_name.toLowerCase().includes(searchTerm) || 
+                                     user.email.toLowerCase().includes(searchTerm);
+                const matchesRole = !roleFilter || user.role === roleFilter;
+                return matchesSearch && matchesRole;
+            });
+
+            // Update the table with filtered results
+            const usersHtml = filteredUsers.map(user => `
+                <div class="user-row" data-role="${user.role}" data-email="${user.email.toLowerCase()}" 
+                     style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #e2e8f0;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                            <span style="font-weight: 600; color: #374151;">${user.full_name}</span>
+                            <span style="background: ${getRoleColor(user.role)}; color: white; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">
+                                ${getRoleIcon(user.role)} ${user.role.toUpperCase()}
+                            </span>
+                            ${user.is_active ? 
+                                '<span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">✓ Active</span>' : 
+                                '<span style="background: #ef4444; color: white; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">⏸ Inactive</span>'
+                            }
+                        </div>
+                        <div style="color: #64748b; font-size: 0.9rem;">${user.email}</div>
+                    </div>
+                    <div style="text-align: right; color: #64748b; font-size: 0.85rem;">
+                        <div>Created: ${formatDate(user.created_at)}</div>
+                        ${user.last_login ? `<div>Last Login: ${formatDate(user.last_login)}</div>` : '<div>Never logged in</div>'}
+                        <div>Activity: ${user.activityCount} actions</div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('usersTableBody').innerHTML = usersHtml || `
+                <div style="text-align: center; padding: 3rem; color: #64748b;">
+                    <p>No users match your search criteria.</p>
+                </div>
+            `;
         }
 
         function exportUsers() {
@@ -2210,7 +2557,36 @@
                 showPermissionError('export user data');
                 return;
             }
-            alert('🚧 User export functionality coming soon!');
+            
+            if (!window.allUsers || window.allUsers.length === 0) {
+                alert('No user data to export. Please load the users list first.');
+                return;
+            }
+            
+            // Create CSV content
+            const csvHeaders = ['Email', 'Full Name', 'Role', 'Status', 'Created Date', 'Last Login', 'Activity Count'];
+            const csvRows = window.allUsers.map(user => [
+                user.email,
+                user.full_name,
+                user.role,
+                user.is_active ? 'Active' : 'Inactive',
+                new Date(user.created_at).toISOString().split('T')[0],
+                user.last_login ? new Date(user.last_login).toISOString().split('T')[0] : 'Never',
+                user.activityCount
+            ]);
+            
+            const csvContent = [csvHeaders, ...csvRows].map(row => row.join(',')).join('\n');
+            
+            // Download CSV file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `ticketmail_users_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function auditUserActivity() {
@@ -2218,7 +2594,7 @@
                 showPermissionError('view user activity logs');
                 return;
             }
-            alert('🚧 User activity audit coming soon!');
+            alert('🚧 Detailed user activity audit interface coming soon!\n\nCurrent activity counts are shown in the user list.');
         }
 
         // Database setup functions
@@ -2865,6 +3241,8 @@
                                 refreshAnalytics();
                             } else if (targetPage === 'tickets') {
                                 loadTickets(); // Refresh tickets when tickets page is opened
+                            } else if (targetPage === 'user-management') {
+                                loadUsersList(); // Refresh user list when user management page is opened
                             }
                         }
                     });
