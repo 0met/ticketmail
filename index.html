@@ -24,10 +24,14 @@
 
         .sidebar {
             width: 250px;
+            min-width: 250px;
+            max-width: 250px;
+            flex-shrink: 0;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border-right: 1px solid rgba(255, 255, 255, 0.2);
             padding: 2rem 1rem;
+            overflow: hidden;
         }
 
         .logo {
@@ -76,6 +80,8 @@
             flex: 1;
             padding: 2rem;
             overflow-y: auto;
+            min-width: 0;
+            width: calc(100% - 250px);
         }
 
         .page {
@@ -916,9 +922,12 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             border: 1px solid #e5e7eb;
             min-width: 200px;
+            max-width: 250px;
             z-index: 100;
             display: none;
             margin-top: 0.5rem;
+            white-space: nowrap;
+            overflow: hidden;
         }
 
         .user-dropdown.show {
@@ -1000,6 +1009,8 @@
             bottom: 1rem;
             left: 1rem;
             right: 1rem;
+            max-width: calc(250px - 2rem);
+            overflow: hidden;
         }
 
         .setup-result {
@@ -1269,7 +1280,7 @@
         </div>
     </div>
 
-    <div class="container auth-required"
+    <div class="container auth-required">
         <nav class="sidebar">
             <div class="logo">
                 <h1>📧 TicketMail</h1>
