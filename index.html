@@ -1923,6 +1923,8 @@
 
         // Initialize authentication on page load
         async function initAuth() {
+            console.log('🔑 initAuth() function called');
+            
             // Prevent multiple simultaneous validations
             if (authState.isValidating) {
                 console.log('⏳ Authentication already in progress, waiting...');
@@ -2000,6 +2002,7 @@
         }
 
         function hideLoginOverlay() {
+            console.log('🙈 Hiding login overlay - showing authenticated UI');
             document.getElementById('loginOverlay').style.display = 'none';
             document.querySelector('.auth-required').style.display = 'flex';
         }
@@ -2153,6 +2156,11 @@
         // Update UI for authenticated state
         function updateUIForAuthentication() {
             if (!authState.user) return;
+
+            console.log('🎨 Updating UI for authenticated user:', authState.user.email);
+
+            // Hide login overlay first
+            hideLoginOverlay();
 
             // Update user info in sidebar
             const initials = authState.user.fullName 
@@ -4161,6 +4169,8 @@
 
         // Start the application
         document.addEventListener('DOMContentLoaded', async function() {
+            console.log('📱 DOM Content Loaded - Starting app initialization');
+            
             // Initialize login tabs and form handlers
             initLoginTabs();
             
@@ -4168,11 +4178,17 @@
             document.getElementById('registerForm').addEventListener('submit', handleRegister);
             
             // Try to authenticate first
+            console.log('🔐 Starting authentication check...');
             const authSuccess = await initAuth();
             
-            // Only initialize main app if authenticated
             if (authSuccess) {
+                console.log('✅ Authentication successful, initializing main app');
+                // Ensure UI is properly updated for authenticated state
+                updateUIForAuthentication();
                 init();
+            } else {
+                console.log('❌ Authentication failed, showing login overlay');
+                showLoginOverlay();
             }
         });
     </script>
