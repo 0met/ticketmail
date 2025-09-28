@@ -403,6 +403,7 @@ exports.handler = async (event, context) => {
 
     } catch (error) {
         console.error('Error in email sync:', error);
+        console.error('Error stack:', error.stack);
         
         return {
             statusCode: 500,
@@ -412,7 +413,9 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({
                 success: false,
-                error: 'Email sync failed: ' + error.message
+                error: 'Email sync failed: ' + error.message,
+                details: error.stack,
+                timestamp: new Date().toISOString()
             })
         };
     } finally {
