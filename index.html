@@ -1917,13 +1917,25 @@
             isAuthenticated: false,
             user: null,
             sessionToken: null,
-            permissions: []
+            permissions: [],
+            isValidating: false
         };
 
         // Initialize authentication on page load
         async function initAuth() {
+            // Prevent multiple simultaneous validations
+            if (authState.isValidating) {
+                console.log('⏳ Authentication already in progress, waiting...');
+                return authState.isAuthenticated;
+            }
+
+            console.log('🔐 Starting authentication check...');
+            authState.isValidating = true;
+            
             const storedToken = localStorage.getItem('ticketmail_session');
+            
             if (storedToken) {
+                console.log('📱 Found stored session token, validating...');
                 try {
                     const response = await fetch('/.netlify/functions/auth-validate', {
                         method: 'POST',
@@ -1931,29 +1943,58 @@
                         body: JSON.stringify({ sessionToken: storedToken })
                     });
 
+                    console.log(`🌐 Auth validate response status: ${response.status}`);
+                    
+                    if (!response.ok) {
+                        console.error(`❌ Auth validate failed with status ${response.status}`);
+                        const errorText = await response.text();
+                        console.error('Auth validate error response:', errorText);
+                        localStorage.removeItem('ticketmail_session');
+                        authState.isValidating = false;
+                        showLoginOverlay();
+                        return false;
+                    }
+
                     const result = await response.json();
+                    console.log('🔍 Auth validate result:', result);
+                    
                     if (result.success) {
+                        console.log('✅ Session validation successful');
                         authState.isAuthenticated = true;
                         authState.user = result.user;
                         authState.sessionToken = storedToken;
                         authState.permissions = result.permissions;
+                        authState.isValidating = false;
                         updateUIForAuthentication();
                         return true;
                     } else {
+                        console.warn('⚠️ Session validation failed:', result.error);
                         localStorage.removeItem('ticketmail_session');
                     }
                 } catch (error) {
-                    console.error('Auth validation failed:', error);
+                    console.error('💥 Auth validation network error:', error);
                     localStorage.removeItem('ticketmail_session');
                 }
+            } else {
+                console.log('📭 No stored session token found');
             }
             
+            authState.isValidating = false;
+            console.log('🔑 Showing login overlay');
             showLoginOverlay();
             return false;
         }
 
         // Show/hide login overlay
         function showLoginOverlay() {
+            console.log('👁️ showLoginOverlay called, current auth state:', authState.isAuthenticated);
+            
+            // Don't show login if already authenticated (unless explicitly logging out)
+            if (authState.isAuthenticated && !authState.isValidating) {
+                console.log('✅ User already authenticated, not showing login overlay');
+                return;
+            }
+            
             document.getElementById('loginOverlay').style.display = 'flex';
             document.querySelector('.auth-required').style.display = 'none';
         }
@@ -2251,8 +2292,12 @@
 
         // Logout function
         async function logout() {
+            console.log('🚪 Logout function called');
+            console.trace('Logout called from:'); // This will show the call stack
+            
             try {
                 if (authState.sessionToken) {
+                    console.log('📡 Sending logout request to server...');
                     await fetch('/.netlify/functions/auth-logout', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -2267,6 +2312,7 @@
                 authState.user = null;
                 authState.sessionToken = null;
                 authState.permissions = [];
+                authState.isValidating = false;
                 
                 localStorage.removeItem('ticketmail_session');
                 
@@ -3265,10 +3311,11 @@
         async function init() {
             // Only initialize if authenticated
             if (!authState.isAuthenticated) {
-                const authSuccess = await initAuth();
-                if (!authSuccess) return;
+                console.log('⚠️ Init called but not authenticated, stopping initialization');
+                return;
             }
 
+            console.log('🚀 Initializing authenticated application...');
             loadSettings();
             updateConnectionStatus();
             initNavigation();
