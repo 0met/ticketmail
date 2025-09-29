@@ -142,9 +142,7 @@ exports.handler = async (event, context) => {
             SELECT 
                 COUNT(*) as total_tickets,
                 COUNT(CASE WHEN status = 'closed' THEN 1 END) as resolved_tickets,
-                ROUND(
-                    (COUNT(CASE WHEN status = 'closed' THEN 1 END)::FLOAT / COUNT(*)::FLOAT) * 100, 2
-                ) as resolution_rate,
+                ROUND((COUNT(CASE WHEN status = 'closed' THEN 1 END)::numeric / NULLIF(COUNT(*)::numeric,0) * 100), 2) as resolution_rate,
                 COUNT(CASE WHEN status IN ('new', 'pending') THEN 1 END) as pending_tickets,
                 COUNT(CASE WHEN priority = 'high' AND status != 'closed' THEN 1 END) as urgent_open
             FROM tickets
