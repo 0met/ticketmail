@@ -97,12 +97,34 @@ exports.handler = async (event, context) => {
         }
 
         // Save settings to database
-        await saveUserSettings({
-            gmailAddress: settings.gmailAddress,
-            appPassword: settings.appPassword,
-            refreshInterval: refreshInterval,
-            defaultStatus: settings.defaultStatus
-        });
+        try {
+            await saveUserSettings({
+                gmailAddress: settings.gmailAddress,
+                appPassword: settings.appPassword,
+                refreshInterval: refreshInterval,
+                defaultStatus: settings.defaultStatus
+            });
+        } catch (dbError) {
+            console.error('Database error saving settings:', dbError);
+            
+            // Check if it's a table not found error
+            if (dbError.message.includes('relation "user_settings" does not exist')) {
+                return {
+                    statusCode: 400,
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        success: false,
+                        error: 'User settings table does not exist. Please initialize the database first.',
+                        hint: 'Contact administrator or visit /.netlify/functions/init-settings-table'
+                    })
+                };
+            }
+            
+            throw dbError; // Re-throw other errors
+        }
 
         return {
             statusCode: 200,
@@ -118,6 +140,7 @@ exports.handler = async (event, context) => {
 
     } catch (error) {
         console.error('Error in settings-update function:', error);
+        console.error('Error stack:', error.stack);
         
         return {
             statusCode: 500,
@@ -127,7 +150,9 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({
                 success: false,
-                error: 'Internal server error: ' + error.message
+                error: 'Internal server error: ' + error.message,
+                details: error.stack,
+                timestamp: new Date().toISOString()
             })
         };
     }
