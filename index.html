@@ -334,9 +334,9 @@
         .modal-content {
             background: white;
             border-radius: 12px;
-            width: 90%;
-            max-width: 900px;
-            max-height: 90vh;
+            width: 92%;
+            max-width: 1000px; /* a bit wider for desktop */
+            max-height: 92vh;
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
@@ -378,8 +378,9 @@
 
         .ticket-details {
             display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 2rem;
+            /* Slightly wider main column and a fixed-ish sidebar for predictable layout */
+            grid-template-columns: 1.6fr 360px;
+            gap: 1.5rem;
         }
 
         .ticket-content {
@@ -391,8 +392,30 @@
         .ticket-sidebar {
             background: #f9fafb;
             border-radius: 8px;
-            padding: 1.5rem;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column; /* allow save button to be pushed to bottom */
+            gap: 0.75rem;
         }
+
+        /* make save actions stick to the bottom of the sidebar */
+        .ticket-sidebar .save-actions {
+            margin-top: auto;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Make save actions sticky when conversation is long so the button remains visible */
+        .save-actions {
+            position: sticky;
+            bottom: 16px;
+            z-index: 5;
+            background: transparent;
+            padding-top: 0.25rem;
+        }
+
+        /* Slight visual densification for ticket cards */
+        .ticket-card { padding: 1rem; }
+        .ticket-meta { gap: 0.5rem; font-size: 0.8rem; }
 
         .status-controls {
             margin-bottom: 2rem;
@@ -1472,10 +1495,10 @@
                                             <strong>Source:</strong> <span id="ticketSource">-</span>
                                         </div>
                                         <div style="margin-bottom: 0.5rem;">
-                                            <strong>Created:</strong> <span id="ticketCreated">-</span>
+                                            <strong>Created:</strong> <span id="ticketCreated" title="-">-</span>
                                         </div>
                                         <div style="margin-bottom: 0.5rem;">
-                                            <strong>Last Updated:</strong> <span id="ticketUpdated">-</span>
+                                            <strong>Last Updated:</strong> <span id="ticketUpdated" title="-">-</span>
                                         </div>
                                         <div style="margin-bottom: 0.5rem;" id="resolutionTimeRow" style="display: none;">
                                             <strong>Resolution Time:</strong> <span id="ticketResolutionTime">-</span>
@@ -1484,7 +1507,7 @@
                                 </div>
 
                                 <!-- Save Button -->
-                                <div style="margin-bottom: 1.5rem;">
+                                <div class="save-actions">
                                     <button id="saveTicketBtn" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 600;" onclick="saveTicketChanges()">
                                         💾 Save Changes
                                     </button>
@@ -3063,12 +3086,15 @@
                 return;
             }
 
-            container.innerHTML = ticketsToRender.map(ticket => `
+            container.innerHTML = ticketsToRender.map(ticket => {
+                const ticketNum = ticket.ticketNumber || ticket.ticket_number || 'TK-XXXX';
+                const absDate = ticket.date ? (new Date(ticket.date)).toISOString() : '';
+                return `
                 <div class="ticket-card" onclick="openTicketModal('${ticket.id}')" style="cursor: pointer;">
                     <div class="ticket-header">
                         <div>
-                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
-                                <span class="ticket-number" style="background: #3b82f6; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${ticket.ticketNumber || 'TK-XXXX'}</span>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                <span class="ticket-number" style="background: #3b82f6; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${ticketNum}</span>
                                 <span class="priority-badge priority-${ticket.priority || 'medium'}" style="padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">${(ticket.priority || 'medium').toUpperCase()}</span>
                                 <span class="category-badge" style="background: #f3f4f6; color: #374151; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">${ticket.category || 'general'}</span>
                                 ${ticket.isManual ? '<span class="manual-badge" style="background: #fbbf24; color: #92400e; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">✏️ MANUAL</span>' : ''}
@@ -3076,14 +3102,14 @@
                             <div class="ticket-subject">${ticket.subject}</div>
                             <div class="ticket-meta">
                                 <span>From: ${ticket.from}</span>
-                                <span>${formatDate(ticket.date)}</span>
+                                <span title="${absDate}">${formatDate(ticket.date)}</span>
                             </div>
                         </div>
-                        <span class="ticket-status status-${ticket.status}">${ticket.status.toUpperCase()}</span>
+                        <span class="ticket-status status-${ticket.status}">${ticket.status ? ticket.status.toUpperCase() : 'NEW'}</span>
                     </div>
-                    <p style="color: #64748b; margin-top: 1rem;">${truncateText(ticket.body, 100)}</p>
+                    <p style="color: #64748b; margin-top: 1rem;">${truncateText(ticket.body || '', 100)}</p>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // Apply filters to tickets
@@ -3265,11 +3291,36 @@
             }, null, 2));
 
             // Populate modal content
-            document.getElementById('ticketModalTitle').textContent = currentTicket.subject;
-            document.getElementById('ticketNumber').textContent = currentTicket.ticket_number || 'TK-XXXX';
-            document.getElementById('ticketId').textContent = currentTicket.id;
-            document.getElementById('ticketCreated').textContent = formatDate(currentTicket.created_at || currentTicket.date);
-            document.getElementById('ticketUpdated').textContent = formatDate(currentTicket.updated_at || currentTicket.updatedAt || currentTicket.createdAt);
+            document.getElementById('ticketModalTitle').textContent = currentTicket.subject || '(No Subject)';
+            // ticket number may be under different keys depending on source
+            const ticketNumberVal = currentTicket.ticket_number || currentTicket.ticketNumber || currentTicket.ticket || 'TK-XXXX';
+            document.getElementById('ticketNumber').textContent = ticketNumberVal;
+            document.getElementById('ticketId').textContent = currentTicket.id || '-';
+
+            // Created / Updated: show relative text, but keep absolute timestamp in title for copy/paste
+            const createdAtRaw = currentTicket.created_at || currentTicket.date || currentTicket.createdAt || currentTicket.received_at || currentTicket.receivedAt;
+            const updatedAtRaw = currentTicket.updated_at || currentTicket.updatedAt || currentTicket.updated_at || currentTicket.created_at || createdAtRaw;
+
+            const createdEl = document.getElementById('ticketCreated');
+            const updatedEl = document.getElementById('ticketUpdated');
+
+            if (createdAtRaw) {
+                const createdIso = (new Date(createdAtRaw)).toISOString();
+                createdEl.textContent = formatDate(createdAtRaw);
+                createdEl.title = createdIso;
+            } else {
+                createdEl.textContent = 'Unknown';
+                createdEl.title = '';
+            }
+
+            if (updatedAtRaw) {
+                const updatedIso = (new Date(updatedAtRaw)).toISOString();
+                updatedEl.textContent = formatDate(updatedAtRaw);
+                updatedEl.title = updatedIso;
+            } else {
+                updatedEl.textContent = formatDate(createdAtRaw);
+                updatedEl.title = createdAtRaw ? (new Date(createdAtRaw)).toISOString() : '';
+            }
             document.getElementById('ticketSource').textContent = currentTicket.source === 'email' ? 'Email Import' : (currentTicket.is_manual ? 'Manual Entry' : 'Email Import');
 
             // Populate dropdown fields
@@ -3503,6 +3554,44 @@
                     addToConversationHistory(currentTicket.id, 'system', 
                         `Ticket updated: Status: ${updates.status}, Priority: ${updates.priority}, Category: ${updates.category}`, 
                         new Date());
+
+                    // If backend returned the updated ticket object, refresh modal fields from it
+                    if (result.ticket) {
+                        const updated = result.ticket;
+
+                        // Normalize keys/schemas
+                        const updatedTicketNumber = updated.ticket_number || updated.ticketNumber || updated.ticket || ticket?.ticketNumber || ticket?.ticket_number;
+                        const updatedCreated = updated.created_at || updated.createdAt || updated.received_at || updated.receivedAt;
+                        const updatedUpdated = updated.updated_at || updated.updatedAt || updated.updated_at || updated.created_at || updatedCreated;
+
+                        // Update modal display
+                        try {
+                            const ticketNumberEl = document.getElementById('ticketNumber');
+                            const ticketIdEl = document.getElementById('ticketId');
+                            const ticketCreatedEl = document.getElementById('ticketCreated');
+                            const ticketUpdatedEl = document.getElementById('ticketUpdated');
+
+                            if (ticketNumberEl) ticketNumberEl.textContent = updatedTicketNumber || ticketNumberEl.textContent;
+                            if (ticketIdEl) ticketIdEl.textContent = updated.id || ticketIdEl.textContent;
+
+                            if (ticketCreatedEl && updatedCreated) {
+                                ticketCreatedEl.textContent = formatDate(updatedCreated);
+                                ticketCreatedEl.title = (new Date(updatedCreated)).toISOString();
+                            }
+                            if (ticketUpdatedEl && updatedUpdated) {
+                                ticketUpdatedEl.textContent = formatDate(updatedUpdated);
+                                ticketUpdatedEl.title = (new Date(updatedUpdated)).toISOString();
+                            }
+
+                            // Update customer fields from DB-confirmed values if present
+                            if (updated.customer_name) document.getElementById('customerName').value = updated.customer_name;
+                            if (updated.customer_id) document.getElementById('customerId').value = updated.customer_id;
+                            if (updated.customer_phone) document.getElementById('customerPhone').value = updated.customer_phone;
+                            if (updated.customer_email) document.getElementById('customerEmail').value = updated.customer_email;
+                        } catch (e) {
+                            console.warn('Could not refresh modal fields from update response:', e.message);
+                        }
+                    }
 
                     console.log('Ticket save completed successfully');
                 } else {
