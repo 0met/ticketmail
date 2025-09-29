@@ -267,10 +267,47 @@ exports.handler = async (event, context) => {
     try {
         console.log('Starting email sync process...');
         
-        // Get user settings
+        // Get user settings with enhanced error handling
         console.log('Fetching user settings...');
-        const settings = await getUserSettings();
-        console.log('Settings retrieved:', settings ? 'Found' : 'Not found');
+        let settings;
+        try {
+            settings = await getUserSettings();
+            console.log('Settings retrieved:', settings ? 'Found' : 'Not found');
+        } catch (settingsError) {
+            console.error('Error getting user settings:', settingsError);
+            console.error('Settings error stack:', settingsError.stack);
+            
+            // Check if it's a table not found error
+            if (settingsError.message.includes('relation "user_settings" does not exist') || 
+                settingsError.message.includes('user_settings')) {
+                return {
+                    statusCode: 400,
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        success: false,
+                        error: 'User settings table does not exist. Database needs to be initialized.',
+                        hint: 'Contact administrator to initialize the user_settings table.'
+                    })
+                };
+            }
+            
+            // For other database errors
+            return {
+                statusCode: 500,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    success: false,
+                    error: 'Database error while fetching settings: ' + settingsError.message,
+                    details: settingsError.stack
+                })
+            };
+        }
         
         if (!settings) {
             console.log('No settings found in database - likely not configured yet');
