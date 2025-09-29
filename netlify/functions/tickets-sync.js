@@ -363,10 +363,25 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Fetch emails
-        console.log('Fetching emails...');
-        const emails = await fetchEmails(imap, ['UNSEEN'], 5); // Limit to 5 emails for testing
-        console.log(`Found ${emails.length} emails`);
+            // Parse request body for optional test flags
+            let requestBody = {};
+            try {
+                requestBody = event.body ? JSON.parse(event.body) : {};
+            } catch (parseErr) {
+                console.log('Could not parse request body, proceeding with defaults');
+                requestBody = {};
+            }
+
+            const queryTestAll = event.queryStringParameters && (event.queryStringParameters.testAll === 'true' || event.queryStringParameters.testAll === '1');
+            const testAll = requestBody.testAll === true || queryTestAll === true;
+
+            // Fetch emails
+            console.log('Fetching emails...');
+            const searchCriteria = testAll ? ['ALL'] : ['UNSEEN'];
+            const maxEmails = testAll ? (requestBody.maxEmails || 50) : 5; // larger for testAll
+            console.log(`Using search criteria: ${JSON.stringify(searchCriteria)}, maxEmails: ${maxEmails}`);
+            const emails = await fetchEmails(imap, searchCriteria, maxEmails);
+            console.log(`Found ${emails.length} emails`);
 
         if (emails.length === 0) {
             return {
@@ -387,6 +402,14 @@ exports.handler = async (event, context) => {
         // Process emails and create tickets
         console.log('Processing emails for tickets...');
         let ticketsCreated = 0;
+
+        // Log parsed email subjects for debugging
+        try {
+            const parsedSubjects = emails.map(e => e && e.subject ? e.subject : '(no subject)');
+            console.log('DEBUGGING: Parsed email subjects:', parsedSubjects.slice(0, 20));
+        } catch (slogErr) {
+            console.log('Error logging parsed subjects:', slogErr.message);
+        }
 
         for (const email of emails) {
             try {
@@ -432,10 +455,15 @@ exports.handler = async (event, context) => {
                 processed: emails.length,
                 tickets: ticketsCreated,
                 details: emails.map(email => ({
-                    subject: email.subject,
-                    from: email.from,
-                    isTicket: isTicketEmail(email)
-                }))
+                    subject: email && email.subject ? email.subject : null,
+                    from: email && email.from ? email.from : null,
+                    isTicket: !!email && isTicketEmail(email)
+                })),
+                debug: {
+                    testAll: testAll,
+                    searchCriteria: searchCriteria,
+                    maxEmails: maxEmails
+                }
             })
         };
 
