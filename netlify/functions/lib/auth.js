@@ -41,39 +41,45 @@ async function createUser(userData) {
 
 async function authenticateUser(email, password) {
     const sql = getDatabase();
-    
+
     // Get user with password
     const users = await sql`
         SELECT id, email, password_hash, full_name, role, is_active
         FROM users 
         WHERE email = ${email}
     `;
-    
+
     if (users.length === 0) {
+        console.log('No user found for email:', email);
         return { success: false, error: 'Invalid credentials' };
     }
-    
+
     const user = users[0];
-    
+    console.log('User from DB:', user);
+    console.log('Password from input:', password);
+    console.log('Password hash from DB:', user.password_hash);
+
     // Check if account is active
     if (!user.is_active) {
+        console.log('Account is not active for user:', email);
         return { success: false, error: 'Account is not active' };
     }
-    
+
     // Verify password
     const isValidPassword = await verifyPassword(password, user.password_hash);
-    
+    console.log('Password valid?', isValidPassword);
+
     if (!isValidPassword) {
         return { success: false, error: 'Invalid credentials' };
     }
-    
+
     // Update last login
     await sql`
         UPDATE users 
         SET last_login = CURRENT_TIMESTAMP
         WHERE id = ${user.id}
     `;
-    
+
     // Create session
     const sessionToken = generateSessionToken();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
