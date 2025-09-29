@@ -890,9 +890,14 @@
             transform: none;
         }
 
-        .user-menu {
-            position: relative;
-            display: inline-block;
+        .user-profile-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
         }
 
         .user-avatar {
@@ -905,95 +910,58 @@
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            flex-shrink: 0;
         }
 
-        .user-avatar:hover {
-            transform: scale(1.05);
+        .user-details {
+            flex: 1;
+            min-width: 0;
         }
 
-        .user-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
-            min-width: 200px;
-            max-width: 250px;
-            z-index: 100;
-            display: none;
-            margin-top: 0.5rem;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-
-        .user-dropdown.show {
-            display: block;
-            animation: dropdownSlide 0.2s ease-out;
-        }
-
-        @keyframes dropdownSlide {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .user-dropdown-header {
-            padding: 1rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .user-dropdown-name {
+        .user-name {
             font-weight: 600;
             color: #1f2937;
-            margin-bottom: 0.25rem;
-        }
-
-        .user-dropdown-email {
             font-size: 0.875rem;
-            color: #6b7280;
+            line-height: 1.2;
+            margin-bottom: 0.125rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        .user-dropdown-role {
+        .user-email {
             font-size: 0.75rem;
+            color: #6b7280;
+            line-height: 1.2;
+            margin-bottom: 0.125rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .user-role {
+            font-size: 0.7rem;
             color: #667eea;
             text-transform: uppercase;
             font-weight: 500;
+            letter-spacing: 0.05em;
         }
 
-        .user-dropdown-menu {
-            padding: 0.5rem 0;
-        }
-
-        .user-dropdown-item {
-            display: block;
-            padding: 0.75rem 1rem;
-            color: #374151;
-            text-decoration: none;
-            transition: background 0.2s ease;
-            cursor: pointer;
+        .logout-btn {
+            padding: 0.5rem;
             border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-        }
-
-        .user-dropdown-item:hover {
-            background: #f9fafb;
-        }
-
-        .user-dropdown-item.logout {
+            background: #fee2e2;
             color: #dc2626;
-            border-top: 1px solid #e5e7eb;
-            margin-top: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .logout-btn:hover {
+            background: #fecaca;
+            transform: scale(1.05);
         }
 
         .auth-required {
@@ -1135,8 +1103,6 @@
 
             <div class="form-tabs">
                 <button class="form-tab active" data-tab="login">Sign In</button>
-                <button class="form-tab" data-tab="register">Sign Up</button>
-                <button class="form-tab" data-tab="setup">Setup</button>
             </div>
 
             <!-- Login Form -->
@@ -1151,37 +1117,6 @@
                 </div>
                 <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
             </form>
-
-            <!-- Register Form -->
-            <form id="registerForm" class="login-form" style="display: none;">
-                <div class="form-field">
-                    <label for="registerFullName">Full Name</label>
-                    <input type="text" id="registerFullName" required placeholder="Enter your full name">
-                </div>
-                <div class="form-field">
-                    <label for="registerEmail">Email Address</label>
-                    <input type="email" id="registerEmail" required placeholder="Enter your email">
-                </div>
-                <div class="form-field">
-                    <label for="registerPassword">Password</label>
-                    <input type="password" id="registerPassword" required placeholder="Create a password (min. 8 chars)">
-                </div>
-                <div class="form-field">
-                    <label for="registerRole">Role</label>
-                    <select id="registerRole" required>
-                        <option value="agent">Support Agent</option>
-                        <option value="admin">Administrator</option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label for="registerPhone">Phone Number (Optional)</label>
-                    <input type="tel" id="registerPhone" placeholder="Enter your phone number">
-                </div>
-                <button type="submit" class="login-btn" id="registerBtn">Create Account</button>
-            </form>
-
-            <!-- Database Setup Section -->
-            <div id="setupSection" class="login-form" style="display: none; gap: 1rem;">
                 <div style="text-align: center; margin-bottom: 1rem;">
                     <h3 style="color: #667eea; margin-bottom: 0.5rem;">🛠️ Database Setup</h3>
                     <p style="font-size: 0.9rem; color: #64748b;">Initialize the authentication system</p>
@@ -1255,7 +1190,7 @@
 
                 <div class="form-group">
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                        <input type="checkbox" id="newUserActive" name="isActive" checked
+                        <input type="checkbox" id="newUserActive" name="active" checked
                                style="width: 1rem; height: 1rem;">
                         <span style="color: #374151; font-weight: 600;">User is active</span>
                     </label>
@@ -1326,34 +1261,18 @@
             
             <!-- User Info Section -->
             <div class="user-info">
-                <div class="user-menu">
-                    <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
+                <div class="user-profile-card">
+                    <div class="user-avatar">
                         <span id="userInitials">?</span>
                     </div>
-                    <div class="user-dropdown" id="userDropdown">
-                        <div class="user-dropdown-header">
-                            <div class="user-dropdown-name" id="userName">Loading...</div>
-                            <div class="user-dropdown-email" id="userEmail">Loading...</div>
-                            <div class="user-dropdown-role" id="userRole">Loading...</div>
-                        </div>
-                        <div class="user-dropdown-menu">
-                            <button class="user-dropdown-item" onclick="openProfileSettings()" data-roles="admin,agent,customer">
-                                👤 Profile Settings
-                            </button>
-                            <button class="user-dropdown-item" onclick="openUserManagement()" data-roles="admin">
-                                👥 User Management
-                            </button>
-                            <button class="user-dropdown-item" onclick="openSystemSettings()" data-roles="admin">
-                                �️ System Settings
-                            </button>
-                            <button class="user-dropdown-item" onclick="openReports()" data-roles="admin,agent">
-                                📊 Reports
-                            </button>
-                            <button class="user-dropdown-item logout" onclick="logout()" data-roles="admin,agent,customer">
-                                🚪 Sign Out
-                            </button>
-                        </div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Loading...</div>
+                        <div class="user-email" id="userEmail">Loading...</div>
+                        <div class="user-role" id="userRole">Loading...</div>
                     </div>
+                    <button class="logout-btn" onclick="logout()" title="Sign Out">
+                        🚪
+                    </button>
                 </div>
             </div>
         </nav>
@@ -2284,19 +2203,6 @@
             alert(`⚠️ You don't have permission to ${action}. Contact your administrator if you need access.`);
         }
 
-        // User dropdown toggle
-        function toggleUserDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('show');
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const userMenu = document.querySelector('.user-menu');
-            if (!userMenu.contains(event.target)) {
-                document.getElementById('userDropdown').classList.remove('show');
-            }
-        });
 
         // Logout function
         async function logout() {
@@ -2411,10 +2317,9 @@
                 const userData = {
                     email: formData.get('email'),
                     password: formData.get('password'),
-                    firstName: formData.get('firstName'),
-                    lastName: formData.get('lastName'),
+                    fullName: `${formData.get('firstName')} ${formData.get('lastName')}`.trim(),
                     role: formData.get('role'),
-                    isActive: formData.get('isActive') === 'on'
+                    createdBy: authState.user.id
                 };
 
                 const response = await fetch('/.netlify/functions/create-user', {
@@ -2433,7 +2338,7 @@
                         <div style="padding: 1rem; background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;">
                             <h4 style="margin: 0 0 0.5rem 0; color: #166534;">✅ User Created Successfully!</h4>
                             <p style="margin: 0; font-size: 0.9rem;">
-                                User <strong>${userData.email}</strong> has been created with role <strong>${userData.role}</strong>.
+                                User <strong>${userData.fullName}</strong> (${userData.email}) has been created with role <strong>${userData.role}</strong>.
                             </p>
                         </div>
                     `;
