@@ -1102,7 +1102,7 @@
             </div>
 
             <div class="form-tabs">
-                <button class="form-tab active" data-tab="login">Sign In</button>
+                <button type="button" class="form-tab active" data-tab="login">Sign In</button>
             </div>
 
             <!-- Login Form -->
@@ -1914,21 +1914,23 @@
             const registerForm = document.getElementById('registerForm');
             const setupSection = document.getElementById('setupSection');
 
+            if (!tabs || tabs.length === 0) return;
+
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     tabs.forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
 
-                    // Hide all sections first
-                    loginForm.style.display = 'none';
-                    registerForm.style.display = 'none';
-                    setupSection.style.display = 'none';
+                    // Hide all sections first (guarding each element)
+                    if (loginForm) loginForm.style.display = 'none';
+                    if (registerForm) registerForm.style.display = 'none';
+                    if (setupSection) setupSection.style.display = 'none';
 
-                    if (tab.dataset.tab === 'login') {
+                    if (tab.dataset.tab === 'login' && loginForm) {
                         loginForm.style.display = 'flex';
-                    } else if (tab.dataset.tab === 'register') {
+                    } else if (tab.dataset.tab === 'register' && registerForm) {
                         registerForm.style.display = 'flex';
-                    } else if (tab.dataset.tab === 'setup') {
+                    } else if (tab.dataset.tab === 'setup' && setupSection) {
                         setupSection.style.display = 'flex';
                     }
                 });
@@ -2282,8 +2284,10 @@
             document.getElementById('userCreationOverlay').style.display = 'none';
         }
 
-        // Handle user creation form submission
-        document.getElementById('userCreationForm').addEventListener('submit', async (e) => {
+        // Handle user creation form submission (guard if form is missing)
+        const _userCreationForm = document.getElementById('userCreationForm');
+        if (_userCreationForm) {
+            _userCreationForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const resultsDiv = document.getElementById('userCreationResults');
@@ -2349,7 +2353,8 @@
                 submitButton.innerHTML = originalButtonText;
                 submitButton.disabled = false;
             }
-        });
+            });
+        }
 
         // Load and display users list
         async function loadUsersList() {
@@ -3128,8 +3133,12 @@
 
         // Format date for display
         function formatDate(date) {
+            if (!date) return 'Unknown';
+            const d = (date instanceof Date) ? date : new Date(date);
+            if (isNaN(d.getTime())) return 'Unknown';
+
             const now = new Date();
-            const diff = now - date;
+            const diff = now - d;
             const hours = Math.floor(diff / (1000 * 60 * 60));
             
             if (hours < 1) return 'Just now';
@@ -4059,9 +4068,12 @@
             
             // Initialize login tabs and form handlers
             initLoginTabs();
-            
-            document.getElementById('loginForm').addEventListener('submit', handleLogin);
-            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+
+            // Bind login and register handlers only if forms exist
+            const _loginForm = document.getElementById('loginForm');
+            const _registerForm = document.getElementById('registerForm');
+            if (_loginForm) _loginForm.addEventListener('submit', handleLogin);
+            if (_registerForm) _registerForm.addEventListener('submit', handleRegister);
             
             // Try to authenticate first
             console.log('🔐 Starting authentication check...');

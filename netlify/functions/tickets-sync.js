@@ -86,16 +86,17 @@ function fetchEmails(imap, searchCriteria = ['UNSEEN'], maxEmails = 10) {
                             stream.once('end', async () => {
                                 try {
                                     const parsed = await simpleParser(buffer);
-                                    const emailData = {
-                                        messageId: parsed.messageId,
-                                        subject: parsed.subject || 'No Subject',
-                                        from: parsed.from?.text || parsed.from?.value?.[0]?.address || 'Unknown',
-                                        to: parsed.to?.text || parsed.to?.value?.[0]?.address || 'Unknown',
-                                        date: parsed.date || new Date(),
-                                        body: parsed.text || parsed.html?.replace(/<[^>]*>/g, '') || '',
-                                        headers: parsed.headers
-                                    };
-                                    resolveEmail(emailData);
+                                                        const emailData = {
+                                                            messageId: parsed.messageId,
+                                                            subject: parsed.subject || 'No Subject',
+                                                            from: parsed.from?.text || parsed.from?.value?.[0]?.address || 'Unknown',
+                                                            to: parsed.to?.text || parsed.to?.value?.[0]?.address || 'Unknown',
+                                                            date: parsed.date || new Date(),
+                                                            body: parsed.text || parsed.html?.replace(/<[^>]*>/g, '') || '',
+                                                            headers: parsed.headers,
+                                                            uid: msg && msg.attributes && msg.attributes.uid ? msg.attributes.uid : null
+                                                        };
+                                                        resolveEmail(emailData);
                                 } catch (parseErr) {
                                     console.error('Error parsing email:', parseErr);
                                     resolveEmail(null); // Return null for failed emails
@@ -126,7 +127,9 @@ function fetchEmails(imap, searchCriteria = ['UNSEEN'], maxEmails = 10) {
                         const validEmails = parsedEmails.filter(email => email && email.subject);
                         
                         console.log(`Successfully parsed ${validEmails.length} emails`);
-                        resolve(validEmails);
+                        // Collect UIDs for marking seen later
+                        const uids = validEmails.map(e => e.uid).filter(Boolean);
+                        resolve({ emails: validEmails, uids });
                     } catch (promiseErr) {
                         console.error('Error waiting for email parsing:', promiseErr);
                         reject(promiseErr);
@@ -375,13 +378,15 @@ exports.handler = async (event, context) => {
             const queryTestAll = event.queryStringParameters && (event.queryStringParameters.testAll === 'true' || event.queryStringParameters.testAll === '1');
             const testAll = requestBody.testAll === true || queryTestAll === true;
 
-            // Fetch emails
+        // Fetch emails
             console.log('Fetching emails...');
             const searchCriteria = testAll ? ['ALL'] : ['UNSEEN'];
             const maxEmails = testAll ? (requestBody.maxEmails || 50) : 5; // larger for testAll
             console.log(`Using search criteria: ${JSON.stringify(searchCriteria)}, maxEmails: ${maxEmails}`);
-            const emails = await fetchEmails(imap, searchCriteria, maxEmails);
-            console.log(`Found ${emails.length} emails`);
+        const fetched = await fetchEmails(imap, searchCriteria, maxEmails);
+        const emails = Array.isArray(fetched) ? fetched : (fetched.emails || []);
+        const fetchedUids = fetched && fetched.uids ? fetched.uids : [];
+        console.log(`Found ${emails.length} emails`);
 
         if (emails.length === 0) {
             return {
@@ -443,6 +448,18 @@ exports.handler = async (event, context) => {
             }
         }
 
+        // Mark processed messages as Seen to avoid re-processing
+        if (fetchedUids && fetchedUids.length > 0) {
+            try {
+                console.log('Marking processed messages as \\Seen for uids:', fetchedUids.slice(0, 10));
+                imap.addFlags(fetchedUids, '\\Seen', (err) => {
+                    if (err) console.error('Error marking messages as Seen:', err.message || err);
+                    else console.log('Successfully marked messages as Seen');
+                });
+            } catch (flagErr) {
+                console.error('Exception while setting flags:', flagErr.message || flagErr);
+            }
+        }
         return {
             statusCode: 200,
             headers: {
