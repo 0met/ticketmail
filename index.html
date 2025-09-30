@@ -1707,17 +1707,43 @@
                     <p class="page-subtitle">Configure your Gmail integration and system preferences</p>
                 </div>
 
-                <form id="settingsForm">
-                    <div class="form-group">
-                        <label class="form-label">Gmail Address</label>
-                        <input type="email" id="gmailAddress" class="form-input" placeholder="emailticket4@gmail.com">
+                <div class="settings-sections" style="display: grid; gap: 2rem;">
+                    <!-- Branding Settings Section -->
+                    <div class="settings-section">
+                        <h3 style="margin-bottom: 1rem; color: #374151;">🎨 Branding Settings</h3>
+                        <p style="color: #6b7280; margin-bottom: 2rem;">Customize your application's branding and appearance</p>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Logo Upload</label>
+                            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                                <div id="logoPreview" style="width: 100px; height: 100px; border: 2px dashed #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
+                                    <span id="logoPlaceholder" style="color: #94a3b8;">No logo</span>
+                                    <img id="currentLogo" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;" alt="Current logo">
+                                </div>
+                                <div style="flex: 1;">
+                                    <input type="file" id="logoUpload" class="form-input" accept="image/*" style="margin-bottom: 0.5rem;">
+                                    <small style="color: #64748b;">Recommended size: 500x500px, Max size: 2MB</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">App Password</label>
-                        <input type="password" id="appPassword" class="form-input" placeholder="Enter your Gmail app password">
-                        <small style="color: #64748b;">Use the app password you generated in Gmail settings</small>
-                    </div>
+                    <!-- Email Integration Settings -->
+                    <div class="settings-section">
+                        <h3 style="margin-bottom: 1rem; color: #374151;">📧 Email Integration</h3>
+                        <p style="color: #6b7280; margin-bottom: 2rem;">Configure Gmail API settings for email ticket management</p>
+                        
+                        <form id="settingsForm">
+                            <div class="form-group">
+                                <label class="form-label">Gmail Address</label>
+                                <input type="email" id="gmailAddress" class="form-input" placeholder="emailticket4@gmail.com">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">App Password</label>
+                                <input type="password" id="appPassword" class="form-input" placeholder="Enter your Gmail app password">
+                                <small style="color: #64748b;">Use the app password you generated in Gmail settings</small>
+                            </div>
 
                     <div class="form-group">
                         <label class="form-label">IMAP Server</label>
@@ -2795,6 +2821,46 @@
         }
 
         // Save settings to localStorage and database
+        // Handle logo upload and preview
+        function initLogoUpload() {
+            const logoUpload = document.getElementById('logoUpload');
+            const logoPreview = document.getElementById('logoPreview');
+            const currentLogo = document.getElementById('currentLogo');
+            const logoPlaceholder = document.getElementById('logoPlaceholder');
+
+            // Load existing logo if any
+            const savedLogo = localStorage.getItem('ticketmail_logo');
+            if (savedLogo) {
+                currentLogo.src = savedLogo;
+                currentLogo.style.display = 'block';
+                logoPlaceholder.style.display = 'none';
+            }
+
+            logoUpload.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                        alert('Logo file size must be less than 2MB');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        currentLogo.src = e.target.result;
+                        currentLogo.style.display = 'block';
+                        logoPlaceholder.style.display = 'none';
+                        localStorage.setItem('ticketmail_logo', e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // Initialize logo upload when settings page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initLogoUpload();
+        });
+
         async function saveSettings() {
             const settings = {
                 gmailAddress: document.getElementById('gmailAddress').value,
