@@ -921,7 +921,7 @@
             background: #1e293b;
             border-radius: 8px;
             border: 1px solid #334155;
-            margin: 1rem;
+            margin: 0.5rem;
         }
 
         .user-avatar {
@@ -999,6 +999,7 @@
         .sidebar .user-info {
             width: 100%;
             padding: 0.5rem;
+            margin-bottom: 1rem;
         }
 
         .setup-result {
@@ -1216,9 +1217,28 @@
 
     <div class="container auth-required">
         <nav class="sidebar">
-            <div class="logo">
-                <h1>📧 TicketMail</h1>
+            <div class="nav-brand">
+                <span class="app-icon">📧</span>
+                <span class="app-name">TicketMail</span>
             </div>
+            
+            <!-- User Info Section -->
+            <div class="user-info" style="margin: 1rem 0;">
+                <div class="user-profile-card">
+                    <div class="user-avatar">
+                        <span id="userInitials">?</span>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Loading...</div>
+                        <div class="user-email" id="userEmail">Loading...</div>
+                        <div class="user-role" id="userRole">Loading...</div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()" title="Sign Out">
+                        🚪
+                    </button>
+                </div>
+            </div>
+            
             <ul class="nav-menu">
                 <li class="nav-item" data-roles="admin,agent,customer">
                     <a href="#" class="nav-link active" data-page="dashboard">
@@ -1257,8 +1277,7 @@
                     </a>
                 </li>
             </ul>
-            
-
+            </ul>
         </nav>
 
         <main class="main-content">
