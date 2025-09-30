@@ -42,7 +42,7 @@ function connectToImap(settings, timeoutMs = 15000) {
 }
 
 // Fixed email fetching function with proper async handling
-function fetchEmails(imap, searchCriteria = ['UNSEEN'], maxEmails = 10) {
+function fetchEmails(imap, searchCriteria = ['OR', 'UNSEEN', ['SINCE', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()]], maxEmails = 10) {
     return new Promise((resolve, reject) => {
         imap.openBox('INBOX', false, (err, box) => {
             if (err) {
@@ -448,8 +448,8 @@ exports.handler = async (event, context) => {
             }
         }
 
-        // Mark processed messages as Seen to avoid re-processing
-        if (fetchedUids && fetchedUids.length > 0) {
+        // Only mark messages as seen if they resulted in tickets
+        if (fetchedUids && fetchedUids.length > 0 && ticketsCreated > 0) {
             try {
                 console.log('Marking processed messages as \\Seen for uids:', fetchedUids.slice(0, 10));
                 imap.addFlags(fetchedUids, '\\Seen', (err) => {
