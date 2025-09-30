@@ -1868,7 +1868,11 @@
     </div>
 
     <script>
-        // Global auth state
+        // Global constants
+        const UI_READY_EVENT = 'uiready';
+        
+        // Global state variables
+        let uiInitialized = false;
         let authState = {
             isAuthenticated: false,
             user: null,
