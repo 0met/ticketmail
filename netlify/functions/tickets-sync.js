@@ -436,9 +436,17 @@ exports.handler = async (event, context) => {
                         source: 'email'
                     };
 
-                    await saveTicket(ticket);
-                    ticketsCreated++;
-                    console.log(`Ticket created successfully for: ${email.subject}`);
+                    try {
+                        const savedTicket = await saveTicket(ticket);
+                        if (savedTicket) {
+                            ticketsCreated++;
+                            console.log(`Ticket created successfully for: ${email.subject}`);
+                        } else {
+                            console.error('Failed to save ticket:', ticket);
+                        }
+                    } catch (saveError) {
+                        console.error('Error saving ticket:', saveError.message, ticket);
+                    }
                 } else {
                     console.log('Email not identified as ticket:', email.subject);
                 }
