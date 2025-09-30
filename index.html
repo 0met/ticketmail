@@ -952,10 +952,15 @@
             align-items: center;
             gap: 0.75rem;
             padding: 0.75rem;
-            background: #1e293b;
+            background: rgba(79, 70, 229, 0.1); /* Brand color with transparency */
             border-radius: 8px;
-            border: 1px solid #334155;
+            border: 1px solid rgba(99, 102, 241, 0.2); /* Light brand color with transparency */
             margin: 0.5rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .user-profile-card:hover {
+            background: rgba(79, 70, 229, 0.15); /* Slightly more opaque on hover */
         }
 
         .user-avatar {
