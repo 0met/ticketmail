@@ -2219,13 +2219,17 @@
                 // Update navigation visibility based on role
                 updateNavigationVisibility();
 
+                // Set role data attribute on body for CSS role-based visibility
+                const roleElement = document.body;
+                if (authState.user.role) {
+                    roleElement.setAttribute('data-role', authState.user.role);
+                }
+
+                // Apply role-based visibility
+                applyRoleBasedPermissions(authState.user.role);
             } catch (error) {
                 console.error('Error updating UI:', error);
             }
-            roleElement.setAttribute('data-role', authState.user.role);
-
-            // Apply role-based visibility
-            applyRoleBasedPermissions(authState.user.role);
         }
 
         // Apply role-based permissions throughout the UI
