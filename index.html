@@ -1964,13 +1964,25 @@
             event.preventDefault();
             
             const loginBtn = document.getElementById('loginBtn');
+            if (!loginBtn) {
+                console.error('Login button not found');
+                return;
+            }
+
             const originalText = loginBtn.textContent;
-            loginBtn.textContent = 'Signing in...';
+            loginBtn.textContent = '🔄 Signing in...';
             loginBtn.disabled = true;
 
             try {
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
+                const emailInput = document.getElementById('loginEmail');
+                const passwordInput = document.getElementById('loginPassword');
+                
+                if (!emailInput || !passwordInput) {
+                    throw new Error('Login form elements not found');
+                }
+
+                const email = emailInput.value;
+                const password = passwordInput.value;
 
                 const response = await fetch('/.netlify/functions/auth-login', {
                     method: 'POST',
@@ -1980,7 +1992,9 @@
 
                 const result = await response.json();
 
-                if (result.success) {
+                if (result.success && result.sessionToken) {
+                    console.log('🔑 Login successful, updating session state...');
+                    
                     authState.isAuthenticated = true;
                     authState.user = result.user;
                     authState.sessionToken = result.sessionToken;
@@ -1990,14 +2004,17 @@
                     // Get user permissions
                     await loadUserPermissions();
                     
+                    // Make sure UI is initialized before updating
+                    document.dispatchEvent(new Event('uiready'));
+                    
+                    // Update UI and hide login
                     updateUIForAuthentication();
                     hideLoginOverlay();
                     
-                    // Initialize app after successful login
+                    console.log('🚀 Initializing app after login...');
                     init();
                 } else {
-                    alert('❌ ' + result.error);
-                }
+                    throw new Error(result.error || 'Login failed');
             } catch (error) {
                 console.error('Login error:', error);
                 alert('❌ Network error. Please try again.');
@@ -2057,6 +2074,34 @@
             }
         }
 
+        // Initialize UI elements
+        function initializeUI() {
+            console.log('🎨 Initializing UI elements...');
+            
+            // Create user info elements if they don't exist
+            const userInfo = document.querySelector('.user-info');
+            if (userInfo) {
+                const elements = ['userInitials', 'userName', 'userEmail', 'userRole'];
+                elements.forEach(id => {
+                    if (!document.getElementById(id)) {
+                        const element = document.createElement('div');
+                        element.id = id;
+                        userInfo.appendChild(element);
+                    }
+                });
+            }
+
+            // Ensure nav menu items are set up
+            const navMenu = document.querySelector('.nav-menu');
+            if (navMenu) {
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    if (!item.dataset.roles) {
+                        item.dataset.roles = 'admin,agent,customer';
+                    }
+                });
+            }
+        }
+
         // Load user permissions
         async function loadUserPermissions() {
             if (!authState.sessionToken) return;
@@ -2077,27 +2122,55 @@
             }
         }
 
+        // Update navigation menu visibility based on user role
+        function updateNavigationVisibility() {
+            const userRole = authState.user?.role;
+            if (!userRole) return;
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                const allowedRoles = (item.dataset.roles || '').split(',');
+                item.style.display = allowedRoles.includes(userRole) ? 'block' : 'none';
+            });
+        }
+
         // Update UI for authenticated state
         function updateUIForAuthentication() {
-            if (!authState.user) return;
+            if (!authState.user) {
+                console.warn('⚠️ No user data available for UI update');
+                return;
+            }
 
             console.log('🎨 Updating UI for authenticated user:', authState.user.email);
 
-            // Hide login overlay first
-            hideLoginOverlay();
+            try {
+                // Hide login overlay first
+                hideLoginOverlay();
 
-            // Update user info in sidebar
-            const initials = authState.user.fullName 
-                ? authState.user.fullName.split(' ').map(n => n[0]).join('').toUpperCase()
-                : authState.user.email[0].toUpperCase();
-            
-            document.getElementById('userInitials').textContent = initials;
-            document.getElementById('userName').textContent = authState.user.fullName || 'User';
-            document.getElementById('userEmail').textContent = authState.user.email;
-            
-            const roleElement = document.getElementById('userRole');
-            const roleText = `${authState.user.role.charAt(0).toUpperCase() + authState.user.role.slice(1)}`;
-            roleElement.textContent = roleText;
+                // Update user info in sidebar with null checks
+                const initials = authState.user.fullName 
+                    ? authState.user.fullName.split(' ').map(n => n[0]).join('').toUpperCase()
+                    : authState.user.email[0].toUpperCase();
+                
+                const userInitialsEl = document.getElementById('userInitials');
+                const userNameEl = document.getElementById('userName');
+                const userEmailEl = document.getElementById('userEmail');
+                const userRoleEl = document.getElementById('userRole');
+
+                if (userInitialsEl) userInitialsEl.textContent = initials;
+                if (userNameEl) userNameEl.textContent = authState.user.fullName || 'User';
+                if (userEmailEl) userEmailEl.textContent = authState.user.email;
+                
+                if (userRoleEl && authState.user.role) {
+                    const roleText = `${authState.user.role.charAt(0).toUpperCase() + authState.user.role.slice(1)}`;
+                    userRoleEl.textContent = roleText;
+                }
+
+                // Update navigation visibility based on role
+                updateNavigationVisibility();
+
+            } catch (error) {
+                console.error('Error updating UI:', error);
+            }
             roleElement.setAttribute('data-role', authState.user.role);
 
             // Apply role-based visibility
@@ -4153,6 +4226,15 @@
         // Start the application
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('📱 DOM Content Loaded - Starting app initialization');
+            
+            // Initialize UI elements
+            initializeUI();
+            
+            // Dispatch UI ready event
+            if (!uiInitialized) {
+                uiInitialized = true;
+                document.dispatchEvent(new Event(UI_READY_EVENT));
+            }
             
             // Initialize login tabs and form handlers
             initLoginTabs();
