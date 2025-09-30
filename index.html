@@ -918,9 +918,10 @@
             align-items: center;
             gap: 0.75rem;
             padding: 0.75rem;
-            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            background: #1e293b;
             border-radius: 8px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #334155;
+            margin: 1rem;
         }
 
         .user-avatar {
@@ -996,12 +997,8 @@
         }
 
         .sidebar .user-info {
-            position: absolute;
-            bottom: 1rem;
-            left: 1rem;
-            right: 1rem;
-            max-width: calc(250px - 2rem);
-            overflow: hidden;
+            width: 100%;
+            padding: 0.5rem;
         }
 
         .setup-result {
@@ -1261,22 +1258,7 @@
                 </li>
             </ul>
             
-            <!-- User Info Section -->
-            <div class="user-info">
-                <div class="user-profile-card">
-                    <div class="user-avatar">
-                        <span id="userInitials">?</span>
-                    </div>
-                    <div class="user-details">
-                        <div class="user-name" id="userName">Loading...</div>
-                        <div class="user-email" id="userEmail">Loading...</div>
-                        <div class="user-role" id="userRole">Loading...</div>
-                    </div>
-                    <button class="logout-btn" onclick="logout()" title="Sign Out">
-                        🚪
-                    </button>
-                </div>
-            </div>
+
         </nav>
 
         <main class="main-content">
