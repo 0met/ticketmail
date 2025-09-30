@@ -1170,8 +1170,6 @@
                 </div>
                 <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
             </form>
-                <!-- Setup buttons and default credentials removed from login view -->
-            </div>
         </div>
     </div>
 
@@ -1870,7 +1868,7 @@
     </div>
 
     <script>
-        // Authentication State
+        // Global auth state
         let authState = {
             isAuthenticated: false,
             user: null,
@@ -1998,18 +1996,17 @@
         // Login form handler
         async function handleLogin(event) {
             event.preventDefault();
-            
             const loginBtn = document.getElementById('loginBtn');
-            if (!loginBtn) {
-                console.error('Login button not found');
-                return;
-            }
-
-            const originalText = loginBtn.textContent;
-            loginBtn.textContent = '🔄 Signing in...';
-            loginBtn.disabled = true;
-
+            const originalText = loginBtn ? loginBtn.textContent : 'Sign In';
+            
             try {
+                if (!loginBtn) {
+                    throw new Error('Login button not found');
+                }
+
+                loginBtn.textContent = '🔄 Signing in...';
+                loginBtn.disabled = true;
+
                 const emailInput = document.getElementById('loginEmail');
                 const passwordInput = document.getElementById('loginPassword');
                 
@@ -2020,44 +2017,59 @@
                 const email = emailInput.value;
                 const password = passwordInput.value;
 
+                if (!email || !password) {
+                    throw new Error('Please enter both email and password');
+                }
+
                 const response = await fetch('/.netlify/functions/auth-login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
 
+                if (!response.ok) {
+                    throw new Error(`Authentication failed: ${response.statusText}`);
+                }
+
                 const result = await response.json();
 
-                if (result.success && result.sessionToken) {
-                    console.log('🔑 Login successful, updating session state...');
-                    
-                    authState.isAuthenticated = true;
-                    authState.user = result.user;
-                    authState.sessionToken = result.sessionToken;
-                    
-                    localStorage.setItem('ticketmail_session', result.sessionToken);
-                    
-                    // Get user permissions
-                    await loadUserPermissions();
-                    
-                    // Make sure UI is initialized before updating
-                    document.dispatchEvent(new Event('uiready'));
-                    
-                    // Update UI and hide login
-                    updateUIForAuthentication();
-                    hideLoginOverlay();
-                    
-                    console.log('🚀 Initializing app after login...');
-                    init();
-                } else {
+                if (!result.success) {
                     throw new Error(result.error || 'Login failed');
+                }
+
+                if (!result.sessionToken) {
+                    throw new Error('No session token received');
+                }
+
+                if (!result.user) {
+                    throw new Error('No user data received');
+                }
+
+                // Update authentication state
+                authState.isAuthenticated = true;
+                authState.user = result.user;
+                authState.sessionToken = result.sessionToken;
+                
+                // Store session
+                localStorage.setItem('ticketmail_session', result.sessionToken);
+                
+                // Load permissions and update UI
+                await loadUserPermissions();
+                updateUIForAuthentication();
+                hideLoginOverlay();
+                
+                // Initialize application
+                await init();
             } catch (error) {
-                console.error('Login error:', error);
-                alert('❌ Network error. Please try again.');
+                console.error('Login failed:', error);
+                alert(`Login failed: ${error.message}`);
             } finally {
-                loginBtn.textContent = originalText;
-                loginBtn.disabled = false;
+                if (loginBtn) {
+                    loginBtn.textContent = originalText;
+                    loginBtn.disabled = false;
+                }
             }
+        }
         }
 
         // Register form handler
