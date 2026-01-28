@@ -1,11 +1,22 @@
-const { neon } = require('@neondatabase/serverless');
 const bcrypt = require('bcryptjs');
-const { getDatabase: getLocalDB } = require('./database-local');
+const { getDatabase: getSupabaseDB } = require('./database-supabase');
+function getLocalDB() {
+    // IMPORTANT: database-local depends on native sqlite3, which will crash on Netlify
+    // if it's even imported on Linux when bundled from Windows.
+    // Keep this require lazy so production (Supabase) never loads sqlite3.
+    // eslint-disable-next-line global-require
+    return require('./database-local').getDatabase();
+}
 
 function getDatabase() {
-    // FORCE LOCAL DB
-    console.log('🔌 Using Local SQLite Database Adapter (Auth)');
-    return getLocalDB();
+    // Use Supabase in production, local SQLite for development
+    if (process.env.NODE_ENV === 'production' || process.env.USE_SUPABASE === 'true') {
+        console.log('🔌 Using Supabase Database Adapter (Auth)');
+        return getSupabaseDB();
+    } else {
+        console.log('🔌 Using Local SQLite Database Adapter (Auth)');
+        return getLocalDB();
+    }
 }
 const crypto = require('crypto');
 
@@ -26,39 +37,54 @@ async function verifyPassword(password, hash) {
 }
 
 async function createUser(userData) {
-    const sql = getDatabase();
+    const db = await getDatabase();
 
     // Hash password
     const passwordHash = await hashPassword(userData.password);
 
-    // Create user
-    const user = await sql`
-        INSERT INTO users (email, password_hash, full_name, role, company_id, department, job_title, phone)
-        VALUES (${userData.email}, ${passwordHash}, ${userData.fullName}, 
-                ${userData.role || 'customer'}, ${userData.companyId || null},
-                ${userData.department || null}, ${userData.jobTitle || null}, ${userData.phone || null})
-        RETURNING id, email, full_name, role, is_active, created_at, company_id, department, job_title, phone
-    `;
+    // Create user data object
+    const userDataToInsert = {
+        email: userData.email,
+        password_hash: passwordHash,
+        full_name: userData.fullName || null,
+        role: userData.role || 'customer',
+        company_id: userData.companyId || null,
+        department: userData.department || null,
+        job_title: userData.jobTitle || null,
+        phone: userData.phone || null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+    };
 
-    return user[0];
+    // Create user using database method
+    const user = await db.createUser(userDataToInsert);
+
+    return {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+        is_active: user.is_active,
+        created_at: user.created_at,
+        company_id: user.company_id,
+        department: user.department,
+        job_title: user.job_title,
+        phone: user.phone
+    };
 }
 
 async function authenticateUser(email, password) {
-    const sql = getDatabase();
+    const db = await getDatabase();
 
-    // Get user with password
-    const users = await sql`
-        SELECT id, email, password_hash, full_name, role, is_active
-        FROM users 
-        WHERE email = ${email}
-    `;
+    // Get user by email
+    const user = await db.getUserByEmail(email);
 
-    if (users.length === 0) {
+    if (!user) {
         console.log('No user found for email:', email);
         return { success: false, error: 'Invalid credentials' };
     }
 
-    const user = users[0];
     console.log('User from DB:', user);
     console.log('Password from input:', password);
     console.log('Password hash from DB:', user.password_hash);
@@ -78,20 +104,21 @@ async function authenticateUser(email, password) {
     }
 
     // Update last login
-    await sql`
-        UPDATE users 
-        SET last_login = CURRENT_TIMESTAMP
-        WHERE id = ${user.id}
-    `;
+    await db.updateUser(user.id, {
+        last_login: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+    });
 
     // Create session
     const sessionToken = generateSessionToken();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    await sql`
-        INSERT INTO sessions (user_id, session_token, expires_at)
-        VALUES (${user.id}, ${sessionToken}, ${expiresAt})
-    `;
+    await db.createSession({
+        user_id: user.id,
+        session_token: sessionToken,
+        expires_at: expiresAt.toISOString(),
+        created_at: new Date().toISOString()
+    });
 
     return {
         success: true,
@@ -107,22 +134,15 @@ async function authenticateUser(email, password) {
 }
 
 async function validateSession(sessionToken) {
-    const sql = getDatabase();
+    const db = await getDatabase();
 
-    const sessions = await sql`
-        SELECT s.user_id, s.expires_at, u.email, u.full_name, u.role, u.is_active
-        FROM sessions s
-        JOIN users u ON s.user_id = u.id
-        WHERE s.session_token = ${sessionToken} AND s.expires_at > CURRENT_TIMESTAMP
-    `;
+    const session = await db.getSessionByToken(sessionToken);
 
-    if (sessions.length === 0) {
+    if (!session) {
         return { valid: false, error: 'Invalid or expired session' };
     }
 
-    const session = sessions[0];
-
-    if (!session.is_active) {
+    if (!session.users.is_active) {
         return { valid: false, error: 'User account is not active' };
     }
 
@@ -130,41 +150,50 @@ async function validateSession(sessionToken) {
         valid: true,
         user: {
             id: session.user_id,
-            email: session.email,
-            fullName: session.full_name,
-            role: session.role
+            email: session.users.email,
+            fullName: session.users.full_name,
+            role: session.users.role
         }
     };
 }
 
 async function getUserPermissions(userId) {
-    const sql = getDatabase();
+    const db = await getDatabase();
+    const user = await db.getUserById(userId);
 
-    const permissions = await sql`
-        SELECT permission_type
-        FROM permissions
-        WHERE user_id = ${userId}
-    `;
+    if (!user) {
+        return [];
+    }
 
-    return permissions.map(p => p.permission_type);
+    // Basic role-based permissions
+    switch (user.role) {
+        case 'admin':
+            return ['read', 'write', 'delete', 'manage_users', 'manage_system'];
+        case 'agent':
+            return ['read', 'write', 'manage_tickets'];
+        case 'customer':
+        default:
+            return ['read', 'create_ticket'];
+    }
 }
 
 async function logActivity(userId, action, resourceType, details, ipAddress) {
-    const sql = getDatabase();
+    const db = await getDatabase();
 
-    await sql`
-        INSERT INTO activity_log (user_id, action, resource_type, details, ip_address)
-        VALUES (${userId}, ${action}, ${resourceType}, ${details ? JSON.stringify(details) : null}, ${ipAddress})
-    `;
+    await db.logActivity({
+        user_id: userId,
+        action: action,
+        resource_type: resourceType,
+        details: details || {},
+        ip_address: ipAddress,
+        created_at: new Date().toISOString()
+    });
 }
 
 async function invalidateSession(sessionToken) {
-    const sql = getDatabase();
+    const db = await getDatabase();
 
-    await sql`
-        DELETE FROM sessions 
-        WHERE session_token = ${sessionToken}
-    `;
+    await db.deleteSession(sessionToken);
 
     return true;
 }
