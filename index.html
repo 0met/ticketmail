@@ -3984,6 +3984,19 @@
                                 console.log('🔍 window.loadUsers exists?', typeof window.loadUsers);
                                 console.log('🔍 loadUsersList exists?', typeof loadUsersList);
                                 console.log('🔍 loadUsers exists?', typeof loadUsers);
+                                
+                                // NUCLEAR OPTION: Force page to stay visible
+                                const userMgmtPage = document.getElementById('user-management');
+                                const forceVisible = setInterval(() => {
+                                    if (userMgmtPage.classList.contains('active')) {
+                                        userMgmtPage.style.display = 'block';
+                                        userMgmtPage.style.visibility = 'visible';
+                                        userMgmtPage.style.opacity = '1';
+                                    } else {
+                                        clearInterval(forceVisible);
+                                    }
+                                }, 50);
+                                
                                 setTimeout(() => {
                                     if (typeof window.loadUsers === 'function') {
                                         console.log('✅ Calling window.loadUsers()');
