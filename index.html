@@ -76,8 +76,10 @@
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border-right: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 2rem 1rem;
+            padding: 0;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .logo {
@@ -93,6 +95,9 @@
 
         .nav-menu {
             list-style: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 0;
         }
 
         .nav-item {
@@ -998,7 +1003,12 @@
         .login-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-            transform: none;
+            transform: nBottom - Modern SaaS Style */
+        .user-profile-bottom {
+            margin-top: auto;
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.1);
         }
 
         /* User Profile Card - Modern Minimalist Design */
@@ -1006,21 +1016,21 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 1rem;
+            padding: 0.75rem;
             background: transparent;
-            border-radius: 12px;
+            border-radius: 10px;
             border: none;
-            margin: 0 1rem;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            cursor: pointer;
         }
 
         .user-profile-card:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.08);
         }
 
         .user-avatar {
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
@@ -1030,7 +1040,7 @@
             font-weight: 600;
             font-size: 0.875rem;
             flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .user-details {
@@ -1041,30 +1051,29 @@
         .user-name {
             font-weight: 600;
             color: white;
-            font-size: 0.9rem;
-            line-height: 1.3;
-            margin-bottom: 0.125rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .user-email {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.6);
-            line-height: 1.2;
+            font-size: 0.875rem;
+            line-height: 1.4;
             margin-bottom: 0.25rem;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
+        .user-email {
+            display: none; /* Hide email for cleaner look */
+        }
+
+        .user-role-badge {
+            display: inline-block;
+        }
+
+        .user-role-badge span,
         .user-role {
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.7);
             background: rgba(255, 255, 255, 0.1);
-            padding: 0.15rem 0.5rem;
-            border-radius: 12px;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
             text-transform: uppercase;
             font-weight: 600;
             letter-spacing: 0.05em;
@@ -1074,19 +1083,22 @@
         .logout-btn {
             padding: 0.5rem;
             border: none;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border-radius: 8px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-size: 1rem;
             flex-shrink: 0;
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444
 
         .logout-btn:hover {
             background: rgba(239, 68, 68, 0.2);
@@ -1428,23 +1440,6 @@
                 </div>
             </div>
             
-            <!-- User Info Section -->
-            <div class="user-info" style="margin: 1rem 0;">
-                <div class="user-profile-card">
-                    <div class="user-avatar">
-                        <span id="userInitials">?</span>
-                    </div>
-                    <div class="user-details">
-                        <div class="user-name" id="userName">Loading...</div>
-                        <div class="user-email" id="userEmail">Loading...</div>
-                        <div class="user-role" id="userRole">Loading...</div>
-                    </div>
-                    <button class="logout-btn" onclick="logout()" title="Sign Out">
-                        🚪
-                    </button>
-                </div>
-            </div>
-            
             <ul class="nav-menu">
                 <li class="nav-item" data-roles="admin,agent,customer">
                     <a href="#" class="nav-link active" data-page="dashboard">
@@ -1483,7 +1478,28 @@
                     </a>
                 </li>
             </ul>
-            </ul>
+            
+            <!-- User Profile at Bottom - Modern SaaS Pattern -->
+            <div class="user-profile-bottom">
+                <div class="user-profile-card">
+                    <div class="user-avatar">
+                        <span id="userInitials">?</span>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Loading...</div>
+                        <div class="user-role-badge">
+                            <span id="userRole">Loading...</span>
+                        </div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()" title="Sign Out">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </nav>
 
         <main class="main-content">
