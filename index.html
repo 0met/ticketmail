@@ -3877,10 +3877,14 @@
             const navLinks = document.querySelectorAll('.nav-link');
             const pages = document.querySelectorAll('.page');
 
+            console.log('🎯 initNavigation called, found', navLinks.length, 'nav links and', pages.length, 'pages');
+
             navLinks.forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const targetPage = link.dataset.page;
+                    
+                    console.log('🖱️ Navigation clicked, target page:', targetPage);
 
                     // Update active nav link
                     navLinks.forEach(l => l.classList.remove('active'));
@@ -3888,11 +3892,17 @@
 
                     // Show target page
                     pages.forEach(page => {
+                        console.log('📄 Processing page:', page.id, 'display:', page.style.display);
                         page.classList.remove('active');
                         page.style.display = 'none';
                         if (page.id === targetPage) {
+                            console.log('✅ Showing page:', page.id);
                             page.classList.add('active');
                             page.style.display = 'block';
+                            page.style.visibility = 'visible';
+                            page.style.opacity = '1';
+                            
+                            console.log('📊 Page after changes - display:', page.style.display, 'visibility:', page.style.visibility, 'classList:', page.classList.toString());
                             
                             // Force display for user-management page
                             if (targetPage === 'user-management') {
