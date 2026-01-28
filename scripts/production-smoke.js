@@ -107,6 +107,7 @@ async function run() {
   const baseUrl = (process.env.TM_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, '');
   const email = process.env.TM_SMOKE_EMAIL || '';
   const password = process.env.TM_SMOKE_PASSWORD || '';
+  const mutate = String(process.env.TM_SMOKE_MUTATE || '').toLowerCase() === 'true';
 
   const results = [];
   const startedAt = Date.now();
@@ -171,6 +172,33 @@ async function run() {
     return { status: res.status, body: json || safePreviewBody(res.text) };
   });
 
+  // 2b) CORS preflight should work for key endpoints
+  await test('OPTIONS auth-login (CORS preflight)', async () => {
+    const res = await request(`${baseUrl}/.netlify/functions/auth-login`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: baseUrl,
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'content-type,authorization'
+      }
+    });
+    ok(res.status === 200, `Expected 200, got ${res.status}`);
+    return { status: res.status };
+  });
+
+  await test('OPTIONS get-settings (CORS preflight)', async () => {
+    const res = await request(`${baseUrl}/.netlify/functions/get-settings`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: baseUrl,
+        'Access-Control-Request-Method': 'GET',
+        'Access-Control-Request-Headers': 'content-type,authorization'
+      }
+    });
+    ok(res.status === 200, `Expected 200, got ${res.status}`);
+    return { status: res.status };
+  });
+
   // 3) get-settings should never 500
   await test('GET get-settings', async () => {
     const res = await request(`${baseUrl}/.netlify/functions/get-settings`, { method: 'GET' });
@@ -188,6 +216,25 @@ async function run() {
     ok(json && typeof json === 'object', 'Expected JSON body');
     if (res.status === 200) ok(json.success === true, 'Expected success:true');
     return { status: res.status, body: json };
+  });
+
+  // 4b) create-ticket should exist (non-mutating checks by default)
+  await test('GET create-ticket (should be 405, not 404)', async () => {
+    const res = await request(`${baseUrl}/.netlify/functions/create-ticket`, { method: 'GET' });
+    ok(res.status === 405, `Expected 405, got ${res.status}`);
+    return { status: res.status, body: safePreviewBody(res.text) };
+  });
+
+  await test('POST create-ticket missing fields (should be 400)', async () => {
+    const res = await request(`${baseUrl}/.netlify/functions/create-ticket`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    ok(res.status === 400, `Expected 400, got ${res.status}`);
+    const json = asJson(res.text);
+    ok(json && json.success === false, 'Expected success:false');
+    return { status: res.status, body: json || safePreviewBody(res.text) };
   });
 
   // 5) auth endpoints: login + validate (only if creds provided)
@@ -257,6 +304,37 @@ async function run() {
     }
 
     return { status: res.status, body: asJson(res.text) || safePreviewBody(res.text) };
+  });
+
+  // 7) Optional mutation tests (disabled by default)
+  await test('MUTATION mode (skips unless TM_SMOKE_MUTATE=true)', async () => {
+    if (!mutate) {
+      return { skipped: true, reason: 'Set TM_SMOKE_MUTATE=true to enable mutation tests.' };
+    }
+    if (!sessionToken) {
+      return { skipped: true, reason: 'Mutation tests require TM_SMOKE_EMAIL/TM_SMOKE_PASSWORD (admin) to obtain a session token.' };
+    }
+
+    // Intentionally conservative: do not create/update/delete by default beyond a safe create-ticket.
+    // This helps catch DB write failures without requiring admin-only endpoints.
+    const title = `Smoke Test Ticket ${new Date().toISOString()}`;
+    const res = await request(`${baseUrl}/.netlify/functions/create-ticket`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        description: 'Automated smoke test ticket. Safe to delete if desired.',
+        customerEmail: `smoke-${Date.now()}@example.com`,
+        customerName: 'Smoke Test',
+        status: 'open',
+        priority: 'low'
+      })
+    });
+    ok([201, 500].includes(res.status), `Expected 201 or 500, got ${res.status}`);
+    const json = asJson(res.text);
+    ok(json && typeof json === 'object', 'Expected JSON body');
+    if (res.status === 201) ok(json.success === true, 'Expected success:true');
+    return { status: res.status, body: redactObject(json) };
   });
 
   // Small pause to reduce bursty traffic if re-run quickly
