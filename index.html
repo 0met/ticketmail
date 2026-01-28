@@ -154,12 +154,20 @@
             height: auto !important;
             min-height: 600px !important;
             background: lime !important; /* DEBUG: Make it very visible */
-            z-index: 9999 !important; /* DEBUG: Force to top */
+            z-index: 1 !important;
+            width: 100% !important;
+            padding: 2rem !important;
         }
 
-        /* DEBUG: Make content visible */
+        /* DEBUG: Make content visible and remove any hiding */
         #user-management.page.active * {
             visibility: visible !important;
+        }
+
+        /* Override any .page styling that might hide it */
+        #user-management.page.active {
+            box-shadow: none !important;
+            border-radius: 0 !important;
         }
 
         @keyframes fadeIn {
