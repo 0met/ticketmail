@@ -146,6 +146,13 @@
             position: relative !important;
             height: auto !important;
             min-height: 600px !important;
+            background: lime !important; /* DEBUG: Make it very visible */
+            z-index: 9999 !important; /* DEBUG: Force to top */
+        }
+
+        /* DEBUG: Make content visible */
+        #user-management.page.active * {
+            visibility: visible !important;
         }
 
         @keyframes fadeIn {
