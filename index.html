@@ -3915,11 +3915,20 @@
                                 loadTickets(); // Refresh tickets when tickets page is opened
                             } else if (targetPage === 'user-management') {
                                 // Load users when user management page is opened
+                                console.log('🔍 User management page opened');
+                                console.log('🔍 window.loadUsers exists?', typeof window.loadUsers);
+                                console.log('🔍 loadUsersList exists?', typeof loadUsersList);
+                                console.log('🔍 loadUsers exists?', typeof loadUsers);
                                 setTimeout(() => {
                                     if (typeof window.loadUsers === 'function') {
+                                        console.log('✅ Calling window.loadUsers()');
                                         loadUsers();
                                     } else if (typeof loadUsersList === 'function') {
+                                        console.log('✅ Calling loadUsersList()');
                                         loadUsersList();
+                                    } else {
+                                        console.error('❌ Neither loadUsers nor loadUsersList function found!');
+                                        console.error('Available global functions:', Object.keys(window).filter(k => k.includes('load')));
                                     }
                                 }, 100);
                             }

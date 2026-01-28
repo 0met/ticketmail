@@ -1,10 +1,16 @@
 // User Management System - JavaScript Functions
 // This file contains all functions for managing users, companies, and their relationships
 
+console.log('✅ user-management.js loaded successfully');
+console.log('📝 Checking if authState is available:', typeof authState);
+
 // ==================== Global State ====================
 let allUsers = [];
 let allCompanies = [];
 let filteredUsers = [];
+
+console.log('🔍 loadUsers function type:', typeof loadUsers);
+console.log('🔍 window.loadUsers type:', typeof window.loadUsers);
 
 // ==================== Tab Management ====================
 function switchUserTab(tabName) {
