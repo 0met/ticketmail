@@ -159,9 +159,12 @@
             padding: 2rem !important;
         }
 
-        /* DEBUG: Make content visible and remove any hiding */
-        #user-management.page.active * {
+        /* DEBUG: Force all children to be visible and display */
+        #user-management.page.active > * {
+            display: block !important;
             visibility: visible !important;
+            opacity: 1 !important;
+            background: yellow !important; /* DEBUG: different color for children */
         }
 
         /* Override any .page styling that might hide it */
