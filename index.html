@@ -1547,6 +1547,21 @@
                                     </div>
                                 </div>
 
+                                <div class="response-section" style="margin-top: 1.25rem;">
+                                    <h3 style="margin-bottom: 1rem; color: #1f2937;">Internal Notes</h3>
+                                    <div class="response-form">
+                                        <textarea
+                                            id="internalNoteText"
+                                            class="response-textarea"
+                                            placeholder="Add an internal note (not emailed to customer)..."
+                                        ></textarea>
+                                        <div class="response-actions">
+                                            <div style="color: #6b7280; font-size: 0.875rem;">Visible to your team only</div>
+                                            <button class="btn btn-secondary" onclick="addInternalNote()">➕ Add Note</button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="response-section">
                                     <h3 style="margin-bottom: 1rem; color: #1f2937;">Send Response</h3>
                                     <div class="response-form">
@@ -1590,6 +1605,10 @@
                                             <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Email Address</label>
                                             <input type="email" id="customerEmail" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" placeholder="Email address">
                                         </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Company</label>
+                                            <input type="text" id="customerCompany" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" placeholder="Company name">
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1602,6 +1621,8 @@
                                             <select id="ticketStatusDropdown" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;">
                                                 <option value="new">New</option>
                                                 <option value="open">Open</option>
+                                                <option value="pending">Pending</option>
+                                                <option value="approved">Approved</option>
                                                 <option value="closed">Closed</option>
                                             </select>
                                         </div>
@@ -1611,6 +1632,13 @@
                                                 <option value="low">Low</option>
                                                 <option value="medium">Medium</option>
                                                 <option value="high">High</option>
+                                                <option value="critical">Critical</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Assigned To</label>
+                                            <select id="ticketAssigneeDropdown" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;">
+                                                <option value="">Unassigned</option>
                                             </select>
                                         </div>
                                         <div>
@@ -1621,8 +1649,9 @@
                                                 <option value="billing">Billing</option>
                                                 <option value="support">Support</option>
                                                 <option value="account">Account</option>
+                                                <option value="feature-request">Feature Request</option>
+                                                <option value="urgent">Urgent</option>
                                                 <option value="bug">Bug Report</option>
-                                                <option value="feature">Feature Request</option>
                                             </select>
                                         </div>
                                     </div>
@@ -3696,8 +3725,15 @@
             container.innerHTML = ticketsToRender.map(ticket => {
                 const ticketNum = ticket.ticketNumber || ticket.ticket_number || 'TK-XXXX';
                 const absDate = ticket.date ? (new Date(ticket.date)).toISOString() : '';
+                const customerLine = ticket.customer_name || ticket.customerName || ticket.customer_email || ticket.customerEmail || ticket.from || 'Unknown';
+                const companyLine = ticket.customer_company || ticket.customerCompany || '';
+                const fromLine = companyLine ? `${customerLine} • ${companyLine}` : customerLine;
+                
+                // Escape the ticket ID for safe use in HTML attribute
+                const safeTicketId = String(ticket.id || '').replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+                
                 return `
-                <div class="ticket-card" onclick="openTicketModal('${ticket.id}')" style="cursor: pointer;">
+                <div class="ticket-card" data-ticket-id="${safeTicketId}" style="cursor: pointer;">
                     <div class="ticket-header">
                         <div>
                             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
@@ -3708,7 +3744,7 @@
                             </div>
                             <div class="ticket-subject">${ticket.subject}</div>
                             <div class="ticket-meta">
-                                <span>From: ${ticket.from}</span>
+                                <span title="${customerLine}">From: ${fromLine}</span>
                                 <span title="${absDate}">${formatDate(ticket.date)}</span>
                             </div>
                         </div>
@@ -3717,6 +3753,23 @@
                     <p style="color: #64748b; margin-top: 1rem;">${truncateText(ticket.body || '', 100)}</p>
                 </div>
             `}).join('');
+            
+            // Add click event listeners after rendering
+            console.log('🎯 Attempting to attach event listeners...');
+            setTimeout(() => {
+                const ticketCards = container.querySelectorAll('.ticket-card[data-ticket-id]');
+                console.log(`🎯 Found ${ticketCards.length} ticket cards to attach listeners to`);
+                ticketCards.forEach((card, index) => {
+                    const ticketId = card.getAttribute('data-ticket-id');
+                    console.log(`🎯 Attaching listener to ticket ${index + 1} with ID:`, ticketId);
+                    card.addEventListener('click', function() {
+                        console.log('🖱️ TICKET CLICKED! ID:', ticketId);
+                        const ticketId2 = this.getAttribute('data-ticket-id');
+                        openTicketModal(ticketId2);
+                    });
+                });
+                console.log('✅ All event listeners attached');
+            }, 0);
         }
 
         // Apply filters to tickets
@@ -3914,10 +3967,73 @@
 
         // Ticket Modal Functions
         let currentTicket = null;
+        let assignableUsersCache = null;
+
+        async function loadAssignableUsers() {
+            if (assignableUsersCache) return assignableUsersCache;
+            if (!authState || !authState.sessionToken) return [];
+
+            try {
+                const response = await fetch('/.netlify/functions/list-users', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authState.sessionToken}`
+                    }
+                });
+                const data = await response.json();
+                if (!data.success) return [];
+
+                const users = Array.isArray(data.users) ? data.users : [];
+                assignableUsersCache = users
+                    .filter(u => ['admin', 'agent'].includes(u.role) && u.isActive !== false)
+                    .map(u => ({
+                        id: u.id,
+                        label: u.fullName || u.full_name || u.email || `User ${u.id}`
+                    }));
+                return assignableUsersCache;
+            } catch (e) {
+                console.warn('Could not load assignable users:', e.message);
+                return [];
+            }
+        }
+
+        async function populateAssigneeDropdown(selectedAssigneeId) {
+            const select = document.getElementById('ticketAssigneeDropdown');
+            if (!select) return;
+
+            const selected = String(selectedAssigneeId ?? '').trim();
+            const users = await loadAssignableUsers();
+
+            const options = [
+                { value: '', label: 'Unassigned' },
+                ...users.map(u => ({ value: String(u.id), label: u.label }))
+            ];
+
+            select.innerHTML = options
+                .map(o => `<option value="${o.value}">${o.label}</option>`)
+                .join('');
+
+            if (selected) {
+                select.value = selected;
+            }
+        }
 
         function openTicketModal(ticketId) {
-            currentTicket = appState.tickets.find(t => t.id === ticketId);
-            if (!currentTicket) return;
+            console.log('🔍 openTicketModal called with ticketId:', ticketId);
+            console.log('📊 Available tickets in appState:', appState.tickets.length);
+            console.log('📝 Available ticket IDs:', appState.tickets.map(t => String(t.id)));
+            
+            const normalizedTicketId = String(ticketId);
+            currentTicket = appState.tickets.find(t => String(t.id) === normalizedTicketId);
+            
+            if (!currentTicket) {
+                console.error('❌ Ticket not found with ID:', ticketId);
+                console.error('❌ Normalized ID:', normalizedTicketId);
+                console.error('❌ Available tickets:', appState.tickets.map(t => ({id: t.id, subject: t.subject})));
+                alert(`Error: Ticket with ID ${ticketId} not found. Please refresh the page and try again.`);
+                return;
+            }
 
             console.log('🎫 Opening ticket modal for ticket:', JSON.stringify({
                 id: currentTicket.id,
@@ -3973,6 +4089,8 @@
             const customerName = currentTicket.customer_name || currentTicket.customerName || extractNameFromEmail(currentTicket.from_email) || '';
             const customerId = currentTicket.customer_id || currentTicket.customerId || '';
             const customerPhone = currentTicket.customer_phone || currentTicket.customerPhone || '';
+            const customerCompany = currentTicket.customer_company || currentTicket.customerCompany || currentTicket.companyName || currentTicket.company_name || '';
+            const assignedTo = currentTicket.assigned_to || currentTicket.assignedTo || '';
             
             console.log('🏷️  Populating customer fields (with fallbacks):', {
                 customerEmail,
@@ -3996,6 +4114,7 @@
             const customerNameEl = document.getElementById('customerName');
             const customerIdEl = document.getElementById('customerId');
             const customerPhoneEl = document.getElementById('customerPhone');
+            const customerCompanyEl = document.getElementById('customerCompany');
             
             console.log('🔍 Customer field elements found:', {
                 customerEmailEl: !!customerEmailEl,
@@ -4008,6 +4127,10 @@
             if (customerNameEl) customerNameEl.value = customerName;
             if (customerIdEl) customerIdEl.value = customerId;
             if (customerPhoneEl) customerPhoneEl.value = customerPhone;
+            if (customerCompanyEl) customerCompanyEl.value = customerCompany;
+
+            // Populate assignee dropdown (best-effort)
+            populateAssigneeDropdown(assignedTo);
 
             // Show resolution time if ticket is closed
             const resolutionTimeRow = document.getElementById('resolutionTimeRow');
@@ -4041,7 +4164,7 @@
             `;
 
             // Load conversation history
-            loadConversationHistory(ticketId);
+            loadConversationHistory(normalizedTicketId);
 
             // Show modal first
             document.getElementById('ticketModal').classList.add('active');
@@ -4055,11 +4178,18 @@
                 const customerNameEl = document.getElementById('customerName');
                 const customerIdEl = document.getElementById('customerId');
                 const customerPhoneEl = document.getElementById('customerPhone');
+                const customerCompanyEl = document.getElementById('customerCompany');
+                const assigneeEl = document.getElementById('ticketAssigneeDropdown');
                 
                 if (customerEmailEl) customerEmailEl.value = customerEmail;
                 if (customerNameEl) customerNameEl.value = customerName;
                 if (customerIdEl) customerIdEl.value = customerId;
                 if (customerPhoneEl) customerPhoneEl.value = customerPhone;
+                if (customerCompanyEl) customerCompanyEl.value = customerCompany;
+
+                if (assigneeEl && assignedTo) {
+                    assigneeEl.value = String(assignedTo);
+                }
                 
                 console.log('✅ Customer fields re-populated after DOM ready');
             }, 100);
@@ -4099,16 +4229,18 @@
                 const updates = {
                     status: document.getElementById('ticketStatusDropdown').value,
                     priority: document.getElementById('ticketPriorityDropdown').value,
+                    assignedTo: document.getElementById('ticketAssigneeDropdown')?.value || '',
                     category: document.getElementById('ticketCategoryDropdown').value,
                     customerName: document.getElementById('customerName').value,
                     customerId: document.getElementById('customerId').value,
                     customerPhone: document.getElementById('customerPhone').value,
-                    customerEmail: document.getElementById('customerEmail').value
+                    customerEmail: document.getElementById('customerEmail').value,
+                    customerCompany: document.getElementById('customerCompany')?.value || ''
                 };
 
                 // Validate values against database constraints
-                const validStatuses = ['new', 'open', 'closed'];
-                const validPriorities = ['low', 'medium', 'high'];
+                const validStatuses = ['new', 'open', 'pending', 'approved', 'closed'];
+                const validPriorities = ['low', 'medium', 'high', 'critical'];
                 
                 if (!validStatuses.includes(updates.status)) {
                     alert('❌ Invalid status value. Please select a valid status.');
@@ -4137,7 +4269,10 @@
                 // Use the existing updateTicket function
                 const response = await fetch('/.netlify/functions/update-ticket', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
+                    },
                     body: JSON.stringify({
                         ticketId: currentTicket.id,
                         updates: updates
@@ -4402,7 +4537,11 @@
         // Conversation history
         async function loadConversationHistory(ticketId) {
             try {
-                const response = await fetch(`/.netlify/functions/get-conversation?ticketId=${ticketId}`);
+                const response = await fetch(`/.netlify/functions/get-conversation?ticketId=${ticketId}`, {
+                    headers: {
+                        ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
+                    }
+                });
                 const result = await response.json();
                 
                 if (result.success) {
@@ -4424,15 +4563,34 @@
                 return;
             }
 
-            container.innerHTML = conversation.map(item => `
-                <div class="conversation-item ${item.type === 'outbound' ? 'outbound' : ''}">
-                    <div class="conversation-meta">
-                        <span><strong>${item.type === 'outbound' ? 'Support' : item.from || 'Customer'}</strong></span>
-                        <span>${formatDate(item.date)}</span>
+            container.innerHTML = conversation.map(item => {
+                const type = item.type || 'inbound';
+                const who = (type === 'outbound')
+                    ? 'Support'
+                    : (type === 'system')
+                        ? 'System'
+                        : (type === 'internal')
+                            ? (item.from ? `Internal • ${item.from}` : 'Internal Note')
+                            : (item.from || 'Customer');
+
+                const style = (type === 'internal')
+                    ? 'background: #f8fafc; border-left: 4px solid #3b82f6;'
+                    : (type === 'system')
+                        ? 'background: #f1f5f9; border-left: 4px solid #64748b;'
+                        : '';
+
+                const cls = type === 'outbound' ? 'outbound' : '';
+
+                return `
+                    <div class="conversation-item ${cls}" style="${style}">
+                        <div class="conversation-meta">
+                            <span><strong>${who}</strong></span>
+                            <span>${formatDate(item.date)}</span>
+                        </div>
+                        <div style="white-space: pre-wrap; line-height: 1.6;">${item.message}</div>
                     </div>
-                    <div style="white-space: pre-wrap; line-height: 1.6;">${item.message}</div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function addToConversationHistory(ticketId, type, message, date) {
@@ -4458,6 +4616,50 @@
         }
 
         // Email response functionality
+        async function addInternalNote() {
+            const noteEl = document.getElementById('internalNoteText');
+            const message = (noteEl ? noteEl.value : '').trim();
+
+            if (!message) {
+                alert('❌ Please enter a note');
+                return;
+            }
+
+            if (!currentTicket) {
+                alert('❌ No ticket selected');
+                return;
+            }
+
+            try {
+                const response = await fetch('/.netlify/functions/add-comment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
+                    },
+                    body: JSON.stringify({
+                        ticketId: currentTicket.id,
+                        message,
+                        type: 'internal',
+                        from: authState?.user?.email || null
+                    })
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    alert('❌ Failed to add note: ' + (result.error || 'Unknown error'));
+                    return;
+                }
+
+                addToConversationHistory(currentTicket.id, 'internal', message, new Date());
+                if (noteEl) noteEl.value = '';
+                showDiscreteNotification('✅ Note added', 'success');
+            } catch (error) {
+                console.error('Error adding note:', error);
+                alert('❌ Error adding note: ' + error.message);
+            }
+        }
+
         async function sendResponse() {
             const responseText = document.getElementById('responseText').value.trim();
             const sendCopy = document.getElementById('sendCopy').checked;
@@ -4475,7 +4677,10 @@
             try {
                 const response = await fetch('/.netlify/functions/send-response', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
+                    },
                     body: JSON.stringify({
                         ticketId: currentTicket.id,
                         to: currentTicket.from,
@@ -4527,7 +4732,10 @@
                 try {
                     const response = await fetch('/.netlify/functions/delete-ticket', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
+                        },
                         body: JSON.stringify({ ticketId: currentTicket.id })
                     });
 
