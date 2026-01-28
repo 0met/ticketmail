@@ -118,6 +118,13 @@
             min-width: 0;
             width: calc(100% - 250px);
             display: block;
+            position: relative; /* DEBUG: Ensure proper positioning context */
+        }
+
+        /* DEBUG: Make main-content visible */
+        .main-content:has(#user-management.active) {
+            background: red !important; /* DEBUG: Show container when user-management is active */
+            min-height: 100vh !important;
         }
 
         .page {
