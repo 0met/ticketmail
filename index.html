@@ -3927,6 +3927,18 @@
                             page.style.visibility = 'visible';
                             page.style.opacity = '1';
                             
+                            // CRITICAL FIX: Remove any inline display:none that was set by role permissions
+                            // The applyRoleBasedPermissions function sets inline styles that override CSS
+                            page.style.removeProperty('display');
+                            page.style.display = 'block';
+                            
+                            // Also fix any child elements that might have been hidden by role permissions
+                            const roleHiddenChildren = page.querySelectorAll('[data-roles]');
+                            roleHiddenChildren.forEach(child => {
+                                child.style.removeProperty('display');
+                                child.style.display = '';
+                            });
+                            
                             console.log('📊 Page after changes - display:', page.style.display, 'visibility:', page.style.visibility, 'classList:', page.classList.toString());
                             
                             // Force display for user-management page
