@@ -1,7 +1,7 @@
 {
   "name": "ticketmail",
   "version": "1.0.0",
-  "description": "Gmail-based ticket management system with Netlify and NeonDB integration",
+  "description": "Gmail-based ticket management system with Netlify and Supabase integration",
   "main": "index.html",
   "scripts": {
     "dev": "netlify dev",
@@ -10,14 +10,18 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0",
+    "@supabase/supabase-js": "^2.93.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^2.2.2",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
+    "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "imap": "^0.8.19",
     "mailparser": "^3.6.5",
     "nodemailer": "^7.0.6",
+    "pg": "^8.12.0",
+    "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
@@ -27,7 +31,7 @@
     "gmail",
     "ticket-system",
     "netlify",
-    "neondb",
+    "supabase",
     "imap"
   ],
   "author": "TicketMail Team",
