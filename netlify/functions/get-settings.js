@@ -60,17 +60,36 @@ exports.handler = async (event, context) => {
 
     } catch (error) {
         console.error('Error getting settings:', error);
-        
+
+        const message = (error && error.message) ? error.message : String(error);
+        const isMissingTable = message.includes("Could not find the table 'public.user_settings'") ||
+            message.toLowerCase().includes('user_settings') && message.toLowerCase().includes('schema cache');
+
+        if (isMissingTable) {
+            return {
+                statusCode: 200,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    success: true,
+                    settings: null,
+                    source: 'none',
+                    message: 'No settings table found in Supabase. Run the setup flow to create/configure Gmail settings.'
+                })
+            };
+        }
+
         return {
             statusCode: 500,
             headers: {
                 'Access-Control-Allow-Origin': '*',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
-                success: false, 
-                error: 'Failed to retrieve settings: ' + error.message,
-                stack: error.stack
+            body: JSON.stringify({
+                success: false,
+                error: 'Failed to retrieve settings: ' + message
             })
         };
     }
