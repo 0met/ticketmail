@@ -2708,6 +2708,14 @@
             const elementsWithRoles = document.querySelectorAll('[data-roles]');
             
             elementsWithRoles.forEach(element => {
+                // CRITICAL FIX: Never hide active pages
+                if (element.classList.contains('page') && element.classList.contains('active')) {
+                    console.log('⚠️ Skipping role check for active page:', element.id);
+                    element.style.display = 'block';
+                    element.classList.remove('role-hidden');
+                    return; // Skip this element
+                }
+                
                 const allowedRoles = element.getAttribute('data-roles').split(',');
                 if (allowedRoles.includes(userRole)) {
                     element.style.display = '';
