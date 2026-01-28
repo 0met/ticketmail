@@ -138,6 +138,16 @@
             opacity: 1 !important;
         }
 
+        /* Force user-management page to display when active */
+        #user-management.page.active {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
+            height: auto !important;
+            min-height: 600px !important;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
