@@ -137,6 +137,46 @@ exports.handler = async (event, context) => {
             LIMIT 10
         `;
 
+        // Company analytics
+        const ticketsByCompany = await sql`
+            SELECT 
+                c.id,
+                c.name as company_name,
+                c.domain,
+                COUNT(DISTINCT t.id) as ticket_count,
+                COUNT(DISTINCT CASE WHEN t.status = 'closed' THEN t.id END) as closed_count,
+                COUNT(DISTINCT CASE WHEN t.status IN ('new', 'open') THEN t.id END) as open_count,
+                COUNT(DISTINCT CASE WHEN t.created_at >= ${startDate.toISOString()} THEN t.id END) as recent_tickets,
+                COUNT(DISTINCT u.id) as user_count,
+                AVG(CASE WHEN t.resolution_time IS NOT NULL THEN t.resolution_time END) as avg_resolution_hours
+            FROM companies c
+            LEFT JOIN tickets t ON t.company_id = c.id
+            LEFT JOIN users u ON u.company_id = c.id
+            WHERE c.is_active = true
+            GROUP BY c.id, c.name, c.domain
+            ORDER BY ticket_count DESC
+            LIMIT 10
+        `;
+
+        // Agent performance (tickets assigned)
+        const agentPerformance = await sql`
+            SELECT 
+                u.id,
+                u.full_name,
+                u.email,
+                COUNT(DISTINCT t.id) as assigned_tickets,
+                COUNT(DISTINCT CASE WHEN t.status = 'closed' THEN t.id END) as resolved_tickets,
+                COUNT(DISTINCT CASE WHEN t.status IN ('new', 'open') THEN t.id END) as open_tickets,
+                AVG(CASE WHEN t.resolution_time IS NOT NULL THEN t.resolution_time END) as avg_resolution_hours
+            FROM users u
+            LEFT JOIN tickets t ON t.assigned_to = u.id
+            WHERE u.role IN ('admin', 'agent') AND u.is_active = true
+            GROUP BY u.id, u.full_name, u.email
+            HAVING COUNT(DISTINCT t.id) > 0
+            ORDER BY assigned_tickets DESC
+            LIMIT 10
+        `;
+
         // Performance metrics
         const performanceMetrics = await sql`
             SELECT 
@@ -174,6 +214,14 @@ exports.handler = async (event, context) => {
             insights: {
                 topCategories: topCategories,
                 timeframe: timeframe
+            },
+            companies: {
+                topByTickets: ticketsByCompany,
+                totalCompanies: ticketsByCompany.length
+            },
+            agents: {
+                performance: agentPerformance,
+                totalAgents: agentPerformance.length
             },
             generatedAt: new Date().toISOString()
         };

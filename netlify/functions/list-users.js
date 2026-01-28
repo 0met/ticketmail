@@ -1,8 +1,4 @@
-const { neon } = require('@neondatabase/serverless');
-
-function getDatabase() {
-    return neon(process.env.DATABASE_URL);
-}
+const { getDatabase } = require('./lib/database-local');
 
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
@@ -33,8 +29,8 @@ exports.handler = async (event, context) => {
 
     try {
         const sql = getDatabase();
-        
-        // Get all users with their basic info (no passwords)
+
+        // Get all users with their basic info (no passwords) and company details
         const users = await sql`
             SELECT 
                 u.id,
@@ -44,26 +40,54 @@ exports.handler = async (event, context) => {
                 u.is_active,
                 u.created_at,
                 u.last_login,
-                (SELECT COUNT(*) FROM permissions p WHERE p.user_id = u.id) as permission_count
+                u.company_id,
+                u.department,
+                u.job_title,
+                u.phone,
+                c.name as company_name,
+                c.domain as company_domain,
+                (SELECT COUNT(*) FROM permissions p WHERE p.user_id = u.id) as permission_count,
+                (SELECT COUNT(*) FROM tickets t WHERE t.assigned_to = u.id AND t.status != 'closed') as open_ticket_count
             FROM users u
+            LEFT JOIN companies c ON u.company_id = c.id
             ORDER BY u.created_at DESC
         `;
 
         // Get user activity counts
-        const userStats = await sql`
-            SELECT 
-                user_id,
-                COUNT(*) as activity_count,
-                MAX(created_at) as last_activity
-            FROM activity_log 
-            GROUP BY user_id
-        `;
+        // Note: In SQLite, we might need to handle the case where activity_log is empty or missing
+        let userStats = [];
+        try {
+            userStats = await sql`
+                SELECT 
+                    user_id,
+                    COUNT(*) as activity_count,
+                    MAX(created_at) as last_activity
+                FROM activity_log 
+                GROUP BY user_id
+            `;
+        } catch (e) {
+            console.warn('Could not fetch activity stats:', e);
+        }
 
         // Combine user data with stats
         const usersWithStats = users.map(user => {
             const stats = userStats.find(s => s.user_id === user.id);
             return {
-                ...user,
+                id: user.id,
+                email: user.email,
+                fullName: user.full_name,
+                role: user.role,
+                isActive: user.is_active,
+                createdAt: user.created_at,
+                lastLogin: user.last_login,
+                companyId: user.company_id,
+                companyName: user.company_name,
+                companyDomain: user.company_domain,
+                department: user.department,
+                jobTitle: user.job_title,
+                phone: user.phone,
+                permissionCount: parseInt(user.permission_count) || 0,
+                openTicketCount: parseInt(user.open_ticket_count) || 0,
                 activityCount: stats ? parseInt(stats.activity_count) : 0,
                 lastActivity: stats ? stats.last_activity : null
             };
@@ -89,7 +113,7 @@ exports.handler = async (event, context) => {
 
     } catch (error) {
         console.error('List users error:', error);
-        
+
         return {
             statusCode: 500,
             headers: {

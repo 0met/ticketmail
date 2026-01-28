@@ -28,7 +28,7 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const { email, fullName, role, password, createdBy } = JSON.parse(event.body);
+        const { email, fullName, role, password, createdBy, companyId, department, jobTitle, phone } = JSON.parse(event.body);
 
         // Validate required fields
         if (!email || !fullName || !role || !password) {
@@ -73,7 +73,11 @@ exports.handler = async (event, context) => {
             email,
             fullName,
             role,
-            password
+            password,
+            companyId: companyId || null,
+            department: department || null,
+            jobTitle: jobTitle || null,
+            phone: phone || null
         };
 
         const user = await createUser(userData);

@@ -1,5 +1,6 @@
 const { neon } = require('@neondatabase/serverless');
 const crypto = require('crypto-js');
+const { getDatabase: getLocalDB } = require('./database-local');
 
 // Database connection - initialized on demand
 let sql = null;
@@ -9,28 +10,11 @@ function initializeConnection() {
     if (sql) {
         return sql; // Return existing connection
     }
-    
-    try {
-        if (!process.env.DATABASE_URL) {
-            throw new Error('DATABASE_URL environment variable is not set');
-        }
-        
-        // Clean the URL and validate format
-        const databaseUrl = process.env.DATABASE_URL.trim();
-        console.log('Initializing Neon connection with URL length:', databaseUrl.length);
-        console.log('URL starts with:', databaseUrl.substring(0, 20));
-        
-        if (!databaseUrl.startsWith('postgresql://')) {
-            throw new Error(`Invalid DATABASE_URL format. Expected postgresql://, got: ${databaseUrl.substring(0, 20)}...`);
-        }
-        
-        sql = neon(databaseUrl);
-        console.log('Neon connection initialized successfully');
-        return sql;
-    } catch (error) {
-        console.error('Error initializing Neon connection:', error);
-        throw error;
-    }
+
+    // FORCE LOCAL DB for this user request
+    console.log('🔌 Using Local SQLite Database Adapter');
+    sql = getLocalDB();
+    return sql;
 }
 
 // Get database connection
@@ -62,7 +46,7 @@ function decryptData(encryptedText) {
 async function initializeDatabase() {
     try {
         const sql = getDatabase();
-        
+
         // Create settings table
         await sql`
             CREATE TABLE IF NOT EXISTS user_settings (
@@ -96,7 +80,7 @@ async function initializeDatabase() {
         await sql`
             CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status)
         `;
-        
+
         await sql`
             CREATE INDEX IF NOT EXISTS idx_tickets_date ON tickets(date_received)
         `;
@@ -117,14 +101,14 @@ async function initializeDatabase() {
 async function getUserSettings() {
     try {
         const sql = getDatabase();
-        
+
         const result = await sql`
             SELECT gmail_address, app_password, refresh_interval, default_status 
             FROM user_settings 
             ORDER BY created_at DESC 
             LIMIT 1
         `;
-        
+
         if (result.length > 0) {
             const settings = result[0];
             return {
@@ -134,7 +118,7 @@ async function getUserSettings() {
                 defaultStatus: settings.default_status
             };
         }
-        
+
         return null;
     } catch (error) {
         console.error('Error getting user settings:', error);
@@ -147,15 +131,15 @@ async function saveUserSettings(settings) {
     try {
         const sql = getDatabase();
         const encryptedPassword = encryptData(settings.appPassword);
-        
+
         // Delete existing settings and insert new ones
         await sql`DELETE FROM user_settings`;
-        
+
         await sql`
             INSERT INTO user_settings (gmail_address, app_password, refresh_interval, default_status)
             VALUES (${settings.gmailAddress}, ${encryptedPassword}, ${settings.refreshInterval}, ${settings.defaultStatus})
         `;
-        
+
         return true;
     } catch (error) {
         console.error('Error saving user settings:', error);
@@ -167,15 +151,15 @@ async function saveUserSettings(settings) {
 async function saveTicket(ticket) {
     try {
         const sql = getDatabase();
-        
+
         // Generate ticket number
         const year = new Date().getFullYear();
         const timestamp = Date.now().toString().slice(-4); // Last 4 digits of timestamp
         const randomNum = Math.floor(Math.random() * 100).toString().padStart(2, '0');
         const ticketNumber = `TK-${year}-${timestamp}${randomNum}`;
-        
+
         console.log('Saving ticket with generated number:', ticketNumber);
-        
+
         await sql`
             INSERT INTO tickets (
                 subject, 
@@ -212,7 +196,7 @@ async function saveTicket(ticket) {
                 -- Don't overwrite status, priority, category on email sync
                 -- These should only be updated via manual ticket updates
         `;
-        
+
         return true;
     } catch (error) {
         console.error('Error saving ticket:', error);
@@ -224,7 +208,7 @@ async function saveTicket(ticket) {
 async function getTickets(limit = 100) {
     try {
         const sql = getDatabase();
-        
+
         const result = await sql`
             SELECT id, subject, from_email, to_email, body_text, status, received_at, created_at, updated_at,
                    ticket_number, priority, category, resolution_time, closed_at, is_manual, source,
@@ -233,9 +217,9 @@ async function getTickets(limit = 100) {
             ORDER BY received_at DESC 
             LIMIT ${limit}
         `;
-        
+
         console.log('🔍 Raw database result (first ticket):', JSON.stringify(result[0], null, 2));
-        
+
         const mappedTickets = result.map(ticket => ({
             id: ticket.id,
             ticketNumber: ticket.ticket_number,
@@ -258,9 +242,9 @@ async function getTickets(limit = 100) {
             customerPhone: ticket.customer_phone || null,
             customerEmail: ticket.customer_email || ticket.from_email // Use from_email as fallback
         }));
-        
+
         console.log('🎯 Mapped ticket (first ticket):', JSON.stringify(mappedTickets[0], null, 2));
-        
+
         return mappedTickets;
     } catch (error) {
         console.error('Error getting tickets:', error);
@@ -272,38 +256,38 @@ async function getTickets(limit = 100) {
 async function updateTicketStatus(ticketId, status) {
     try {
         const sql = getDatabase();
-        
+
         console.log(`Updating ticket ${ticketId} to status ${status}`);
-        
+
         // First, let's check if the ticket exists (without UUID casting)
         const existingTicket = await sql`
             SELECT id, status FROM tickets WHERE id = ${ticketId}
         `;
-        
+
         console.log('Existing ticket:', existingTicket);
-        
+
         if (existingTicket.length === 0) {
             console.log('Ticket not found!');
             return { success: false, error: 'Ticket not found' };
         }
-        
+
         // Now update without UUID casting
         const result = await sql`
             UPDATE tickets 
             SET status = ${status}, updated_at = CURRENT_TIMESTAMP 
             WHERE id = ${ticketId}
         `;
-        
+
         console.log('Update result:', result);
         console.log('Update result count:', result.count);
-        
+
         // Verify the update worked
         const updatedTicket = await sql`
             SELECT id, status, updated_at FROM tickets WHERE id = ${ticketId}
         `;
-        
+
         console.log('After update:', updatedTicket);
-        
+
         return { success: true, updatedTicket: updatedTicket[0] };
     } catch (error) {
         console.error('Error updating ticket status:', error);
@@ -315,25 +299,25 @@ async function updateTicketStatus(ticketId, status) {
 async function updateTicket(ticketId, updates) {
     try {
         const sql = getDatabase();
-        
+
         console.log(`Updating ticket ${ticketId} with updates:`, updates);
-        
+
         // Check if ticket exists first (without UUID casting)
         const existingTicket = await sql`
             SELECT id FROM tickets WHERE id = ${ticketId}
         `;
-        
+
         console.log('Existing ticket check:', existingTicket);
-        
+
         if (existingTicket.length === 0) {
             console.log('Ticket not found!');
             return { success: false, error: 'Ticket not found' };
         }
-        
+
         // Handle each field individually to ensure proper parameter binding (without UUID casting)
         for (const [key, value] of Object.entries(updates)) {
             console.log(`Updating ${key} to ${value} for ticket ${ticketId}`);
-            
+
             if (key === 'priority') {
                 const result = await sql`UPDATE tickets SET priority = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
                 console.log(`Priority update result:`, result);
@@ -349,7 +333,7 @@ async function updateTicket(ticketId, updates) {
             } else if (key === 'closedAt') {
                 const result = await sql`UPDATE tickets SET closed_at = ${value}, updated_at = CURRENT_TIMESTAMP WHERE id = ${ticketId}`;
                 console.log(`Closed at update result:`, result);
-            } 
+            }
             // Customer fields - we'll add the columns if they don't exist
             else if (key === 'customerName') {
                 try {
@@ -381,14 +365,14 @@ async function updateTicket(ticketId, updates) {
                 }
             }
         }
-        
+
         // Get the updated ticket (without UUID casting)
         const updatedTicket = await sql`
             SELECT * FROM tickets WHERE id = ${ticketId}
         `;
-        
+
         console.log('Update completed. Updated ticket:', updatedTicket[0]);
-        
+
         return { success: true, ticket: updatedTicket[0] };
     } catch (error) {
         console.error('Error updating ticket:', error);

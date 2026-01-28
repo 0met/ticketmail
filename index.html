@@ -116,6 +116,7 @@
             overflow-y: auto;
             min-width: 0;
             width: calc(100% - 250px);
+            display: block;
         }
 
         .page {
@@ -128,8 +129,12 @@
         }
 
         .page.active {
-            display: block;
+            display: block !important;
             animation: fadeIn 0.3s ease-in-out;
+            width: 100%;
+            min-width: 100%;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         @keyframes fadeIn {
@@ -813,6 +818,8 @@
             padding: 2.5rem;
             width: 90%;
             max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             animation: slideUp 0.3s ease-out;
         }
@@ -1151,6 +1158,7 @@
             margin-bottom: 1rem;
         }
     </style>
+    <link rel="stylesheet" href="assets/user-management.css">
 </head>
 <body>
     <!-- Login/Register Overlay -->
@@ -1226,6 +1234,36 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="newUserCompany" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Company (Optional)</label>
+                    <select id="newUserCompany" name="companyId"
+                            style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                        <option value="">No Company</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="newUserDepartment" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Department (Optional)</label>
+                        <input type="text" id="newUserDepartment" name="department"
+                               style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;"
+                               placeholder="e.g., Sales, Support">
+                    </div>
+                    <div class="form-group">
+                        <label for="newUserJobTitle" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Job Title (Optional)</label>
+                        <input type="text" id="newUserJobTitle" name="jobTitle"
+                               style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;"
+                               placeholder="e.g., Manager">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="newUserPhone" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Phone (Optional)</label>
+                    <input type="tel" id="newUserPhone" name="phone"
+                           style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;"
+                           placeholder="+1 (555) 123-4567">
+                </div>
+
+                <div class="form-group">
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                         <input type="checkbox" id="newUserActive" name="active" checked
                                style="width: 1rem; height: 1rem;">
@@ -1249,6 +1287,76 @@
             </form>
 
             <div id="userCreationResults" style="margin-top: 1rem;"></div>
+        </div>
+    </div>
+
+    <!-- Company Creation/Edit Modal -->
+    <div id="companyModal" class="login-overlay" style="display: none;">
+        <div class="login-modal" style="max-width: 600px;">
+            <div class="login-header">
+                <h2 id="companyModalTitle" class="login-title">🏢 Create New Company</h2>
+                <p class="login-subtitle">Add a new company to the system</p>
+            </div>
+
+            <form id="companyForm" class="login-form">
+                <input type="hidden" id="companyId" name="id">
+                
+                <div class="form-group">
+                    <label for="companyName" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Company Name *</label>
+                    <input type="text" id="companyName" name="name" required
+                           style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                </div>
+
+                <div class="form-group">
+                    <label for="companyDomain" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Domain</label>
+                    <input type="text" id="companyDomain" name="domain" placeholder="example.com"
+                           style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="companyIndustry" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Industry</label>
+                        <input type="text" id="companyIndustry" name="industry" placeholder="Technology, Healthcare, etc."
+                               style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div class="form-group">
+                        <label for="companyPhone" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Phone</label>
+                        <input type="tel" id="companyPhone" name="phone"
+                               style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="companyAddress" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Address</label>
+                    <textarea id="companyAddress" name="address" rows="2"
+                              style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="companyNotes" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">Notes</label>
+                    <textarea id="companyNotes" name="notes" rows="3"
+                              style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="companyActive" name="isActive" checked
+                           style="width: 20px; height: 20px; cursor: pointer;">
+                    <label for="companyActive" style="margin: 0; color: #374151; cursor: pointer;">Active Company</label>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeCompanyModal()"
+                            style="flex: 1; padding: 0.75rem; background: #e2e8f0; color: #374151; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            style="flex: 2; padding: 0.75rem; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">
+                        🏢 Save Company
+                    </button>
+                </div>
+            </form>
+
+            <div id="companyFormResults" style="margin-top: 1rem;"></div>
         </div>
     </div>
 
@@ -1818,81 +1926,91 @@
             </div>
 
             <!-- User Management Page (Admin Only) -->
-            <div id="user-management" class="page" data-roles="admin">
-                <div class="page-header">
-                    <h1 class="page-title">User Management</h1>
-                    <p class="page-subtitle">Manage users, roles, and permissions</p>
-                </div>
+            <div id="user-management" data-roles="admin" class="page" style="min-height: 600px !important;">
+                <h1 style="margin-bottom: 0.5rem;">User Management</h1>
+                <p style="color: #64748b; margin-bottom: 2rem;">Manage users, companies, roles, and permissions</p>
 
-                <div class="admin-actions" style="margin-bottom: 2rem;">
-                    <button class="btn btn-primary admin-only" onclick="createNewUser()">
-                        👤 Add New User
+                <!-- Tab Navigation -->
+                <div class="tab-navigation" style="display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 2px solid #e5e7eb;">
+                    <button class="tab-btn active" data-tab="users" onclick="switchUserTab('users')">
+                        👥 Users
                     </button>
-                    <button class="btn btn-secondary admin-only" onclick="exportUsers()">
-                        📊 Export Users
-                    </button>
-                    <button class="btn btn-warning admin-only" onclick="auditUserActivity()">
-                        🔍 User Activity Log
+                    <button class="tab-btn" data-tab="companies" onclick="switchUserTab('companies')">
+                        🏢 Companies
                     </button>
                 </div>
 
-                <div class="users-grid">
-                    <!-- User Statistics Cards -->
-                    <div class="stats-grid" style="margin-bottom: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                        <div class="stat-card" style="background: #3b82f6; color: white;">
-                            <div class="stat-icon">👥</div>
-                            <div class="stat-value" id="totalUsersCount">-</div>
-                            <div class="stat-label">Total Users</div>
-                        </div>
-                        <div class="stat-card" style="background: #10b981; color: white;">
-                            <div class="stat-icon">🛡️</div>
-                            <div class="stat-value" id="adminUsersCount">-</div>
-                            <div class="stat-label">Admins</div>
-                        </div>
-                        <div class="stat-card" style="background: #f59e0b; color: white;">
-                            <div class="stat-icon">👨‍💼</div>
-                            <div class="stat-value" id="agentUsersCount">-</div>
-                            <div class="stat-label">Agents</div>
-                        </div>
-                        <div class="stat-card" style="background: #8b5cf6; color: white;">
-                            <div class="stat-icon">�</div>
-                            <div class="stat-value" id="customerUsersCount">-</div>
-                            <div class="stat-label">Customers</div>
-                        </div>
+                <!-- Users Tab -->
+                <div id="users-tab" class="tab-content active" style="display: block;">
+                    <div style="margin-bottom: 2rem;">
+                        <button class="btn btn-primary" style="margin-right: 1rem;" onclick="if(typeof createNewUser === 'function') createNewUser()">
+                            👤 Add New User
+                        </button>
+                        <button class="btn btn-secondary" onclick="if(typeof exportUsers === 'function') exportUsers()">
+                            📊 Export Users
+                        </button>
                     </div>
 
-                    <!-- User List Table -->
-                    <div id="usersList" class="users-table" style="background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
-                        <div class="table-header" style="background: #f8fafc; padding: 1rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: between; align-items: center;">
-                            <h3 style="margin: 0; color: #374151; font-size: 1.1rem;">👥 All Users</h3>
-                            <div class="table-controls" style="display: flex; gap: 1rem; align-items: center;">
-                                <input type="text" id="userSearch" placeholder="Search users..." 
-                                    style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem;"
-                                    onkeyup="filterUsers()">
-                                <select id="roleFilter" onchange="filterUsers()" 
-                                    style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem;">
-                                    <option value="">All Roles</option>
-                                    <option value="admin">Admins</option>
-                                    <option value="agent">Agents</option>
-                                    <option value="customer">Customers</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div id="usersTableBody">
-                            <div style="text-align: center; padding: 3rem; color: #64748b;">
-                                <div class="loading-spinner" style="margin: 0 auto 1rem;">⏳</div>
-                                <p>Loading users...</p>
-                            </div>
-                        </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div style="background: #3b82f6; color: white; padding: 1.5rem; border-radius: 8px;">
+                        <div style="font-size: 2rem; font-weight: bold;" id="totalUsersCount">-</div>
+                        <div>Total Users</div>
+                    </div>
+                    <div style="background: #10b981; color: white; padding: 1.5rem; border-radius: 8px;">
+                        <div style="font-size: 2rem; font-weight: bold;" id="adminUsersCount">-</div>
+                        <div>Admins</div>
+                    </div>
+                    <div style="background: #f59e0b; color: white; padding: 1.5rem; border-radius: 8px;">
+                        <div style="font-size: 2rem; font-weight: bold;" id="agentUsersCount">-</div>
+                        <div>Agents</div>
+                    </div>
+                    <div style="background: #8b5cf6; color: white; padding: 1.5rem; border-radius: 8px;">
+                        <div style="font-size: 2rem; font-weight: bold;" id="customerUsersCount">-</div>
+                        <div>Customers</div>
                     </div>
                 </div>
 
-                <!-- Access Restricted Message for Non-Admins -->
-                <div class="access-restricted" style="display: none;">
-                    <h3>🔒 Access Restricted</h3>
-                    <p>You don't have permission to access the user management panel.</p>
-                    <p>Contact your administrator if you need access to manage users.</p>
+                <div style="background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h3 style="margin-bottom: 1rem;">All Users</h3>
+                    <div id="usersTableBody">
+                        <p style="text-align: center; padding: 2rem; color: #64748b;">Loading users...</p>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Companies Tab -->
+                <div id="companies-tab" class="tab-content" style="display: none;">
+                    <div style="margin-bottom: 2rem;">
+                        <button class="btn btn-primary" style="margin-right: 1rem;" onclick="openCompanyModal()">
+                            🏢 Add New Company
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshCompaniesList()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                        <div style="background: #3b82f6; color: white; padding: 1.5rem; border-radius: 8px;">
+                            <div style="font-size: 2rem; font-weight: bold;" id="totalCompaniesCount">-</div>
+                            <div>Total Companies</div>
+                        </div>
+                        <div style="background: #10b981; color: white; padding: 1.5rem; border-radius: 8px;">
+                            <div style="font-size: 2rem; font-weight: bold;" id="activeCompaniesCount">-</div>
+                            <div>Active Companies</div>
+                        </div>
+                        <div style="background: #f59e0b; color: white; padding: 1.5rem; border-radius: 8px;">
+                            <div style="font-size: 2rem; font-weight: bold;" id="companiesUsersCount">-</div>
+                            <div>Total Users</div>
+                        </div>
+                        <div style="background: #8b5cf6; color: white; padding: 1.5rem; border-radius: 8px;">
+                            <div style="font-size: 2rem; font-weight: bold;" id="companiesTicketsCount">-</div>
+                            <div>Total Tickets</div>
+                        </div>
+                    </div>
+
+                    <div id="companiesList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                        <p style="text-align: center; padding: 2rem; color: #64748b; grid-column: 1 / -1;">Loading companies...</p>
+                    </div>
                 </div>
             </div>
         </main>
@@ -2459,6 +2577,38 @@
             document.getElementById('userCreationForm').reset();
             document.getElementById('newUserActive').checked = true;
             document.getElementById('userCreationResults').innerHTML = '';
+            
+            // Load companies for dropdown
+            loadCompaniesForModal();
+        }
+
+        async function loadCompaniesForModal() {
+            try {
+                const response = await fetch('/.netlify/functions/companies-list', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authState.sessionToken}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.companies) {
+                    const companySelect = document.getElementById('newUserCompany');
+                    // Clear existing options except the first one
+                    companySelect.innerHTML = '<option value="">-- Select Company (Optional) --</option>';
+                    
+                    // Add company options
+                    result.companies.forEach(company => {
+                        const option = document.createElement('option');
+                        option.value = company.id;
+                        option.textContent = company.name;
+                        companySelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading companies:', error);
+            }
         }
 
         function closeUserCreationModal() {
@@ -2485,7 +2635,11 @@
                     password: formData.get('password'),
                     fullName: `${formData.get('firstName')} ${formData.get('lastName')}`.trim(),
                     role: formData.get('role'),
-                    createdBy: authState.user.id
+                    createdBy: authState.user.id,
+                    companyId: formData.get('companyId') || null,
+                    department: formData.get('department') || null,
+                    jobTitle: formData.get('jobTitle') || null,
+                    phone: formData.get('phone') || null
                 };
 
                 const response = await fetch('/.netlify/functions/create-user', {
@@ -3417,8 +3571,34 @@
                     // Show target page
                     pages.forEach(page => {
                         page.classList.remove('active');
+                        page.style.display = 'none';
                         if (page.id === targetPage) {
                             page.classList.add('active');
+                            page.style.display = 'block';
+                            
+                            // Force display for user-management page
+                            if (targetPage === 'user-management') {
+                                // Immediate force
+                                const userMgmtPage = document.getElementById('user-management');
+                                if (userMgmtPage) {
+                                    userMgmtPage.style.display = 'block';
+                                    userMgmtPage.style.visibility = 'visible';
+                                    userMgmtPage.style.opacity = '1';
+                                    userMgmtPage.style.position = 'relative';
+                                    userMgmtPage.style.height = 'auto';
+                                    userMgmtPage.style.minHeight = '600px';
+                                    userMgmtPage.style.width = '100%';
+                                }
+                                
+                                // Double check after a tiny delay
+                                setTimeout(() => {
+                                    const page = document.getElementById('user-management');
+                                    if (page) {
+                                        page.style.display = 'block';
+                                        page.style.visibility = 'visible';
+                                    }
+                                }, 50);
+                            }
                             
                             // Load data when specific pages are opened
                             if (targetPage === 'analytics') {
@@ -3426,7 +3606,14 @@
                             } else if (targetPage === 'tickets') {
                                 loadTickets(); // Refresh tickets when tickets page is opened
                             } else if (targetPage === 'user-management') {
-                                loadUsersList(); // Refresh user list when user management page is opened
+                                // Load users when user management page is opened
+                                setTimeout(() => {
+                                    if (typeof window.loadUsers === 'function') {
+                                        loadUsers();
+                                    } else if (typeof loadUsersList === 'function') {
+                                        loadUsersList();
+                                    }
+                                }, 100);
                             }
                         }
                     });
@@ -4386,5 +4573,6 @@
             }
         });
     </script>
+    <script src="assets/user-management.js"></script>
 </body>
 </html>
