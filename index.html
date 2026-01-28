@@ -36,11 +36,12 @@
             gap: 1rem;
         }
 
-        .app-icon {
-            font-size: 2.5rem;
-            line-height: 1;
-            color: white;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        .app-logo {
+            height: 40px;
+            width: auto;
+            max-width: 120px;
+            object-fit: contain;
+            filter: brightness(0) invert(1); /* Make logo white to match the theme */
         }
 
         .app-name {
@@ -1364,7 +1365,7 @@
         <nav class="sidebar">
             <div class="nav-brand">
                 <div class="brand-content">
-                    <span class="app-icon">�</span>
+                    <img src="assets/tickethublogo.jpg" alt="TicketHub Logo" class="app-logo">
                     <span class="app-name">TicketMail</span>
                 </div>
             </div>
@@ -1926,90 +1927,344 @@
             </div>
 
             <!-- User Management Page (Admin Only) -->
-            <div id="user-management" data-roles="admin" class="page" style="min-height: 600px !important;">
-                <h1 style="margin-bottom: 0.5rem;">User Management</h1>
-                <p style="color: #64748b; margin-bottom: 2rem;">Manage users, companies, roles, and permissions</p>
+            <div id="user-management" class="page" data-roles="admin">
+                <div class="page-header">
+                    <h1 class="page-title">User &amp; Company Management</h1>
+                    <p class="page-subtitle">Manage users, companies, roles, and permissions</p>
+                </div>
 
                 <!-- Tab Navigation -->
-                <div class="tab-navigation" style="display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 2px solid #e5e7eb;">
-                    <button class="tab-btn active" data-tab="users" onclick="switchUserTab('users')">
-                        👥 Users
+                <div class="tab-navigation" style="display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 2px solid #e2e8f0;">
+                    <button class="tab-btn active" onclick="switchUserTab('users')" data-tab="users">
+                        <span style="margin-right: 0.5rem;">👥</span> Users
                     </button>
-                    <button class="tab-btn" data-tab="companies" onclick="switchUserTab('companies')">
-                        🏢 Companies
+                    <button class="tab-btn" onclick="switchUserTab('companies')" data-tab="companies">
+                        <span style="margin-right: 0.5rem;">🏢</span> Companies
+                    </button>
+                    <button class="tab-btn" onclick="switchUserTab('activity')" data-tab="activity">
+                        <span style="margin-right: 0.5rem;">📊</span> Activity Log
                     </button>
                 </div>
 
                 <!-- Users Tab -->
-                <div id="users-tab" class="tab-content active" style="display: block;">
-                    <div style="margin-bottom: 2rem;">
-                        <button class="btn btn-primary" style="margin-right: 1rem;" onclick="if(typeof createNewUser === 'function') createNewUser()">
+                <div id="users-tab" class="tab-content active">
+                    <div class="admin-actions" style="margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="openUserModal()">
                             👤 Add New User
                         </button>
-                        <button class="btn btn-secondary" onclick="if(typeof exportUsers === 'function') exportUsers()">
+                        <button class="btn btn-secondary" onclick="exportUsers()">
                             📊 Export Users
                         </button>
-                    </div>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                    <div style="background: #3b82f6; color: white; padding: 1.5rem; border-radius: 8px;">
-                        <div style="font-size: 2rem; font-weight: bold;" id="totalUsersCount">-</div>
-                        <div>Total Users</div>
-                    </div>
-                    <div style="background: #10b981; color: white; padding: 1.5rem; border-radius: 8px;">
-                        <div style="font-size: 2rem; font-weight: bold;" id="adminUsersCount">-</div>
-                        <div>Admins</div>
-                    </div>
-                    <div style="background: #f59e0b; color: white; padding: 1.5rem; border-radius: 8px;">
-                        <div style="font-size: 2rem; font-weight: bold;" id="agentUsersCount">-</div>
-                        <div>Agents</div>
-                    </div>
-                    <div style="background: #8b5cf6; color: white; padding: 1.5rem; border-radius: 8px;">
-                        <div style="font-size: 2rem; font-weight: bold;" id="customerUsersCount">-</div>
-                        <div>Customers</div>
-                    </div>
-                </div>
-
-                <div style="background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <h3 style="margin-bottom: 1rem;">All Users</h3>
-                    <div id="usersTableBody">
-                        <p style="text-align: center; padding: 2rem; color: #64748b;">Loading users...</p>
-                    </div>
-                </div>
-                </div>
-
-                <!-- Companies Tab -->
-                <div id="companies-tab" class="tab-content" style="display: none;">
-                    <div style="margin-bottom: 2rem;">
-                        <button class="btn btn-primary" style="margin-right: 1rem;" onclick="openCompanyModal()">
-                            🏢 Add New Company
-                        </button>
-                        <button class="btn btn-secondary" onclick="refreshCompaniesList()">
+                        <button class="btn" onclick="refreshUsersList()">
                             🔄 Refresh
                         </button>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                        <div style="background: #3b82f6; color: white; padding: 1.5rem; border-radius: 8px;">
-                            <div style="font-size: 2rem; font-weight: bold;" id="totalCompaniesCount">-</div>
-                            <div>Total Companies</div>
+                    <!-- User Statistics -->
+                    <div class="stats-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                            <div class="stat-number" id="totalUsersCount">0</div>
+                            <div class="stat-label">Total Users</div>
                         </div>
-                        <div style="background: #10b981; color: white; padding: 1.5rem; border-radius: 8px;">
-                            <div style="font-size: 2rem; font-weight: bold;" id="activeCompaniesCount">-</div>
-                            <div>Active Companies</div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <div class="stat-number" id="adminUsersCount">0</div>
+                            <div class="stat-label">Admins</div>
                         </div>
-                        <div style="background: #f59e0b; color: white; padding: 1.5rem; border-radius: 8px;">
-                            <div style="font-size: 2rem; font-weight: bold;" id="companiesUsersCount">-</div>
-                            <div>Total Users</div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <div class="stat-number" id="agentUsersCount">0</div>
+                            <div class="stat-label">Agents</div>
                         </div>
-                        <div style="background: #8b5cf6; color: white; padding: 1.5rem; border-radius: 8px;">
-                            <div style="font-size: 2rem; font-weight: bold;" id="companiesTicketsCount">-</div>
-                            <div>Total Tickets</div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                            <div class="stat-number" id="customerUsersCount">0</div>
+                            <div class="stat-label">Customers</div>
                         </div>
                     </div>
 
-                    <div id="companiesList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
-                        <p style="text-align: center; padding: 2rem; color: #64748b; grid-column: 1 / -1;">Loading companies...</p>
+                    <!-- User Filters and Search -->
+                    <div class="filters-container" style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <input type="text" id="userSearch" placeholder="🔍 Search users..."
+                                style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;"
+                                onkeyup="filterUsers()">
+                            <select id="roleFilter" onchange="filterUsers()"
+                                style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                <option value="">All Roles</option>
+                                <option value="admin">Admins</option>
+                                <option value="agent">Agents</option>
+                                <option value="customer">Customers</option>
+                            </select>
+                            <select id="companyFilter" onchange="filterUsers()"
+                                style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                <option value="">All Companies</option>
+                            </select>
+                            <select id="statusFilter" onchange="filterUsers()"
+                                style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                <option value="">All Statuses</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Users Table -->
+                    <div id="usersList" class="data-table" style="background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden;">
+                        <div id="usersTableBody">
+                            <div style="text-align: center; padding: 3rem; color: #64748b;">
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                                <p>Loading users...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Companies Tab -->
+                <div id="companies-tab" class="tab-content">
+                    <div class="admin-actions" style="margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="openCompanyModal()">
+                            🏢 Add New Company
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportCompanies()">
+                            📊 Export Companies
+                        </button>
+                        <button class="btn" onclick="refreshCompaniesList()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+
+                    <!-- Company Statistics -->
+                    <div class="stats-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                            <div class="stat-number" id="totalCompaniesCount">0</div>
+                            <div class="stat-label">Total Companies</div>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                            <div class="stat-number" id="activeCompaniesCount">0</div>
+                            <div class="stat-label">Active Companies</div>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                            <div class="stat-number" id="companiesUsersCount">0</div>
+                            <div class="stat-label">Total Users in Companies</div>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                            <div class="stat-number" id="companiesTicketsCount">0</div>
+                            <div class="stat-label">Total Tickets</div>
+                        </div>
+                    </div>
+
+                    <!-- Companies Grid -->
+                    <div id="companiesList" class="companies-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                        <div style="text-align: center; padding: 3rem; color: #64748b; grid-column: 1 / -1;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                            <p>Loading companies...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Log Tab -->
+                <div id="activity-tab" class="tab-content">
+                    <div class="admin-actions" style="margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <select id="activityTypeFilter" onchange="filterActivityLog()"
+                            style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; min-width: 200px;">
+                            <option value="">All Activities</option>
+                            <option value="user_created">User Created</option>
+                            <option value="user_updated">User Updated</option>
+                            <option value="user_deleted">User Deleted</option>
+                            <option value="company_created">Company Created</option>
+                            <option value="company_updated">Company Updated</option>
+                            <option value="login">Logins</option>
+                            <option value="logout">Logouts</option>
+                        </select>
+                        <input type="date" id="activityDateFilter" onchange="filterActivityLog()"
+                            style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                        <button class="btn" onclick="refreshActivityLog()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+
+                    <!-- Activity Log List -->
+                    <div id="activityLogList" class="activity-log" style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                        <div style="text-align: center; padding: 3rem; color: #64748b;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                            <p>Loading activity log...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Access Restricted Message for Non-Admins -->
+                <div class="access-restricted" style="display: none;">
+                    <h3>🔒 Access Restricted</h3>
+                    <p>You don't have permission to access the user management panel.</p>
+                    <p>Contact your administrator if you need access to manage users.</p>
+                </div>
+            </div>
+
+            <!-- User Modal -->
+            <div id="userModal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h2 id="userModalTitle">Add New User</h2>
+                        <button class="modal-close" onclick="closeUserModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="userForm" onsubmit="saveUser(event)">
+                            <input type="hidden" id="userId" value="">
+
+                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="userFullName">Full Name *</label>
+                                    <input type="text" id="userFullName" required
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label for="userEmail">Email *</label>
+                                    <input type="email" id="userEmail" required
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="userRole">Role *</label>
+                                    <select id="userRole" required
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                        <option value="customer">Customer</option>
+                                        <option value="agent">Agent</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="userCompany">Company</label>
+                                    <select id="userCompany"
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                        <option value="">No Company</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="userDepartment">Department</label>
+                                    <input type="text" id="userDepartment"
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label for="userJobTitle">Job Title</label>
+                                    <input type="text" id="userJobTitle"
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="userPhone">Phone</label>
+                                    <input type="tel" id="userPhone"
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label for="userPassword">Password <span id="passwordOptional" style="color: #64748b; font-size: 0.875rem;"></span></label>
+                                    <input type="password" id="userPassword"
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <input type="checkbox" id="userIsActive" checked>
+                                    <span>Active User</span>
+                                </label>
+                            </div>
+
+                            <div class="modal-footer" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                                <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save User</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Company Modal -->
+            <div id="companyModal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h2 id="companyModalTitle">Add New Company</h2>
+                        <button class="modal-close" onclick="closeCompanyModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="companyForm" onsubmit="saveCompany(event)">
+                            <input type="hidden" id="companyId" value="">
+
+                            <div class="form-group">
+                                <label for="companyName">Company Name *</label>
+                                <input type="text" id="companyName" required
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                            </div>
+
+                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="companyDomain">Domain</label>
+                                    <input type="text" id="companyDomain" placeholder="example.com"
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label for="companyPhone">Phone</label>
+                                    <input type="tel" id="companyPhone"
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="companyAddress">Address</label>
+                                <textarea id="companyAddress" rows="2"
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;"></textarea>
+                            </div>
+
+                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="companyIndustry">Industry</label>
+                                    <select id="companyIndustry"
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                        <option value="">Select Industry</option>
+                                        <option value="technology">Technology</option>
+                                        <option value="healthcare">Healthcare</option>
+                                        <option value="finance">Finance</option>
+                                        <option value="retail">Retail</option>
+                                        <option value="manufacturing">Manufacturing</option>
+                                        <option value="education">Education</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="companySize">Company Size</label>
+                                    <select id="companySize"
+                                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                        <option value="">Select Size</option>
+                                        <option value="small">Small (1-50)</option>
+                                        <option value="medium">Medium (51-200)</option>
+                                        <option value="large">Large (201-1000)</option>
+                                        <option value="enterprise">Enterprise (1000+)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="companyNotes">Notes</label>
+                                <textarea id="companyNotes" rows="3"
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <input type="checkbox" id="companyIsActive" checked>
+                                    <span>Active Company</span>
+                                </label>
+                            </div>
+
+                            <div class="modal-footer" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                                <button type="button" class="btn btn-secondary" onclick="closeCompanyModal()">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save Company</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -3351,7 +3606,7 @@
                     // Debug: Check if any tickets have customer data
                     console.log('🔍 DEBUGGING: First few tickets from database:', JSON.stringify(
                         result.tickets.slice(0, 3).map(t => ({
-                            id: t.id.substring(0, 8) + '...',
+                            id: String(t.id || '').substring(0, 8) + '...',
                             subject: t.subject.substring(0, 20) + '...',
                             customerName: t.customerName,
                             customer_name: t.customer_name,
@@ -3387,7 +3642,7 @@
                     const ticketsWithCustomerData = appState.tickets.filter(t => t.customer_name || t.customer_id || t.customer_phone);
                     if (ticketsWithCustomerData.length > 0) {
                         console.log('📋 Tickets with customer data loaded:', ticketsWithCustomerData.map(t => ({
-                            id: t.id.substring(0, 8) + '...',
+                            id: String(t.id || '').substring(0, 8) + '...',
                             customer_name: t.customer_name,
                             customer_id: t.customer_id,
                             customer_phone: t.customer_phone,
@@ -3427,7 +3682,7 @@
             const ticketsToRender = filteredTickets || appState.tickets;
             
             console.log('renderTickets called with tickets:', ticketsToRender.map(t => ({
-                id: t.id.slice(-8),
+                id: String(t.id).slice(-8),
                 subject: t.subject.slice(0, 20),
                 status: t.status,
                 priority: t.priority
