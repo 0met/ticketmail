@@ -211,10 +211,10 @@ async function run() {
   // 4) get-tickets should respond (even if empty)
   await test('GET get-tickets', async () => {
     const res = await request(`${baseUrl}/.netlify/functions/get-tickets`, { method: 'GET' });
-    ok([200, 500].includes(res.status), `Expected 200 or 500, got ${res.status}`);
+    ok(res.status === 200, `Expected 200, got ${res.status}`);
     const json = asJson(res.text);
     ok(json && typeof json === 'object', 'Expected JSON body');
-    if (res.status === 200) ok(json.success === true, 'Expected success:true');
+    ok(json.success === true, 'Expected success:true');
     return { status: res.status, body: json };
   });
 
