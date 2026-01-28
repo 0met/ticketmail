@@ -9,14 +9,19 @@ function getLocalDB() {
 }
 
 function getDatabase() {
-    // Use Supabase in production, local SQLite for development
-    if (process.env.NODE_ENV === 'production' || process.env.USE_SUPABASE === 'true') {
+    // Prefer Supabase whenever it is configured.
+    // Netlify Functions may not reliably set NODE_ENV, so don't depend on it.
+    const hasSupabase = Boolean(
+        process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)
+    );
+
+    if (hasSupabase && process.env.FORCE_LOCAL_DB !== 'true') {
         console.log('🔌 Using Supabase Database Adapter (Auth)');
         return getSupabaseDB();
-    } else {
-        console.log('🔌 Using Local SQLite Database Adapter (Auth)');
-        return getLocalDB();
     }
+
+    console.log('🔌 Using Local SQLite Database Adapter (Auth)');
+    return getLocalDB();
 }
 const crypto = require('crypto');
 
