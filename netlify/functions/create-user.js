@@ -1,5 +1,36 @@
 const { createUser, logActivity } = require('./lib/auth');
 
+function parseJsonBody(event) {
+    const body = event && event.body;
+    if (body == null) return null;
+    if (typeof body === 'object') return body;
+
+    const raw = String(body).trim();
+
+    try {
+        return JSON.parse(raw);
+    } catch (e1) {
+        try {
+            let candidate = raw;
+            if (candidate.startsWith('\\{"') || candidate.startsWith('\\[')) {
+                candidate = candidate.slice(1);
+            }
+            candidate = candidate.replace(/\\"/g, '"');
+            return JSON.parse(candidate);
+        } catch {
+            try {
+                if (raw.startsWith('"') && raw.endsWith('"')) {
+                    const unwrapped = raw.slice(1, -1).replace(/\\"/g, '"');
+                    return JSON.parse(unwrapped);
+                }
+            } catch {
+                // fall through
+            }
+            throw e1;
+        }
+    }
+}
+
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
@@ -28,7 +59,7 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const { email, fullName, role, password, createdBy, companyId, department, jobTitle, phone } = JSON.parse(event.body);
+        const { email, fullName, role, password, createdBy, companyId, department, jobTitle, phone } = parseJsonBody(event) || {};
 
         // Validate required fields
         if (!email || !fullName || !role || !password) {
