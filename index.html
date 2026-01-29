@@ -4786,6 +4786,8 @@
 
                 if (!statusEl || !priorityEl || !categoryEl) {
                     alert('❌ Required fields not found. Please refresh the page.');
+                    saveBtn.textContent = originalText;
+                    saveBtn.disabled = false;
                     return;
                 }
 
@@ -4807,11 +4809,15 @@
                 
                 if (!validStatuses.includes(updates.status)) {
                     alert('❌ Invalid status value. Please select a valid status.');
+                    saveBtn.textContent = originalText;
+                    saveBtn.disabled = false;
                     return;
                 }
                 
                 if (!validPriorities.includes(updates.priority)) {
                     alert('❌ Invalid priority value. Please select a valid priority.');
+                    saveBtn.textContent = originalText;
+                    saveBtn.disabled = false;
                     return;
                 }
 
