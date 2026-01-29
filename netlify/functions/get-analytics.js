@@ -162,14 +162,14 @@ exports.handler = async (event, context) => {
         const recentTickets = await sql`
             SELECT COUNT(*) as count 
             FROM tickets 
-            WHERE DATE(created_at) >= DATE(${startDateISO})
+            WHERE created_at::date >= ${startDateISO}::date
         `;
 
         const closedTickets = await sql`
             SELECT COUNT(*) as count 
             FROM tickets 
             WHERE status = 'closed' 
-            AND DATE(closed_at) >= DATE(${startDateISO})
+            AND closed_at::date >= ${startDateISO}::date
         `;
 
         // Resolution time analytics
@@ -180,19 +180,19 @@ exports.handler = async (event, context) => {
                 MAX(resolution_time) as max_hours
             FROM tickets 
             WHERE resolution_time IS NOT NULL
-            AND DATE(closed_at) >= DATE(${startDateISO})
+            AND closed_at::date >= ${startDateISO}::date
         `;
 
         // Daily ticket trends (last 30 days)
         const dailyTrends = await sql`
             SELECT 
-                DATE(created_at) as date,
+                created_at::date as date,
                 COUNT(*) as created,
                 SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as closed
             FROM tickets 
-            WHERE DATE(created_at) >= DATE(${startDateISO})
-            GROUP BY DATE(created_at)
-            ORDER BY DATE(created_at) ASC
+            WHERE created_at::date >= ${startDateISO}::date
+            GROUP BY created_at::date
+            ORDER BY created_at::date ASC
         `;
 
         // Monthly analytics for reporting
@@ -232,7 +232,7 @@ exports.handler = async (event, context) => {
             SELECT 
                 COALESCE(category, 'general') as category,
                 COUNT(*) as total_tickets,
-                SUM(CASE WHEN DATE(created_at) >= DATE(${startDateISO}) THEN 1 ELSE 0 END) as recent_tickets,
+                SUM(CASE WHEN created_at::date >= ${startDateISO}::date THEN 1 ELSE 0 END) as recent_tickets,
                 AVG(CASE WHEN resolution_time IS NOT NULL THEN resolution_time END) as avg_resolution_hours
             FROM tickets 
             GROUP BY COALESCE(category, 'general')
@@ -250,7 +250,7 @@ exports.handler = async (event, context) => {
                     COUNT(*) as ticket_count,
                     SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as closed_count,
                     SUM(CASE WHEN status IN ('new', 'open', 'pending') THEN 1 ELSE 0 END) as open_count,
-                    SUM(CASE WHEN DATE(created_at) >= DATE(${startDateISO}) THEN 1 ELSE 0 END) as recent_tickets,
+                    SUM(CASE WHEN created_at::date >= ${startDateISO}::date THEN 1 ELSE 0 END) as recent_tickets,
                     AVG(CASE WHEN resolution_time IS NOT NULL THEN resolution_time END) as avg_resolution_hours
                 FROM tickets 
                 WHERE company_id IS NOT NULL
