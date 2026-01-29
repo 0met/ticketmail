@@ -4876,38 +4876,18 @@
                     if (result.ticket) {
                         const updated = result.ticket;
 
-                        // Normalize keys/schemas
-                        const updatedTicketNumber = updated.ticket_number || updated.ticketNumber || updated.ticket || ticket?.ticketNumber || ticket?.ticket_number;
-                        const updatedCreated = updated.created_at || updated.createdAt || updated.received_at || updated.receivedAt;
-                        const updatedUpdated = updated.updated_at || updated.updatedAt || updated.updated_at || updated.created_at || updatedCreated;
+                        // Update customer fields from DB-confirmed values if present
+                        const customerNameEl = document.getElementById('customerName');
+                        const customerIdEl = document.getElementById('customerId');
+                        const customerPhoneEl = document.getElementById('customerPhone');
+                        const customerEmailEl = document.getElementById('customerEmail');
+                        const customerCompanyEl = document.getElementById('customerCompany');
 
-                        // Update modal display
-                        try {
-                            const ticketNumberEl = document.getElementById('ticketNumber');
-                            const ticketIdEl = document.getElementById('ticketId');
-                            const ticketCreatedEl = document.getElementById('ticketCreated');
-                            const ticketUpdatedEl = document.getElementById('ticketUpdated');
-
-                            if (ticketNumberEl) ticketNumberEl.textContent = updatedTicketNumber || ticketNumberEl.textContent;
-                            if (ticketIdEl) ticketIdEl.textContent = updated.id || ticketIdEl.textContent;
-
-                            if (ticketCreatedEl && updatedCreated) {
-                                ticketCreatedEl.textContent = formatDate(updatedCreated);
-                                ticketCreatedEl.title = (new Date(updatedCreated)).toISOString();
-                            }
-                            if (ticketUpdatedEl && updatedUpdated) {
-                                ticketUpdatedEl.textContent = formatDate(updatedUpdated);
-                                ticketUpdatedEl.title = (new Date(updatedUpdated)).toISOString();
-                            }
-
-                            // Update customer fields from DB-confirmed values if present
-                            if (updated.customer_name) document.getElementById('customerName').value = updated.customer_name;
-                            if (updated.customer_id) document.getElementById('customerId').value = updated.customer_id;
-                            if (updated.customer_phone) document.getElementById('customerPhone').value = updated.customer_phone;
-                            if (updated.customer_email) document.getElementById('customerEmail').value = updated.customer_email;
-                        } catch (e) {
-                            console.warn('Could not refresh modal fields from update response:', e.message);
-                        }
+                        if (customerNameEl && updated.customer_name) customerNameEl.value = updated.customer_name;
+                        if (customerIdEl && updated.customer_id) customerIdEl.value = updated.customer_id;
+                        if (customerPhoneEl && updated.customer_phone) customerPhoneEl.value = updated.customer_phone;
+                        if (customerEmailEl && updated.customer_email) customerEmailEl.value = updated.customer_email;
+                        if (customerCompanyEl && updated.customer_company) customerCompanyEl.value = updated.customer_company;
                     }
 
                     console.log('Ticket save completed successfully');
@@ -4919,8 +4899,11 @@
                 console.error('Error saving ticket:', error);
                 alert('❌ Error saving ticket: ' + error.message);
             } finally {
-                saveBtn.textContent = originalText;
-                saveBtn.disabled = false;
+                const saveBtn = document.getElementById('saveTicketBtn');
+                if (saveBtn) {
+                    saveBtn.textContent = originalText;
+                    saveBtn.disabled = false;
+                }
             }
         }
 
