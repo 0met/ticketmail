@@ -161,6 +161,23 @@
             opacity: 1 !important;
         }
 
+        /* CRITICAL: Force display for ANY active page regardless of inline styles */
+        .page.active,
+        #user-management.active,
+        [id="user-management"].active {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
+            min-height: 500px !important;
+        }
+
+        /* Force all children of active pages to be visible */
+        .page.active > * {
+            display: block !important;
+            visibility: visible !important;
+        }
+
         /* Force user-management page to display when active */
         #user-management.page.active {
             display: block !important;
@@ -4027,10 +4044,21 @@
                         page.style.display = 'none';
                         if (page.id === targetPage) {
                             console.log('✅ Showing page:', page.id);
+                            
+                            // NUCLEAR OPTION: Remove ALL hiding mechanisms
                             page.classList.add('active');
-                            page.style.display = 'block';
-                            page.style.visibility = 'visible';
-                            page.style.opacity = '1';
+                            page.classList.remove('role-hidden');
+                            page.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important;';
+                            page.removeAttribute('hidden');
+                            
+                            // Force all direct children to be visible too
+                            Array.from(page.children).forEach(child => {
+                                if (child.style.display === 'none') {
+                                    child.style.display = '';
+                                }
+                            });
+                            
+                            console.log('📊 Page after nuclear changes - classList:', page.classList.toString(), 'cssText:', page.style.cssText);
                             
                             // CRITICAL FIX: Remove any inline display:none that was set by role permissions
                             // The applyRoleBasedPermissions function sets inline styles that override CSS
