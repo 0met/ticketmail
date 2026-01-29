@@ -1,5 +1,20 @@
-const { getUserSettings } = require('./lib/database');
-const nodemailer = require('nodemailer');
+const { createClient } = require('@supabase/supabase-js');
+
+function isMissingRelation(error) {
+    const msg = (error && error.message ? String(error.message) : '').toLowerCase();
+    return msg.includes('does not exist') || msg.includes('relation') || msg.includes('schema cache');
+}
+
+function getDatabase() {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Missing Supabase credentials');
+    }
+    
+    return createClient(supabaseUrl, supabaseKey);
+}
 
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
@@ -50,99 +65,45 @@ exports.handler = async (event, context) => {
             };
         }
 
-        console.log(`Sending response for ticket ${ticketId} to ${to}`);
+        console.log(`Saving response for ticket ${ticketId} to ${to}`);
 
-        // Get user settings for Gmail credentials
-        const settings = await getUserSettings();
+        // For now, just save the response as a comment instead of actually sending email
+        // This allows the feature to work without email configuration
+        const supabase = getDatabase();
         
-        if (!settings || !settings.gmailAddress || !settings.appPassword) {
+        const { data: comment, error: commentError } = await supabase
+            .from('ticket_comments')
+            .insert({
+                ticket_id: ticketId,
+                comment_text: message,
+                comment_type: 'outbound',
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (commentError) {
+            console.error('Error saving response:', commentError);
             return {
-                statusCode: 400,
+                statusCode: 500,
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     success: false,
-                    error: 'Gmail settings not configured'
+                    error: commentError.message
                 })
             };
         }
 
-        // Create transporter for Gmail SMTP
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: settings.gmailAddress,
-                pass: settings.appPassword
-            }
-        });
+        // Update ticket's updated_at timestamp
+        await supabase
+            .from('tickets')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', ticketId);
 
-        // Email content
-        const emailContent = `
-${message}
-
----
-This message was sent via TicketMail Support System
-Ticket ID: ${ticketId}
-        `.trim();
-
-        // Mail options
-        const mailOptions = {
-            from: settings.gmailAddress,
-            to: to,
-            subject: subject,
-            text: emailContent,
-            html: `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                    <div style="white-space: pre-wrap;">${message.replace(/\n/g, '<br>')}</div>
-                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-                    <small style="color: #666;">
-                        This message was sent via TicketMail Support System<br>
-                        Ticket ID: ${ticketId}
-                    </small>
-                </div>
-            `
-        };
-
-        // Send email
-        await transporter.sendMail(mailOptions);
-
-        // Add to conversation history (if table exists)
-        try {
-            const { getDatabase } = require('./lib/database');
-            const sql = getDatabase();
-
-            await sql`
-                INSERT INTO ticket_conversations (ticket_id, message_type, from_email, to_email, subject, message, created_at)
-                VALUES (${ticketId}, 'outbound', ${settings.gmailAddress}, ${to}, ${subject}, ${message}, CURRENT_TIMESTAMP)
-            `;
-        } catch (conversationError) {
-            console.log('Could not save to conversation history (table may not exist):', conversationError.message);
-            // Continue without failing - conversation history is optional
-        }
-
-        // Send copy to self if requested
-        if (sendCopy) {
-            const copyOptions = {
-                ...mailOptions,
-                to: settings.gmailAddress,
-                subject: `[COPY] ${subject}`,
-                text: `Copy of response sent to ${to}:\n\n${emailContent}`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                        <p><strong>Copy of response sent to ${to}:</strong></p>
-                        <div style="white-space: pre-wrap;">${message.replace(/\n/g, '<br>')}</div>
-                        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-                        <small style="color: #666;">
-                            This message was sent via TicketMail Support System<br>
-                            Ticket ID: ${ticketId}
-                        </small>
-                    </div>
-                `
-            };
-            await transporter.sendMail(copyOptions);
-        }
+        console.log('Response saved successfully as comment');
 
         return {
             statusCode: 200,
@@ -152,9 +113,27 @@ Ticket ID: ${ticketId}
             },
             body: JSON.stringify({
                 success: true,
-                message: 'Response sent successfully',
-                ticketId: ticketId,
-                sentTo: to,
+                message: 'Response saved successfully',
+                comment: comment,
+                note: 'Email sending is disabled. Response saved as internal comment.'
+            })
+        };
+    } catch (error) {
+        console.error('Error in send-response:', error);
+        
+        return {
+            statusCode: 500,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                success: false,
+                error: error.message || 'Internal server error'
+            })
+        };
+    }
+};
                 copySent: sendCopy
             })
         };
