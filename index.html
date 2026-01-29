@@ -4762,22 +4762,43 @@
             }
 
             const saveBtn = document.getElementById('saveTicketBtn');
+            if (!saveBtn) {
+                console.error('Save button not found');
+                alert('❌ Save button not found. Please refresh the page.');
+                return;
+            }
+            
             const originalText = saveBtn.textContent;
             saveBtn.textContent = '💾 Saving...';
             saveBtn.disabled = true;
 
             try {
-                // Collect all changes
+                // Collect all changes with safety checks
+                const statusEl = document.getElementById('ticketStatusDropdown');
+                const priorityEl = document.getElementById('ticketPriorityDropdown');
+                const assigneeEl = document.getElementById('ticketAssigneeDropdown');
+                const categoryEl = document.getElementById('ticketCategoryDropdown');
+                const customerNameEl = document.getElementById('customerName');
+                const customerIdEl = document.getElementById('customerId');
+                const customerPhoneEl = document.getElementById('customerPhone');
+                const customerEmailEl = document.getElementById('customerEmail');
+                const customerCompanyEl = document.getElementById('customerCompany');
+
+                if (!statusEl || !priorityEl || !categoryEl) {
+                    alert('❌ Required fields not found. Please refresh the page.');
+                    return;
+                }
+
                 const updates = {
-                    status: document.getElementById('ticketStatusDropdown').value,
-                    priority: document.getElementById('ticketPriorityDropdown').value,
-                    assignedTo: document.getElementById('ticketAssigneeDropdown')?.value || '',
-                    category: document.getElementById('ticketCategoryDropdown').value,
-                    customerName: document.getElementById('customerName').value,
-                    customerId: document.getElementById('customerId').value,
-                    customerPhone: document.getElementById('customerPhone').value,
-                    customerEmail: document.getElementById('customerEmail').value,
-                    customerCompany: document.getElementById('customerCompany')?.value || ''
+                    status: statusEl.value,
+                    priority: priorityEl.value,
+                    assignedTo: assigneeEl?.value || '',
+                    category: categoryEl.value,
+                    customerName: customerNameEl?.value || '',
+                    customerId: customerIdEl?.value || '',
+                    customerPhone: customerPhoneEl?.value || '',
+                    customerEmail: customerEmailEl?.value || '',
+                    customerCompany: customerCompanyEl?.value || ''
                 };
 
                 // Validate values against database constraints
