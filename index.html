@@ -178,6 +178,14 @@
             visibility: visible !important;
         }
 
+        /* Force tab content in user-management to display */
+        #user-management .tab-content.active,
+        #user-management.active .tab-content.active {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
         /* Force user-management page to display when active */
         #user-management.page.active {
             display: block !important;
