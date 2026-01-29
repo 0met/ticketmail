@@ -4305,131 +4305,84 @@
             }, 3000);
         }
 
+        // Centralized page switcher (used by nav + role redirects)
+        function showPage(targetPage) {
+            try {
+                const pages = document.querySelectorAll('.page');
+                const navLinks = document.querySelectorAll('.nav-link');
+                const page = document.getElementById(targetPage);
+
+                if (!page) {
+                    console.error('❌ showPage: page not found:', targetPage);
+                    return;
+                }
+
+                // Hide all pages first
+                pages.forEach(p => {
+                    p.classList.remove('active');
+                    p.style.display = 'none';
+                });
+
+                // Update active nav link
+                navLinks.forEach(l => {
+                    l.classList.toggle('active', l.dataset.page === targetPage);
+                });
+
+                // Show the requested page
+                page.classList.add('active');
+                page.classList.remove('role-hidden');
+                page.removeAttribute('hidden');
+                page.style.display = 'block';
+
+                // If permissions logic previously set inline display:none, undo it for the active page
+                page.style.removeProperty('display');
+                page.style.display = 'block';
+
+                // Load data when specific pages are opened
+                if (targetPage === 'analytics' && typeof refreshAnalytics === 'function') {
+                    refreshAnalytics();
+                } else if (targetPage === 'tickets' && typeof loadTickets === 'function') {
+                    loadTickets();
+                } else if (targetPage === 'user-management') {
+                    // Ensure Users tab is visible
+                    if (typeof window.switchUserTab === 'function') {
+                        window.switchUserTab('users');
+                    }
+
+                    // Load users list
+                    if (typeof window.loadUsers === 'function') {
+                        window.loadUsers();
+                    } else if (typeof window.loadUsersList === 'function') {
+                        window.loadUsersList();
+                    } else if (typeof loadUsersList === 'function') {
+                        // Fallback to legacy in-page loader if present
+                        loadUsersList();
+                    } else {
+                        console.error('❌ No user-management loader found (loadUsers/loadUsersList)');
+                    }
+                }
+            } catch (err) {
+                console.error('❌ showPage failed:', err);
+            }
+        }
+
+        if (typeof window !== 'undefined') {
+            window.showPage = showPage;
+        }
+
         // Navigation functionality
         function initNavigation() {
             const navLinks = document.querySelectorAll('.nav-link');
-            const pages = document.querySelectorAll('.page');
 
-            console.log('🎯 initNavigation called, found', navLinks.length, 'nav links and', pages.length, 'pages');
+            console.log('🎯 initNavigation called, found', navLinks.length, 'nav links');
 
             navLinks.forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const targetPage = link.dataset.page;
-                    
+
                     console.log('🖱️ Navigation clicked, target page:', targetPage);
-
-                    // Update active nav link
-                    navLinks.forEach(l => l.classList.remove('active'));
-                    link.classList.add('active');
-
-                    // Show target page
-                    pages.forEach(page => {
-                        console.log('📄 Processing page:', page.id, 'display:', page.style.display);
-                        page.classList.remove('active');
-                        page.style.display = 'none';
-                        if (page.id === targetPage) {
-                            console.log('✅ Showing page:', page.id);
-                            
-                            // NUCLEAR OPTION: Remove ALL hiding mechanisms
-                            page.classList.add('active');
-                            page.classList.remove('role-hidden');
-                            page.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important;';
-                            page.removeAttribute('hidden');
-                            
-                            // Force all direct children to be visible too
-                            Array.from(page.children).forEach(child => {
-                                if (child.style.display === 'none') {
-                                    child.style.display = '';
-                                }
-                            });
-                            
-                            console.log('📊 Page after nuclear changes - classList:', page.classList.toString(), 'cssText:', page.style.cssText);
-                            
-                            // CRITICAL FIX: Remove any inline display:none that was set by role permissions
-                            // The applyRoleBasedPermissions function sets inline styles that override CSS
-                            page.style.removeProperty('display');
-                            page.style.display = 'block';
-                            
-                            // Also fix any child elements that might have been hidden by role permissions
-                            const roleHiddenChildren = page.querySelectorAll('[data-roles]');
-                            roleHiddenChildren.forEach(child => {
-                                child.style.removeProperty('display');
-                                child.style.display = '';
-                            });
-                            
-                            console.log('📊 Page after changes - display:', page.style.display, 'visibility:', page.style.visibility, 'classList:', page.classList.toString());
-                            
-                            // Force display for user-management page
-                            if (targetPage === 'user-management') {
-                                // Immediate force
-                                const userMgmtPage = document.getElementById('user-management');
-                                if (userMgmtPage) {
-                                    userMgmtPage.style.display = 'block';
-                                    userMgmtPage.style.visibility = 'visible';
-                                    userMgmtPage.style.opacity = '1';
-                                    userMgmtPage.style.position = 'relative';
-                                    userMgmtPage.style.height = 'auto';
-                                    userMgmtPage.style.minHeight = '600px';
-                                    userMgmtPage.style.width = '100%';
-                                }
-                                
-                                // Double check after a tiny delay
-                                setTimeout(() => {
-                                    const page = document.getElementById('user-management');
-                                    if (page) {
-                                        page.style.display = 'block';
-                                        page.style.visibility = 'visible';
-                                    }
-                                }, 50);
-                            }
-                            
-                            // Load data when specific pages are opened
-                            if (targetPage === 'analytics') {
-                                refreshAnalytics();
-                            } else if (targetPage === 'tickets') {
-                                loadTickets(); // Refresh tickets when tickets page is opened
-                            } else if (targetPage === 'user-management') {
-                                // Load users when user management page is opened
-                                console.log('🔍 User management page opened');
-                                console.log('🔍 window.loadUsers exists?', typeof window.loadUsers);
-                                console.log('🔍 window.loadUsersList exists?', typeof window.loadUsersList);
-                                
-                                // NUCLEAR OPTION: Force page to stay visible
-                                const userMgmtPage = document.getElementById('user-management');
-                                const forceVisible = setInterval(() => {
-                                    if (userMgmtPage.classList.contains('active')) {
-                                        userMgmtPage.style.display = 'block';
-                                        userMgmtPage.style.visibility = 'visible';
-                                        userMgmtPage.style.opacity = '1';
-                                    } else {
-                                        clearInterval(forceVisible);
-                                    }
-                                }, 50);
-                                
-                                setTimeout(() => {
-                                    try {
-                                        if (typeof window.loadUsers === 'function') {
-                                            console.log('✅ Calling window.loadUsers()');
-                                            window.loadUsers();
-                                            return;
-                                        }
-
-                                        if (typeof window.loadUsersList === 'function') {
-                                            console.log('✅ Calling window.loadUsersList()');
-                                            window.loadUsersList();
-                                            return;
-                                        }
-
-                                        console.error('❌ No user-management loader found (loadUsers/loadUsersList)');
-                                        console.error('Available global functions:', Object.keys(window).filter(k => k.toLowerCase().includes('load')));
-                                    } catch (err) {
-                                        console.error('❌ Error while loading user management data:', err);
-                                    }
-                                }, 100);
-                            }
-                        }
-                    });
+                    showPage(targetPage);
                 });
             });
         }
