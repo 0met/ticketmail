@@ -1,5 +1,10 @@
 const { getDatabase } = require('./lib/database');
 
+function isMissingRelation(error) {
+    const msg = (error && error.message ? String(error.message) : '').toLowerCase();
+    return msg.includes('does not exist') || msg.includes('relation') || msg.includes('schema cache');
+}
+
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
@@ -62,16 +67,16 @@ exports.handler = async (event, context) => {
 
         console.log(`Attempting to delete ticket ${ticketId}`);
 
-        const sql = getDatabase();
+        const supabase = getDatabase();
 
         // First, check if ticket exists
-        const existingTicket = await sql`
-            SELECT id, subject, from_email 
-            FROM tickets 
-            WHERE id = ${ticketId}
-        `;
+        const { data: existingTicket, error: selectError } = await supabase
+            .from('tickets')
+            .select('id, subject, from_email')
+            .eq('id', Number(ticketId))
+            .single();
 
-        if (existingTicket.length === 0) {
+        if (selectError || !existingTicket) {
             return {
                 statusCode: 404,
                 headers: {
@@ -85,37 +90,29 @@ exports.handler = async (event, context) => {
             };
         }
 
-        const ticket = existingTicket[0];
+        const ticket = existingTicket;
 
-        // Delete related conversation history first (if the table exists)
+        // Delete related conversation history first (optional)
         try {
-            await sql`
-                DELETE FROM ticket_conversations 
-                WHERE ticket_id = ${ticketId}
-            `;
-            console.log(`Deleted conversation history for ticket ${ticketId}`);
+            const { error: convoError } = await supabase
+                .from('ticket_conversations')
+                .delete()
+                .eq('ticket_id', String(ticketId));
+            if (convoError && !isMissingRelation(convoError)) {
+                console.warn('Could not delete conversation history:', convoError.message);
+            }
         } catch (error) {
-            console.log('No conversation history to delete or table does not exist');
+            console.warn('Conversation delete error:', error.message);
         }
 
         // Delete the ticket
-        const deleteResult = await sql`
-            DELETE FROM tickets 
-            WHERE id = ${ticketId}
-        `;
+        const { error: deleteError } = await supabase
+            .from('tickets')
+            .delete()
+            .eq('id', Number(ticketId));
 
-        if (deleteResult.count === 0) {
-            return {
-                statusCode: 404,
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    success: false,
-                    error: 'Ticket not found or already deleted'
-                })
-            };
+        if (deleteError) {
+            throw deleteError;
         }
 
         console.log(`Successfully deleted ticket ${ticketId}`);

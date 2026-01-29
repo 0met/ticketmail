@@ -4926,7 +4926,6 @@
                 console.error('Error saving ticket:', error);
                 alert('❌ Error saving ticket: ' + error.message);
             } finally {
-                const saveBtn = document.getElementById('saveTicketBtn');
                 if (saveBtn) {
                     saveBtn.textContent = originalText;
                     saveBtn.disabled = false;
@@ -5400,28 +5399,47 @@
         // Load analytics data
         async function loadAnalytics(timeframe = '30') {
             try {
+                console.log(`📊 Loading analytics for ${timeframe} days...`);
                 const response = await fetch(`/.netlify/functions/get-analytics?timeframe=${timeframe}`);
                 const result = await response.json();
+                
+                console.log('📊 Analytics API response:', result);
                 
                 if (result.success) {
                     return result.analytics;
                 } else {
-                    console.error('Error loading analytics:', result.error);
+                    console.error('❌ Error loading analytics:', result.error);
                     return null;
                 }
             } catch (error) {
-                console.error('Error loading analytics:', error);
+                console.error('❌ Error loading analytics:', error);
                 return null;
             }
         }
 
         // Refresh analytics dashboard
         async function refreshAnalytics() {
+            console.log('🔄 Refreshing analytics...');
+            
+            // Show loading state
+            document.getElementById('resolutionRate').textContent = '...';
+            document.getElementById('avgResolutionTime').textContent = '...';
+            document.getElementById('totalTicketsAnalytics').textContent = '...';
+            document.getElementById('urgentOpenTickets').textContent = '...';
+            
             const timeframe = document.getElementById('analyticsTimeframe').value;
             const analytics = await loadAnalytics(timeframe);
             
             if (analytics) {
+                console.log('✅ Analytics loaded:', analytics);
                 updateAnalyticsDashboard(analytics);
+            } else {
+                console.error('❌ Failed to load analytics');
+                // Show error state
+                document.getElementById('resolutionRate').textContent = 'Error';
+                document.getElementById('avgResolutionTime').textContent = 'Error';
+                document.getElementById('totalTicketsAnalytics').textContent = 'Error';
+                document.getElementById('urgentOpenTickets').textContent = 'Error';
             }
         }
 

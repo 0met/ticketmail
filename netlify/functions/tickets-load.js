@@ -1,6 +1,7 @@
 const { getTickets } = require('./lib/database');
 
 exports.handler = async (event, context) => {
+    context.callbackWaitsForEmptyEventLoop = false;
     // Handle CORS preflight requests
     if (event.httpMethod === 'OPTIONS') {
         return {

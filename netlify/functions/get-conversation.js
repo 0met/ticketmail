@@ -1,5 +1,10 @@
 const { getDatabase } = require('./lib/database');
 
+function isMissingRelation(error) {
+    const msg = (error && error.message ? String(error.message) : '').toLowerCase();
+    return msg.includes('does not exist') || msg.includes('relation') || msg.includes('schema cache');
+}
+
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
@@ -34,36 +39,41 @@ exports.handler = async (event, context) => {
 
         console.log(`Getting conversation for ticket ${ticketId}`);
 
-        const sql = getDatabase();
+        const supabase = getDatabase();
 
-        // Create conversation table if it doesn't exist
-        await sql`
-            CREATE TABLE IF NOT EXISTS ticket_conversations (
-                id SERIAL PRIMARY KEY,
-                ticket_id VARCHAR(255) NOT NULL,
-                message_type VARCHAR(20) NOT NULL, -- 'inbound', 'outbound', 'system'
-                from_email VARCHAR(255),
-                to_email VARCHAR(255),
-                subject VARCHAR(500),
-                message TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `;
+        const { data, error } = await supabase
+            .from('ticket_conversations')
+            .select('message_type, from_email, to_email, subject, message, created_at')
+            .eq('ticket_id', ticketId)
+            .order('created_at', { ascending: true });
 
-        // Create index for ticket conversations
-        await sql`
-            CREATE INDEX IF NOT EXISTS idx_ticket_conversations_ticket_id 
-            ON ticket_conversations(ticket_id)
-        `;
+        if (error) {
+            if (isMissingRelation(error)) {
+                return {
+                    statusCode: 200,
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        success: true,
+                        conversation: [],
+                        count: 0,
+                        needsSetup: true
+                    })
+                };
+            }
+            throw error;
+        }
 
-        // Get conversation history
-        const conversation = await sql`
-            SELECT message_type as type, from_email as from, to_email as to, 
-                   subject, message, created_at as date
-            FROM ticket_conversations 
-            WHERE ticket_id = ${ticketId}
-            ORDER BY created_at ASC
-        `;
+        const conversation = (data || []).map((row) => ({
+            type: row.message_type,
+            from: row.from_email,
+            to: row.to_email,
+            subject: row.subject,
+            message: row.message,
+            date: row.created_at
+        }));
 
         return {
             statusCode: 200,

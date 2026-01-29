@@ -1,5 +1,18 @@
-const { getDatabase } = require('./lib/database');
 const { validateSession, logActivity } = require('./lib/auth');
+const { createClient } = require('@supabase/supabase-js');
+
+function getSupabaseClient() {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!url || !key) {
+        throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    }
+
+    return createClient(url, key, {
+        auth: { autoRefreshToken: false, persistSession: false }
+    });
+}
 
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
@@ -82,14 +95,20 @@ exports.handler = async (event, context) => {
             };
         }
 
-        const sql = getDatabase();
+        const supabase = getSupabaseClient();
 
         // Check if company with same name already exists
-        const existingCompany = await sql`
-            SELECT id FROM companies WHERE name = ${name}
-        `;
+        const { data: existingCompany, error: existingError } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('name', name)
+            .limit(1);
 
-        if (existingCompany.length > 0) {
+        if (existingError) {
+            throw existingError;
+        }
+
+        if ((existingCompany || []).length > 0) {
             return {
                 statusCode: 400,
                 headers: {
@@ -101,12 +120,26 @@ exports.handler = async (event, context) => {
         }
 
         // Create company
-        const company = await sql`
-            INSERT INTO companies (name, domain, phone, address, industry, company_size, notes)
-            VALUES (${name}, ${domain || null}, ${phone || null}, ${address || null}, 
-                    ${industry || null}, ${size || null}, ${notes || null})
-            RETURNING id, name, domain, phone, address, industry, company_size, notes, is_active, created_at
-        `;
+        const { data: company, error: insertError } = await supabase
+            .from('companies')
+            .insert({
+                name,
+                domain: domain || null,
+                phone: phone || null,
+                address: address || null,
+                industry: industry || null,
+                company_size: size || null,
+                notes: notes || null,
+                is_active: true,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            })
+            .select('id, name, domain, phone, address, industry, company_size, notes, is_active, created_at')
+            .single();
+
+        if (insertError) {
+            throw insertError;
+        }
 
         // Log activity
         await logActivity(
@@ -126,16 +159,16 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({
                 success: true,
                 company: {
-                    id: company[0].id,
-                    name: company[0].name,
-                    domain: company[0].domain,
-                    phone: company[0].phone,
-                    address: company[0].address,
-                    industry: company[0].industry,
-                    size: company[0].company_size,
-                    notes: company[0].notes,
-                    isActive: company[0].is_active,
-                    createdAt: company[0].created_at
+                    id: company.id,
+                    name: company.name,
+                    domain: company.domain,
+                    phone: company.phone,
+                    address: company.address,
+                    industry: company.industry,
+                    size: company.company_size,
+                    notes: company.notes,
+                    isActive: !!company.is_active,
+                    createdAt: company.created_at
                 }
             })
         };

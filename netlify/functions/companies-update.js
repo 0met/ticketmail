@@ -1,5 +1,18 @@
-const { getDatabase } = require('./lib/database');
 const { validateSession, logActivity } = require('./lib/auth');
+const { createClient } = require('@supabase/supabase-js');
+
+function getSupabaseClient() {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!url || !key) {
+        throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    }
+
+    return createClient(url, key, {
+        auth: { autoRefreshToken: false, persistSession: false }
+    });
+}
 
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
@@ -81,14 +94,20 @@ exports.handler = async (event, context) => {
             };
         }
 
-        const sql = getDatabase();
+        const supabase = getSupabaseClient();
 
         // Check if company exists
-        const existingCompany = await sql`
-            SELECT id FROM companies WHERE id = ${id}
-        `;
+        const { data: existingCompany, error: existingError } = await supabase
+            .from('companies')
+            .select('id, name, domain, phone, address, industry, company_size, notes, is_active, created_at')
+            .eq('id', id)
+            .single();
 
-        if (existingCompany.length === 0) {
+        if (existingError && existingError.code !== 'PGRST116') {
+            throw existingError;
+        }
+
+        if (!existingCompany) {
             return {
                 statusCode: 404,
                 headers: {
@@ -100,28 +119,35 @@ exports.handler = async (event, context) => {
         }
 
         // Update company
-        const updatedCompany = await sql`
-            UPDATE companies 
-            SET 
-                name = ${name !== undefined ? name : existingCompany[0].name},
-                domain = ${domain !== undefined ? domain : existingCompany[0].domain},
-                phone = ${phone !== undefined ? phone : existingCompany[0].phone},
-                address = ${address !== undefined ? address : existingCompany[0].address},
-                industry = ${industry !== undefined ? industry : existingCompany[0].industry},
-                company_size = ${size !== undefined ? size : existingCompany[0].company_size},
-                notes = ${notes !== undefined ? notes : existingCompany[0].notes},
-                is_active = ${isActive !== undefined ? isActive : existingCompany[0].is_active},
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ${id}
-            RETURNING id, name, domain, phone, address, industry, company_size, notes, is_active, created_at, updated_at
-        `;
+        const updates = {
+            name: name !== undefined ? name : existingCompany.name,
+            domain: domain !== undefined ? domain : existingCompany.domain,
+            phone: phone !== undefined ? phone : existingCompany.phone,
+            address: address !== undefined ? address : existingCompany.address,
+            industry: industry !== undefined ? industry : existingCompany.industry,
+            company_size: size !== undefined ? size : existingCompany.company_size,
+            notes: notes !== undefined ? notes : existingCompany.notes,
+            is_active: isActive !== undefined ? isActive : existingCompany.is_active,
+            updated_at: new Date().toISOString()
+        };
+
+        const { data: updatedCompany, error: updateError } = await supabase
+            .from('companies')
+            .update(updates)
+            .eq('id', id)
+            .select('id, name, domain, phone, address, industry, company_size, notes, is_active, created_at, updated_at')
+            .single();
+
+        if (updateError) {
+            throw updateError;
+        }
 
         // Log activity
         await logActivity(
             sessionValidation.user.id, 
             'company_updated', 
             'company', 
-            { companyId: id, companyName: updatedCompany[0].name }, 
+            { companyId: id, companyName: updatedCompany.name }, 
             event.headers['x-forwarded-for'] || event.headers['x-real-ip']
         );
 
@@ -134,17 +160,17 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({
                 success: true,
                 company: {
-                    id: updatedCompany[0].id,
-                    name: updatedCompany[0].name,
-                    domain: updatedCompany[0].domain,
-                    phone: updatedCompany[0].phone,
-                    address: updatedCompany[0].address,
-                    industry: updatedCompany[0].industry,
-                    size: updatedCompany[0].company_size,
-                    notes: updatedCompany[0].notes,
-                    isActive: updatedCompany[0].is_active,
-                    createdAt: updatedCompany[0].created_at,
-                    updatedAt: updatedCompany[0].updated_at
+                    id: updatedCompany.id,
+                    name: updatedCompany.name,
+                    domain: updatedCompany.domain,
+                    phone: updatedCompany.phone,
+                    address: updatedCompany.address,
+                    industry: updatedCompany.industry,
+                    size: updatedCompany.company_size,
+                    notes: updatedCompany.notes,
+                    isActive: !!updatedCompany.is_active,
+                    createdAt: updatedCompany.created_at,
+                    updatedAt: updatedCompany.updated_at
                 }
             })
         };

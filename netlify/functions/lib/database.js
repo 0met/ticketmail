@@ -606,6 +606,12 @@ function mapTicketRecord(ticket) {
         isManual: Boolean(ticket.is_manual),
         is_manual: Boolean(ticket.is_manual),
         source: ticket.source || 'email',
+        createdBy: ticket.created_by ?? null,
+        created_by: ticket.created_by ?? null,
+        assignedTo: ticket.assigned_to ?? null,
+        assigned_to: ticket.assigned_to ?? null,
+        customerCompany: ticket.customer_company ?? null,
+        customer_company: ticket.customer_company ?? null,
         customerName: ticket.customer_name || null,
         customerId: ticket.customer_id || null,
         customerPhone: ticket.customer_phone || null,
@@ -749,6 +755,37 @@ async function updateTicket(ticketId, updates) {
         if (updates.resolutionTime !== undefined) updateData.resolution_time = updates.resolutionTime;
         if (updates.closedAt !== undefined) updateData.closed_at = updates.closedAt;
         if (updates.customerName !== undefined) updateData.customer_name = updates.customerName;
+
+        if (updates.customerId !== undefined) {
+            const raw = String(updates.customerId ?? '').trim();
+            if (!raw) updateData.customer_id = null;
+            else {
+                const n = Number(raw);
+                updateData.customer_id = Number.isFinite(n) ? n : raw;
+            }
+        }
+        if (updates.customerPhone !== undefined) {
+            const raw = String(updates.customerPhone ?? '').trim();
+            updateData.customer_phone = raw || null;
+        }
+        if (updates.customerEmail !== undefined) {
+            const raw = String(updates.customerEmail ?? '').trim();
+            updateData.customer_email = raw || null;
+        }
+
+        if (updates.customerCompany !== undefined) {
+            const raw = String(updates.customerCompany ?? '').trim();
+            updateData.customer_company = raw || null;
+        }
+
+        if (updates.assignedTo !== undefined) {
+            const raw = String(updates.assignedTo ?? '').trim();
+            if (!raw) updateData.assigned_to = null;
+            else {
+                const n = Number(raw);
+                updateData.assigned_to = Number.isFinite(n) ? n : raw;
+            }
+        }
 
         // Update the ticket
         const { data, error: updateError } = await supabase

@@ -1,5 +1,13 @@
 const { getDatabase } = require('./lib/database');
 
+const toNumber = (value, fallback = 0) => {
+    if (value === null || value === undefined || value === '') {
+        return fallback;
+    }
+    const numeric = Number(value);
+    return Number.isNaN(numeric) ? fallback : numeric;
+};
+
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
@@ -37,11 +45,89 @@ exports.handler = async (event, context) => {
         // Get query parameters
         const params = event.queryStringParameters || {};
         const timeframe = params.timeframe || '30'; // days
-        
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - parseInt(timeframe));
+        const parsedTimeframe = parseInt(timeframe, 10);
+        const timeframeDays = Number.isFinite(parsedTimeframe) ? parsedTimeframe : 30;
 
-        console.log(`Generating analytics for last ${timeframe} days`);
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - timeframeDays);
+        const startDateISO = startDate.toISOString();
+
+        const monthlyStartDate = new Date();
+        monthlyStartDate.setMonth(monthlyStartDate.getMonth() - 12);
+        const monthlyStartDateISO = monthlyStartDate.toISOString();
+
+        console.log(`Generating analytics for last ${timeframeDays} days`);
+
+        // Detect optional tables/columns so we can degrade gracefully on different databases
+        let isSQLite = false;
+        let hasCompaniesTable = false;
+        let hasUsersTable = false;
+        let hasTicketCompanyColumn = false;
+        let hasTicketAssignedColumn = false;
+        let hasUserCompanyColumn = false;
+
+        try {
+            await sql`SELECT name FROM sqlite_master WHERE type='table' LIMIT 1`;
+            isSQLite = true;
+        } catch (dialectError) {
+            isSQLite = false;
+        }
+
+        try {
+            let tableNames = [];
+
+            if (isSQLite) {
+                const tables = await sql`
+                    SELECT name FROM sqlite_master WHERE type='table'
+                `;
+                tableNames = tables.map(row => row.name);
+            } else {
+                const tables = await sql`
+                    SELECT table_name as name 
+                    FROM information_schema.tables 
+                    WHERE table_schema = 'public'
+                `;
+                tableNames = tables.map(row => row.name);
+            }
+
+            hasCompaniesTable = tableNames.includes('companies');
+            hasUsersTable = tableNames.includes('users');
+
+            let ticketColumns;
+            if (isSQLite) {
+                ticketColumns = await sql`
+                    SELECT name FROM pragma_table_info('tickets')
+                `;
+            } else {
+                ticketColumns = await sql`
+                    SELECT column_name as name 
+                    FROM information_schema.columns 
+                    WHERE table_schema = 'public' AND table_name = 'tickets'
+                `;
+            }
+            const ticketColumnNames = ticketColumns.map(col => col.name);
+            hasTicketCompanyColumn = ticketColumnNames.includes('company_id');
+            hasTicketAssignedColumn = ticketColumnNames.includes('assigned_to');
+
+            if (hasUsersTable) {
+                let userColumns;
+                if (isSQLite) {
+                    userColumns = await sql`
+                        SELECT name FROM pragma_table_info('users')
+                    `;
+                } else {
+                    userColumns = await sql`
+                        SELECT column_name as name 
+                        FROM information_schema.columns 
+                        WHERE table_schema = 'public' AND table_name = 'users'
+                    `;
+                }
+                const userColumnNames = userColumns.map(col => col.name);
+                hasUserCompanyColumn = userColumnNames.includes('company_id');
+            }
+        } catch (schemaError) {
+            console.warn('Unable to inspect database schema for analytics:', schemaError.message);
+        }
 
         // Basic statistics
         const totalTickets = await sql`
@@ -76,14 +162,14 @@ exports.handler = async (event, context) => {
         const recentTickets = await sql`
             SELECT COUNT(*) as count 
             FROM tickets 
-            WHERE created_at >= ${startDate.toISOString()}
+            WHERE DATE(created_at) >= DATE(${startDateISO})
         `;
 
         const closedTickets = await sql`
             SELECT COUNT(*) as count 
             FROM tickets 
             WHERE status = 'closed' 
-            AND closed_at >= ${startDate.toISOString()}
+            AND DATE(closed_at) >= DATE(${startDateISO})
         `;
 
         // Resolution time analytics
@@ -94,7 +180,7 @@ exports.handler = async (event, context) => {
                 MAX(resolution_time) as max_hours
             FROM tickets 
             WHERE resolution_time IS NOT NULL
-            AND closed_at >= ${startDate.toISOString()}
+            AND DATE(closed_at) >= DATE(${startDateISO})
         `;
 
         // Daily ticket trends (last 30 days)
@@ -102,34 +188,51 @@ exports.handler = async (event, context) => {
             SELECT 
                 DATE(created_at) as date,
                 COUNT(*) as created,
-                COUNT(CASE WHEN status = 'closed' THEN 1 END) as closed
+                SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as closed
             FROM tickets 
-            WHERE created_at >= ${startDate.toISOString()}
+            WHERE DATE(created_at) >= DATE(${startDateISO})
             GROUP BY DATE(created_at)
-            ORDER BY date ASC
+            ORDER BY DATE(created_at) ASC
         `;
 
         // Monthly analytics for reporting
-        const monthlyStats = await sql`
-            SELECT 
-                DATE_TRUNC('month', created_at) as month,
-                COUNT(*) as total_tickets,
-                COUNT(CASE WHEN status = 'closed' THEN 1 END) as closed_tickets,
-                COUNT(CASE WHEN priority = 'high' THEN 1 END) as high_priority,
-                AVG(CASE WHEN resolution_time IS NOT NULL THEN resolution_time END) as avg_resolution_hours
-            FROM tickets 
-            WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '12 months')
-            GROUP BY DATE_TRUNC('month', created_at)
-            ORDER BY month DESC
-            LIMIT 12
-        `;
+        let monthlyStats = [];
+        if (isSQLite) {
+            monthlyStats = await sql`
+                SELECT 
+                    strftime('%Y-%m-01', created_at) as month,
+                    COUNT(*) as total_tickets,
+                    SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as closed_tickets,
+                    SUM(CASE WHEN priority = 'high' THEN 1 ELSE 0 END) as high_priority,
+                    AVG(CASE WHEN resolution_time IS NOT NULL THEN resolution_time END) as avg_resolution_hours
+                FROM tickets 
+                WHERE DATE(created_at) >= DATE(${monthlyStartDateISO})
+                GROUP BY strftime('%Y-%m', created_at)
+                ORDER BY month DESC
+                LIMIT 12
+            `;
+        } else {
+            monthlyStats = await sql`
+                SELECT 
+                    DATE_TRUNC('month', created_at) as month,
+                    COUNT(*) as total_tickets,
+                    COUNT(CASE WHEN status = 'closed' THEN 1 END) as closed_tickets,
+                    COUNT(CASE WHEN priority = 'high' THEN 1 END) as high_priority,
+                    AVG(CASE WHEN resolution_time IS NOT NULL THEN resolution_time END) as avg_resolution_hours
+                FROM tickets 
+                WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '12 months')
+                GROUP BY DATE_TRUNC('month', created_at)
+                ORDER BY month DESC
+                LIMIT 12
+            `;
+        }
 
         // Top categories by volume (for trend analysis)
         const topCategories = await sql`
             SELECT 
                 COALESCE(category, 'general') as category,
                 COUNT(*) as total_tickets,
-                COUNT(CASE WHEN created_at >= ${startDate.toISOString()} THEN 1 END) as recent_tickets,
+                SUM(CASE WHEN DATE(created_at) >= DATE(${startDateISO}) THEN 1 ELSE 0 END) as recent_tickets,
                 AVG(CASE WHEN resolution_time IS NOT NULL THEN resolution_time END) as avg_resolution_hours
             FROM tickets 
             GROUP BY COALESCE(category, 'general')
@@ -138,63 +241,132 @@ exports.handler = async (event, context) => {
         `;
 
         // Company analytics
-        const ticketsByCompany = await sql`
-            SELECT 
-                c.id,
-                c.name as company_name,
-                c.domain,
-                COUNT(DISTINCT t.id) as ticket_count,
-                COUNT(DISTINCT CASE WHEN t.status = 'closed' THEN t.id END) as closed_count,
-                COUNT(DISTINCT CASE WHEN t.status IN ('new', 'open') THEN t.id END) as open_count,
-                COUNT(DISTINCT CASE WHEN t.created_at >= ${startDate.toISOString()} THEN t.id END) as recent_tickets,
-                COUNT(DISTINCT u.id) as user_count,
-                AVG(CASE WHEN t.resolution_time IS NOT NULL THEN t.resolution_time END) as avg_resolution_hours
-            FROM companies c
-            LEFT JOIN tickets t ON t.company_id = c.id
-            LEFT JOIN users u ON u.company_id = c.id
-            WHERE c.is_active = true
-            GROUP BY c.id, c.name, c.domain
-            ORDER BY ticket_count DESC
-            LIMIT 10
-        `;
+        // Company analytics (only when schema supports it)
+        let ticketsByCompany = [];
+        if (hasCompaniesTable && hasTicketCompanyColumn) {
+            const companyTicketStats = await sql`
+                SELECT 
+                    company_id,
+                    COUNT(*) as ticket_count,
+                    SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as closed_count,
+                    SUM(CASE WHEN status IN ('new', 'open', 'pending') THEN 1 ELSE 0 END) as open_count,
+                    SUM(CASE WHEN DATE(created_at) >= DATE(${startDateISO}) THEN 1 ELSE 0 END) as recent_tickets,
+                    AVG(CASE WHEN resolution_time IS NOT NULL THEN resolution_time END) as avg_resolution_hours
+                FROM tickets 
+                WHERE company_id IS NOT NULL
+                GROUP BY company_id
+                ORDER BY ticket_count DESC
+                LIMIT 10
+            `;
 
-        // Agent performance (tickets assigned)
-        const agentPerformance = await sql`
-            SELECT 
-                u.id,
-                u.full_name,
-                u.email,
-                COUNT(DISTINCT t.id) as assigned_tickets,
-                COUNT(DISTINCT CASE WHEN t.status = 'closed' THEN t.id END) as resolved_tickets,
-                COUNT(DISTINCT CASE WHEN t.status IN ('new', 'open') THEN t.id END) as open_tickets,
-                AVG(CASE WHEN t.resolution_time IS NOT NULL THEN t.resolution_time END) as avg_resolution_hours
-            FROM users u
-            LEFT JOIN tickets t ON t.assigned_to = u.id
-            WHERE u.role IN ('admin', 'agent') AND u.is_active = true
-            GROUP BY u.id, u.full_name, u.email
-            HAVING COUNT(DISTINCT t.id) > 0
-            ORDER BY assigned_tickets DESC
-            LIMIT 10
-        `;
+            if (companyTicketStats.length) {
+                let userCountsByCompany = {};
+                if (hasUsersTable && hasUserCompanyColumn) {
+                    const userCounts = await sql`
+                        SELECT company_id, COUNT(*) as count
+                        FROM users
+                        WHERE company_id IS NOT NULL AND COALESCE(is_active, 1) = 1
+                        GROUP BY company_id
+                    `;
+                    userCounts.forEach(row => {
+                        userCountsByCompany[row.company_id] = toNumber(row.count);
+                    });
+                }
+
+                const companyDetails = await Promise.all(companyTicketStats.map(async stats => {
+                    const companyInfo = await sql`
+                        SELECT id, name as company_name, domain
+                        FROM companies
+                        WHERE id = ${stats.company_id} AND COALESCE(is_active, 1) = 1
+                        LIMIT 1
+                    `;
+
+                    if (!companyInfo.length) {
+                        return null;
+                    }
+
+                    return {
+                        id: companyInfo[0].id,
+                        company_name: companyInfo[0].company_name,
+                        domain: companyInfo[0].domain,
+                        ticket_count: toNumber(stats.ticket_count),
+                        closed_count: toNumber(stats.closed_count),
+                        open_count: toNumber(stats.open_count),
+                        recent_tickets: toNumber(stats.recent_tickets),
+                        avg_resolution_hours: stats.avg_resolution_hours === null || stats.avg_resolution_hours === undefined
+                            ? null
+                            : Math.round(Number(stats.avg_resolution_hours) * 10) / 10,
+                        user_count: userCountsByCompany[stats.company_id] || 0
+                    };
+                }));
+
+                ticketsByCompany = companyDetails.filter(Boolean);
+            }
+        }
+
+        // Agent performance (tickets assigned) when schema supports it
+        let agentPerformance = [];
+        if (hasUsersTable && hasTicketAssignedColumn) {
+            agentPerformance = await sql`
+                SELECT 
+                    u.id,
+                    u.full_name,
+                    u.email,
+                    stats.assigned_tickets,
+                    stats.resolved_tickets,
+                    stats.open_tickets,
+                    stats.avg_resolution_hours
+                FROM users u
+                JOIN (
+                    SELECT 
+                        assigned_to as user_id,
+                        COUNT(*) as assigned_tickets,
+                        SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as resolved_tickets,
+                        SUM(CASE WHEN status IN ('new', 'open', 'pending') THEN 1 ELSE 0 END) as open_tickets,
+                        AVG(CASE WHEN resolution_time IS NOT NULL THEN resolution_time END) as avg_resolution_hours
+                    FROM tickets
+                    WHERE assigned_to IS NOT NULL
+                    GROUP BY assigned_to
+                ) stats ON stats.user_id = u.id
+                WHERE u.role IN ('admin', 'agent') AND COALESCE(u.is_active, 1) = 1
+                ORDER BY stats.assigned_tickets DESC
+                LIMIT 10
+            `;
+        }
 
         // Performance metrics
-        const performanceMetrics = await sql`
+        const performanceCounts = await sql`
             SELECT 
                 COUNT(*) as total_tickets,
-                COUNT(CASE WHEN status = 'closed' THEN 1 END) as resolved_tickets,
-                ROUND((COUNT(CASE WHEN status = 'closed' THEN 1 END)::numeric / NULLIF(COUNT(*)::numeric,0) * 100), 2) as resolution_rate,
-                COUNT(CASE WHEN status IN ('new', 'pending') THEN 1 END) as pending_tickets,
-                COUNT(CASE WHEN priority = 'high' AND status != 'closed' THEN 1 END) as urgent_open
+                SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as resolved_tickets,
+                SUM(CASE WHEN status IN ('new', 'pending') THEN 1 ELSE 0 END) as pending_tickets,
+                SUM(CASE WHEN priority = 'high' AND status != 'closed' THEN 1 ELSE 0 END) as urgent_open
             FROM tickets
         `;
 
+        const totalTicketsCount = toNumber(performanceCounts[0]?.total_tickets);
+        const resolvedTicketsCount = toNumber(performanceCounts[0]?.resolved_tickets);
+        const resolutionRate = totalTicketsCount > 0
+            ? Math.round((resolvedTicketsCount / totalTicketsCount) * 1000) / 10
+            : 0;
+
+        const normalizedAgentPerformance = agentPerformance.map(agent => ({
+            ...agent,
+            assigned_tickets: toNumber(agent.assigned_tickets),
+            resolved_tickets: toNumber(agent.resolved_tickets),
+            open_tickets: toNumber(agent.open_tickets),
+            avg_resolution_hours: agent.avg_resolution_hours === null || agent.avg_resolution_hours === undefined
+                ? null
+                : Math.round(Number(agent.avg_resolution_hours) * 10) / 10
+        }));
+
         const analytics = {
             summary: {
-                totalTickets: totalTickets[0].count,
-                recentTickets: recentTickets[0].count,
-                closedTickets: closedTickets[0].count,
-                resolutionRate: performanceMetrics[0].resolution_rate || 0,
-                urgentOpen: performanceMetrics[0].urgent_open || 0
+                totalTickets: toNumber(totalTickets[0]?.count),
+                recentTickets: toNumber(recentTickets[0]?.count),
+                closedTickets: toNumber(closedTickets[0]?.count),
+                resolutionRate,
+                urgentOpen: toNumber(performanceCounts[0]?.urgent_open)
             },
             breakdown: {
                 byStatus: ticketsByStatus,
@@ -206,22 +378,22 @@ exports.handler = async (event, context) => {
                 monthly: monthlyStats
             },
             performance: {
-                averageResolution: avgResolutionTime[0]?.avg_hours ? 
-                    Math.round(avgResolutionTime[0].avg_hours * 10) / 10 : null,
-                fastestResolution: avgResolutionTime[0]?.min_hours || null,
-                slowestResolution: avgResolutionTime[0]?.max_hours || null
+                averageResolution: avgResolutionTime[0]?.avg_hours !== null && avgResolutionTime[0]?.avg_hours !== undefined ? 
+                    Math.round(Number(avgResolutionTime[0].avg_hours) * 10) / 10 : null,
+                fastestResolution: avgResolutionTime[0]?.min_hours !== null && avgResolutionTime[0]?.min_hours !== undefined ? Number(avgResolutionTime[0].min_hours) : null,
+                slowestResolution: avgResolutionTime[0]?.max_hours !== null && avgResolutionTime[0]?.max_hours !== undefined ? Number(avgResolutionTime[0].max_hours) : null
             },
             insights: {
                 topCategories: topCategories,
-                timeframe: timeframe
+                timeframe: timeframeDays
             },
             companies: {
                 topByTickets: ticketsByCompany,
                 totalCompanies: ticketsByCompany.length
             },
             agents: {
-                performance: agentPerformance,
-                totalAgents: agentPerformance.length
+                performance: normalizedAgentPerformance,
+                totalAgents: normalizedAgentPerformance.length
             },
             generatedAt: new Date().toISOString()
         };
