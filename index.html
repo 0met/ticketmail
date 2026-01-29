@@ -134,13 +134,7 @@
             min-width: 0;
             width: calc(100% - 250px);
             display: block;
-            position: relative; /* DEBUG: Ensure proper positioning context */
-        }
-
-        /* DEBUG: Make main-content visible */
-        .main-content:has(#user-management.active) {
-            background: red !important; /* DEBUG: Show container when user-management is active */
-            min-height: 100vh !important;
+            position: relative;
         }
 
         .page {
@@ -159,59 +153,6 @@
             min-width: 100%;
             visibility: visible !important;
             opacity: 1 !important;
-        }
-
-        /* CRITICAL: Force display for ANY active page regardless of inline styles */
-        .page.active,
-        #user-management.active,
-        [id="user-management"].active {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            position: relative !important;
-            min-height: 500px !important;
-        }
-
-        /* Force all children of active pages to be visible */
-        .page.active > * {
-            display: block !important;
-            visibility: visible !important;
-        }
-
-        /* Force tab content in user-management to display */
-        #user-management .tab-content.active,
-        #user-management.active .tab-content.active {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
-        /* Force user-management page to display when active */
-        #user-management.page.active {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            position: relative !important;
-            height: auto !important;
-            min-height: 600px !important;
-            background: lime !important; /* DEBUG: Make it very visible */
-            z-index: 1 !important;
-            width: 100% !important;
-            padding: 2rem !important;
-        }
-
-        /* DEBUG: Force all children to be visible and display */
-        #user-management.page.active > * {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            background: yellow !important; /* DEBUG: different color for children */
-        }
-
-        /* Override any .page styling that might hide it */
-        #user-management.page.active {
-            box-shadow: none !important;
-            border-radius: 0 !important;
         }
 
         @keyframes fadeIn {
@@ -2827,13 +2768,15 @@
 
                     const result = await response.json();
                     console.log('🔍 Auth validate result:', result);
-                    
-                    if (result.success) {
+
+                    const isValid = !!(result && (result.success || result.valid));
+
+                    if (isValid) {
                         console.log('✅ Session validation successful');
                         authState.isAuthenticated = true;
-                        authState.user = result.user;
+                        authState.user = normalizeAuthUser(result.user);
                         authState.sessionToken = storedToken;
-                        authState.permissions = result.permissions;
+                        authState.permissions = Array.isArray(result.permissions) ? result.permissions : [];
                         authState.isValidating = false;
                         updateUIForAuthentication();
                         return true;
@@ -2853,6 +2796,19 @@
             console.log('🔑 Showing login overlay');
             showLoginOverlay();
             return false;
+        }
+
+        function normalizeRole(role) {
+            return (role || 'customer').toString().trim().toLowerCase();
+        }
+
+        function normalizeAuthUser(user) {
+            if (!user || typeof user !== 'object') return null;
+            return {
+                ...user,
+                fullName: user.fullName || user.full_name || user.name || user.email,
+                role: normalizeRole(user.role)
+            };
         }
 
         // Show/hide login overlay
@@ -2959,7 +2915,7 @@
 
                 // Update authentication state
                 authState.isAuthenticated = true;
-                authState.user = result.user;
+                authState.user = normalizeAuthUser(result.user);
                 authState.sessionToken = result.sessionToken;
                 
                 // Store session
@@ -3073,8 +3029,12 @@
                 });
 
                 const result = await response.json();
-                if (result.success) {
-                    authState.permissions = result.permissions || [];
+
+                if (result && (result.success || result.valid)) {
+                    authState.permissions = Array.isArray(result.permissions) ? result.permissions : [];
+                    if (result.user && authState.user) {
+                        authState.user.role = normalizeRole(result.user.role || authState.user.role);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading permissions:', error);
@@ -4433,8 +4393,7 @@
                                 // Load users when user management page is opened
                                 console.log('🔍 User management page opened');
                                 console.log('🔍 window.loadUsers exists?', typeof window.loadUsers);
-                                console.log('🔍 loadUsersList exists?', typeof loadUsersList);
-                                console.log('🔍 loadUsers exists?', typeof loadUsers);
+                                console.log('🔍 window.loadUsersList exists?', typeof window.loadUsersList);
                                 
                                 // NUCLEAR OPTION: Force page to stay visible
                                 const userMgmtPage = document.getElementById('user-management');
@@ -4449,15 +4408,23 @@
                                 }, 50);
                                 
                                 setTimeout(() => {
-                                    if (typeof window.loadUsers === 'function') {
-                                        console.log('✅ Calling window.loadUsers()');
-                                        loadUsers();
-                                    } else if (typeof loadUsersList === 'function') {
-                                        console.log('✅ Calling loadUsersList()');
-                                        loadUsersList();
-                                    } else {
-                                        console.error('❌ Neither loadUsers nor loadUsersList function found!');
-                                        console.error('Available global functions:', Object.keys(window).filter(k => k.includes('load')));
+                                    try {
+                                        if (typeof window.loadUsers === 'function') {
+                                            console.log('✅ Calling window.loadUsers()');
+                                            window.loadUsers();
+                                            return;
+                                        }
+
+                                        if (typeof window.loadUsersList === 'function') {
+                                            console.log('✅ Calling window.loadUsersList()');
+                                            window.loadUsersList();
+                                            return;
+                                        }
+
+                                        console.error('❌ No user-management loader found (loadUsers/loadUsersList)');
+                                        console.error('Available global functions:', Object.keys(window).filter(k => k.toLowerCase().includes('load')));
+                                    } catch (err) {
+                                        console.error('❌ Error while loading user management data:', err);
                                     }
                                 }, 100);
                             }

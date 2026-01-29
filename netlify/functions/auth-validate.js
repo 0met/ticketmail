@@ -92,6 +92,14 @@ exports.handler = async (event, context) => {
             };
         }
 
+        const normalizedRole = (session.users.role || 'customer').toString().trim().toLowerCase();
+        const permissionsByRole = {
+            admin: ['admin_access', 'ticket_management', 'user_management', 'settings_access'],
+            agent: ['ticket_management', 'settings_access'],
+            customer: ['customer_access', 'settings_access']
+        };
+        const permissions = permissionsByRole[normalizedRole] || [];
+
         return {
             statusCode: 200,
             headers: {
@@ -99,13 +107,15 @@ exports.handler = async (event, context) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
+                success: true,
                 valid: true,
                 user: {
                     id: session.users.id,
                     email: session.users.email,
                     fullName: session.users.full_name,
-                    role: session.users.role
-                }
+                    role: normalizedRole
+                },
+                permissions
             })
         };
     } catch (error) {
