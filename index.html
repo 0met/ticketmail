@@ -236,6 +236,92 @@
             color: #64748b;
         }
 
+        /* Dashboard Filters */
+        .dashboard-filter {
+            padding: 0.625rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            font-size: 0.875rem;
+            color: #1f2937;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dashboard-filter:hover {
+            border-color: #cbd5e1;
+        }
+
+        .dashboard-filter:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Dashboard Metrics */
+        .dashboard-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .metric-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #111827;
+            line-height: 1;
+            margin-bottom: 0.75rem;
+        }
+
+        .metric-trend {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .metric-trend.trend-up {
+            color: #10b981;
+        }
+
+        .metric-trend.trend-down {
+            color: #ef4444;
+        }
+
+        .metric-period {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        /* Chart Cards */
+        .chart-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -1588,39 +1674,141 @@
         <main class="main-content">
             <!-- Dashboard Page -->
             <div id="dashboard" class="page active">
-                <div class="page-header">
-                    <h1 class="page-title">Dashboard</h1>
-                    <p class="page-subtitle">Overview of your email ticket system</p>
+                <div class="page-header" style="margin-bottom: 2rem;">
+                    <h1 class="page-title" style="font-size: 1.875rem; font-weight: 400; color: #1f2937; margin-bottom: 0;">SaaS Dashboard</h1>
                 </div>
 
-                <div id="connectionStatus" class="connection-status status-disconnected">
-                    <span class="status-dot dot-red"></span>
-                    <span>Gmail: Not Connected</span>
+                <!-- Filter Controls -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: #64748b; font-weight: 500;">Auto date range</label>
+                        <select class="dashboard-filter" style="min-width: 150px;">
+                            <option>This Month</option>
+                            <option>Last Month</option>
+                            <option>Last 3 Months</option>
+                            <option>This Year</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: #64748b; font-weight: 500;">Services</label>
+                        <select class="dashboard-filter" style="min-width: 120px;">
+                            <option>All</option>
+                            <option>Support</option>
+                            <option>Sales</option>
+                            <option>Technical</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: #64748b; font-weight: 500;">Posts</label>
+                        <select class="dashboard-filter" style="min-width: 120px;">
+                            <option>All</option>
+                            <option>Published</option>
+                            <option>Draft</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalTickets">0</div>
-                        <div class="stat-label">Total Tickets</div>
+                <!-- Metric Cards -->
+                <div class="dashboard-metrics">
+                    <div class="metric-card">
+                        <div class="metric-label">Total Tickets</div>
+                        <div class="metric-value" id="totalTickets">0</div>
+                        <div class="metric-trend trend-down">
+                            <span>↓ 3</span>
+                            <span class="metric-period">vs previous 30 days</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="openTickets">0</div>
-                        <div class="stat-label">Open Tickets</div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Resolution Rate</div>
+                        <div class="metric-value" id="resolutionRate">0<span style="font-size: 1.5rem;">%</span></div>
+                        <div class="metric-trend trend-up">
+                            <span>↑ 2.5%</span>
+                            <span class="metric-period">vs previous 30 days</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="closedTickets">0</div>
-                        <div class="stat-label">Closed Tickets</div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Avg Response Time</div>
+                        <div class="metric-value" id="responseTime">0<span style="font-size: 1.5rem;">hrs</span></div>
+                        <div class="metric-trend trend-down">
+                            <span>↓ 15m</span>
+                            <span class="metric-period">vs previous 30 days</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="responseTime">0</div>
-                        <div class="stat-label">Avg Response Time (hrs)</div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Active Agents</div>
+                        <div class="metric-value" id="activeAgents">0</div>
+                        <div class="metric-trend trend-up">
+                            <span>↑ 2</span>
+                            <span class="metric-period">vs previous 30 days</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="chart-container">
-                    <h3 style="margin-bottom: 1rem;">Recent Activity</h3>
-                    <div class="chart-placeholder">
-                        Ticket activity chart will appear here
+                <!-- Charts Section -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                    <!-- Ticket Distribution Chart -->
+                    <div class="chart-card">
+                        <h3 style="font-size: 0.875rem; font-weight: 500; color: #64748b; margin-bottom: 1.5rem;">Ticket Status Distribution</h3>
+                        <div style="height: 280px; display: flex; align-items: flex-end; justify-content: space-around; gap: 0.5rem; padding: 1rem 0;">
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 85%; border-radius: 8px 8px 0 0;"></div>
+                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Jan</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 92%; border-radius: 8px 8px 0 0;"></div>
+                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Feb</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 78%; border-radius: 8px 8px 0 0;"></div>
+                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Mar</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 65%; border-radius: 8px 8px 0 0;"></div>
+                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Apr</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 72%; border-radius: 8px 8px 0 0;"></div>
+                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">May</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 88%; border-radius: 8px 8px 0 0;"></div>
+                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Jun</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 68%; border-radius: 8px 8px 0 0;"></div>
+                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Jul</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Response Time Trend Chart -->
+                    <div class="chart-card">
+                        <h3 style="font-size: 0.875rem; font-weight: 500; color: #64748b; margin-bottom: 1.5rem;">Response Time Trend</h3>
+                        <div style="height: 280px; position: relative; padding: 1rem 0;">
+                            <svg width="100%" height="100%" viewBox="0 0 400 220" style="overflow: visible;">
+                                <path d="M 10,180 Q 60,120 80,140 T 150,100 Q 180,80 220,110 T 300,90 Q 330,70 390,100" 
+                                      fill="none" 
+                                      stroke="url(#lineGradient)" 
+                                      stroke-width="3" 
+                                      stroke-linecap="round"/>
+                                <defs>
+                                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <!-- Data points -->
+                                <circle cx="10" cy="180" r="4" fill="#3b82f6"/>
+                                <circle cx="80" cy="140" r="4" fill="#3b82f6"/>
+                                <circle cx="150" cy="100" r="4" fill="#3b82f6"/>
+                                <circle cx="220" cy="110" r="4" fill="#3b82f6"/>
+                                <circle cx="300" cy="90" r="4" fill="#8b5cf6"/>
+                                <circle cx="390" cy="100" r="4" fill="#8b5cf6"/>
+                            </svg>
+                        </div>
                     </div>
                 </div>
             </div>
