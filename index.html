@@ -350,11 +350,12 @@
 
         /* Split View Layout */
         .tickets-split-view {
-            display: grid;
-            grid-template-columns: 400px 1fr;
+            display: grid !important;
+            grid-template-columns: 400px 1fr !important;
             gap: 1.5rem;
             height: calc(100vh - 300px);
             min-height: 600px;
+            align-items: start;
         }
 
         .tickets-list-panel {
@@ -364,6 +365,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            max-height: calc(100vh - 300px);
         }
 
         .tickets-list {
@@ -378,6 +380,9 @@
             background: white;
             overflow-y: auto;
             padding: 2rem;
+            max-height: calc(100vh - 300px);
+            position: sticky;
+            top: 0;
         }
 
         .ticket-detail-placeholder {
