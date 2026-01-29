@@ -5405,15 +5405,10 @@
                 
                 console.log('📊 Analytics API response:', result);
                 
-                if (result.success) {
-                    return result.analytics;
-                } else {
-                    console.error('❌ Error loading analytics:', result.error);
-                    return null;
-                }
+                return result; // Return the full result object
             } catch (error) {
                 console.error('❌ Error loading analytics:', error);
-                return null;
+                return { success: false, error: error.message };
             }
         }
 
@@ -5428,18 +5423,26 @@
             document.getElementById('urgentOpenTickets').textContent = '...';
             
             const timeframe = document.getElementById('analyticsTimeframe').value;
-            const analytics = await loadAnalytics(timeframe);
+            const result = await loadAnalytics(timeframe);
             
-            if (analytics) {
-                console.log('✅ Analytics loaded:', analytics);
-                updateAnalyticsDashboard(analytics);
+            if (result && result.analytics) {
+                console.log('✅ Analytics loaded:', result.analytics);
+                updateAnalyticsDashboard(result.analytics);
+            } else if (result && result.error) {
+                console.error('❌ Analytics API Error:', result.error);
+                alert('Analytics Error: ' + result.error);
+                // Show error state with message
+                document.getElementById('resolutionRate').textContent = '⚠️';
+                document.getElementById('avgResolutionTime').textContent = '⚠️';
+                document.getElementById('totalTicketsAnalytics').textContent = '⚠️';
+                document.getElementById('urgentOpenTickets').textContent = '⚠️';
             } else {
-                console.error('❌ Failed to load analytics');
+                console.error('❌ Failed to load analytics - no data returned');
                 // Show error state
-                document.getElementById('resolutionRate').textContent = 'Error';
-                document.getElementById('avgResolutionTime').textContent = 'Error';
-                document.getElementById('totalTicketsAnalytics').textContent = 'Error';
-                document.getElementById('urgentOpenTickets').textContent = 'Error';
+                document.getElementById('resolutionRate').textContent = '⚠️';
+                document.getElementById('avgResolutionTime').textContent = '⚠️';
+                document.getElementById('totalTicketsAnalytics').textContent = '⚠️';
+                document.getElementById('urgentOpenTickets').textContent = '⚠️';
             }
         }
 
