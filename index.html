@@ -2141,6 +2141,55 @@
                                 <label for="newTicketFrom" class="form-label">Customer Email *</label>
                                 <input type="email" id="newTicketFrom" class="form-input" required placeholder="customer@example.com">
                             </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="newTicketCustomerName" class="form-label">Customer Name</label>
+                                    <input type="text" id="newTicketCustomerName" class="form-input" placeholder="John Doe">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="newTicketCustomerPhone" class="form-label">Customer Phone</label>
+                                    <input type="tel" id="newTicketCustomerPhone" class="form-input" placeholder="+1 (555) 123-4567">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="newTicketCompany" class="form-label">Company</label>
+                                <div style="position: relative;">
+                                    <input 
+                                        type="text" 
+                                        id="newTicketCompany" 
+                                        class="form-input" 
+                                        placeholder="Type to search or create new company..."
+                                        list="companiesList"
+                                        oninput="filterCompanies(this.value)">
+                                    <datalist id="companiesList">
+                                        <!-- Companies will be loaded dynamically -->
+                                    </datalist>
+                                </div>
+                                <small style="color: #6b7280; font-size: 0.75rem; display: block; margin-top: 0.25rem;">
+                                    Select existing company or type a new name
+                                </small>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="newTicketCustomerId" class="form-label">Customer ID</label>
+                                    <input type="text" id="newTicketCustomerId" class="form-input" placeholder="CUST-12345">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="newTicketSource" class="form-label">Source</label>
+                                    <select id="newTicketSource" class="form-input">
+                                        <option value="manual" selected>Manual Entry</option>
+                                        <option value="phone">Phone Call</option>
+                                        <option value="chat">Live Chat</option>
+                                        <option value="social">Social Media</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
                             
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                 <div class="form-group">
@@ -2165,6 +2214,14 @@
                                         <option value="urgent">Urgent</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="newTicketAssignee" class="form-label">Assign To</label>
+                                <select id="newTicketAssignee" class="form-input">
+                                    <option value="" selected>Unassigned</option>
+                                    <!-- Will be populated with team members -->
+                                </select>
                             </div>
                             
                             <div class="form-group">
@@ -4876,6 +4933,52 @@
             document.getElementById('newTicketForm').reset();
             document.getElementById('newTicketPriority').value = 'medium';
             document.getElementById('newTicketCategory').value = 'general';
+            document.getElementById('newTicketSource').value = 'manual';
+            
+            // Load companies for dropdown
+            loadCompaniesForNewTicket();
+            
+            // Load assignees
+            loadAssigneesForNewTicket();
+        }
+
+        async function loadCompaniesForNewTicket() {
+            try {
+                const response = await fetch('/.netlify/functions/companies-list');
+                const result = await response.json();
+                
+                if (result.success && result.companies) {
+                    const datalist = document.getElementById('companiesList');
+                    datalist.innerHTML = result.companies.map(company => 
+                        `<option value="${company.name}">${company.name}</option>`
+                    ).join('');
+                }
+            } catch (error) {
+                console.error('Error loading companies:', error);
+            }
+        }
+
+        async function loadAssigneesForNewTicket() {
+            try {
+                const response = await fetch('/.netlify/functions/get-users');
+                const result = await response.json();
+                
+                if (result.success && result.users) {
+                    const select = document.getElementById('newTicketAssignee');
+                    select.innerHTML = '<option value="">Unassigned</option>' + 
+                        result.users
+                            .filter(user => user.role === 'admin' || user.role === 'agent')
+                            .map(user => `<option value="${user.id}">${user.name || user.email}</option>`)
+                            .join('');
+                }
+            } catch (error) {
+                console.error('Error loading assignees:', error);
+            }
+        }
+
+        function filterCompanies(searchTerm) {
+            // This function allows dynamic filtering if needed in the future
+            // Datalist already handles filtering automatically
         }
 
         function closeNewTicketModal() {
@@ -4891,6 +4994,12 @@
             const priority = document.getElementById('newTicketPriority').value;
             const category = document.getElementById('newTicketCategory').value;
             const content = document.getElementById('newTicketContent').value.trim();
+            const customerName = document.getElementById('newTicketCustomerName').value.trim();
+            const customerPhone = document.getElementById('newTicketCustomerPhone').value.trim();
+            const company = document.getElementById('newTicketCompany').value.trim();
+            const customerId = document.getElementById('newTicketCustomerId').value.trim();
+            const source = document.getElementById('newTicketSource').value;
+            const assignedTo = document.getElementById('newTicketAssignee').value;
             
             if (!subject || !from || !content) {
                 alert('❌ Please fill in all required fields');
@@ -4907,7 +5016,13 @@
                         priority: priority,
                         category: category,
                         content: content,
-                        isManual: true
+                        isManual: true,
+                        customer_name: customerName,
+                        customer_phone: customerPhone,
+                        customer_company: company,
+                        customer_id: customerId,
+                        source: source,
+                        assigned_to: assignedTo || null
                     })
                 });
 
