@@ -4322,6 +4322,21 @@
             }, 3000);
         }
 
+        function flattenPagesToMain() {
+            const mainEl = document.querySelector('main');
+            if (!mainEl) return { main: false, moved: 0 };
+
+            let moved = 0;
+            document.querySelectorAll('.page').forEach(p => {
+                if (p.parentElement !== mainEl) {
+                    mainEl.appendChild(p);
+                    moved += 1;
+                }
+            });
+
+            return { main: true, moved };
+        }
+
         function ensurePageInMain(pageId) {
             const pageEl = document.getElementById(pageId);
             if (!pageEl) return { exists: false };
@@ -4329,7 +4344,10 @@
             const mainEl = document.querySelector('main');
             if (!mainEl) return { exists: true, inMain: false };
 
-            if (!mainEl.contains(pageEl)) {
+            // IMPORTANT: The page must be a DIRECT child of <main>.
+            // If it is nested inside another page (e.g. inside #settings),
+            // that hidden parent will hide it even if we set display:block.
+            if (pageEl.parentElement !== mainEl) {
                 mainEl.appendChild(pageEl);
                 return { exists: true, inMain: true, moved: true };
             }
@@ -4338,6 +4356,11 @@
         }
 
         function verifyCriticalDom() {
+            const flat = flattenPagesToMain();
+            if (flat.main && flat.moved > 0) {
+                console.warn(`ℹ️ Flattened nested pages into <main> (moved: ${flat.moved}).`);
+            }
+
             // User Management has been the most common “blank page” failure mode.
             const um = ensurePageInMain('user-management');
             if (!um.exists) {
@@ -4353,6 +4376,9 @@
         function showPage(targetPage) {
             const previousActivePageId = document.querySelector('.page.active')?.id || 'dashboard';
             try {
+                // Defensive: fix accidental nesting of .page nodes (can happen with stale/cached HTML or malformed markup).
+                flattenPagesToMain();
+
                 const pages = document.querySelectorAll('.page');
                 const navLinks = document.querySelectorAll('.nav-link');
                 const page = document.getElementById(targetPage);
