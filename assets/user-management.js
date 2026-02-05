@@ -165,6 +165,8 @@ function renderUsersTable() {
     `;
     
     filteredUsers.forEach(user => {
+        const safeUserIdJs = JSON.stringify(String(user.id));
+        const safeUserEmailJs = JSON.stringify(String(user.email || ''));
         const roleColors = {
             admin: 'background: #ef4444; color: white;',
             agent: 'background: #f59e0b; color: white;',
@@ -209,8 +211,8 @@ function renderUsersTable() {
                     </span>
                 </td>
                 <td style="padding: 1rem; text-align: center;">
-                    <button onclick="editUser(${user.id})" class="btn btn-sm" style="margin-right: 0.5rem;">✏️ Edit</button>
-                    <button onclick="deleteUser(${user.id}, '${user.email}')" class="btn btn-sm btn-danger">🗑️ Delete</button>
+                    <button onclick="editUser(${safeUserIdJs})" class="btn btn-sm" style="margin-right: 0.5rem;">✏️ Edit</button>
+                    <button onclick="deleteUser(${safeUserIdJs}, ${safeUserEmailJs})" class="btn btn-sm btn-danger">🗑️ Delete</button>
                 </td>
             </tr>
         `;
@@ -263,7 +265,8 @@ function openUserModal(userId = null) {
         document.getElementById('passwordOptional').textContent = '(leave blank to keep current)';
         
         // Load user data
-        const user = allUsers.find(u => u.id === userId);
+        const userIdString = String(userId);
+        const user = allUsers.find(u => String(u.id) === userIdString);
         if (user) {
             document.getElementById('userId').value = user.id;
             document.getElementById('userFullName').value = user.fullName || '';
@@ -447,6 +450,7 @@ function renderCompaniesGrid() {
     let html = '';
     
     allCompanies.forEach(company => {
+        const safeCompanyIdJs = JSON.stringify(String(company.id));
         const statusBadge = company.isActive 
             ? '<span style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem;">Active</span>'
             : '<span style="background: #6b7280; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem;">Inactive</span>';
@@ -484,8 +488,8 @@ function renderCompaniesGrid() {
                 ${company.address ? `<p style="margin: 0.5rem 0; color: #64748b; font-size: 0.875rem;">📍 ${company.address}</p>` : ''}
                 
                 <div style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                    <button onclick="editCompany(${company.id})" class="btn btn-sm" style="flex: 1;">✏️ Edit</button>
-                    <button onclick="viewCompanyDetails(${company.id})" class="btn btn-sm btn-secondary" style="flex: 1;">👁️ View</button>
+                    <button onclick="editCompany(${safeCompanyIdJs})" class="btn btn-sm" style="flex: 1;">✏️ Edit</button>
+                    <button onclick="viewCompanyDetails(${safeCompanyIdJs})" class="btn btn-sm btn-secondary" style="flex: 1;">👁️ View</button>
                 </div>
             </div>
         `;
