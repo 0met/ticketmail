@@ -10,11 +10,6 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
-[[redirects]]
-  from = "/user-management-v2"
-  to = "/user-management-v2.html"
-  status = 200
-
 [functions]
   node_bundler = "zisi"
 

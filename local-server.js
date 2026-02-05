@@ -16,11 +16,6 @@ app.use((req, res, next) => {
 });
 app.use(express.static(path.join(__dirname))); // Serve static files from root
 
-// Convenience route for the new standalone user management page
-app.get('/user-management-v2', (req, res) => {
-    res.sendFile(path.join(__dirname, 'user-management-v2.html'));
-});
-
 // Helper to adapt Express request to Netlify Function event
 const adaptRequest = (req) => {
     return {
