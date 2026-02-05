@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>TicketMail — User Management (V2)</title>
+  <link rel="stylesheet" href="/assets/user-management-v2.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">👥</div>
+        <div>
+          <div class="brand-title">User Management</div>
+          <div class="brand-subtitle">Standalone admin panel (V2)</div>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <div id="statusChip" class="chip chip-neutral">Not authenticated</div>
+        <button id="logoutBtn" class="btn btn-secondary" type="button" style="display:none">Logout</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <section id="banner" class="banner" style="display:none"></section>
+
+      <section id="loginSection" class="card" style="display:none">
+        <h2>Admin Login</h2>
+        <p class="muted">Log in with an admin account to manage users.</p>
+
+        <form id="loginForm" class="form">
+          <label>
+            Email
+            <input id="loginEmail" type="email" autocomplete="username" required placeholder="admin@ticketmail.com" />
+          </label>
+          <label>
+            Password
+            <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="••••••••" />
+          </label>
+          <div class="row">
+            <button class="btn btn-primary" type="submit">Sign in</button>
+            <button id="clearSessionBtn" class="btn btn-ghost" type="button">Clear saved session</button>
+          </div>
+          <div id="loginResult" class="small muted"></div>
+        </form>
+
+        <div class="help">
+          <div class="help-title">Having trouble?</div>
+          <ul>
+            <li>If the DB isn’t set up yet, run setup via <a href="/setup_user.html" target="_blank" rel="noopener">setup_user.html</a>.</li>
+            <li>This page calls existing Netlify functions under <code>/.netlify/functions/*</code>.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="appSection" class="card" style="display:none">
+        <div class="section-header">
+          <div>
+            <h2 style="margin:0">Users</h2>
+            <div id="whoami" class="small muted"></div>
+          </div>
+          <div class="row" style="justify-content:flex-end">
+            <button id="refreshBtn" class="btn btn-secondary" type="button">Refresh</button>
+            <button id="createBtn" class="btn btn-primary" type="button">+ Create user</button>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Total</div>
+            <div id="statTotal" class="stat-value">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Admins</div>
+            <div id="statAdmins" class="stat-value">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Agents</div>
+            <div id="statAgents" class="stat-value">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Customers</div>
+            <div id="statCustomers" class="stat-value">—</div>
+          </div>
+        </div>
+
+        <div class="filters">
+          <label>
+            Search
+            <input id="searchInput" type="text" placeholder="Search name, email, department…" />
+          </label>
+          <label>
+            Role
+            <select id="roleFilter">
+              <option value="">All</option>
+              <option value="admin">Admin</option>
+              <option value="agent">Agent</option>
+              <option value="customer">Customer</option>
+            </select>
+          </label>
+          <label>
+            Status
+            <select id="statusFilter">
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </label>
+          <label>
+            Company
+            <select id="companyFilter">
+              <option value="">All</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Company</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th style="text-align:right">Open tickets</th>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTbody">
+              <tr><td colspan="7" class="muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="modalBackdrop" class="modal-backdrop" style="display:none">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <div>
+          <div id="modalTitle" class="modal-title">User</div>
+          <div id="modalSubtitle" class="small muted"></div>
+        </div>
+        <button id="modalClose" class="btn btn-ghost" type="button">✕</button>
+      </div>
+
+      <form id="userForm" class="modal-body">
+        <input id="userId" type="hidden" />
+
+        <div class="grid">
+          <label>
+            Full name
+            <input id="fullName" type="text" required />
+          </label>
+          <label>
+            Email
+            <input id="email" type="email" required />
+          </label>
+          <label>
+            Role
+            <select id="role" required>
+              <option value="admin">Admin</option>
+              <option value="agent">Agent</option>
+              <option value="customer">Customer</option>
+            </select>
+          </label>
+          <label>
+            Status
+            <select id="isActive" required>
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </label>
+          <label>
+            Company
+            <select id="companyId">
+              <option value="">None</option>
+            </select>
+          </label>
+          <label>
+            Department
+            <input id="department" type="text" />
+          </label>
+          <label>
+            Job title
+            <input id="jobTitle" type="text" />
+          </label>
+          <label>
+            Phone
+            <input id="phone" type="text" />
+          </label>
+          <label class="grid-span">
+            Password
+            <input id="password" type="password" placeholder="Leave blank to keep unchanged (edit)" />
+          </label>
+        </div>
+
+        <div id="formResult" class="small muted"></div>
+
+        <div class="modal-footer">
+          <button id="deleteBtn" class="btn btn-danger" type="button" style="display:none">Delete</button>
+          <div class="row" style="justify-content:flex-end">
+            <button id="cancelBtn" class="btn btn-secondary" type="button">Cancel</button>
+            <button id="saveBtn" class="btn btn-primary" type="submit">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/assets/user-management-v2.js"></script>
+</body>
+</html>

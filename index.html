@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Reduce chances of stale SPA HTML being served from cache -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Gmail Ticket System</title>
     <style>
         :root {
@@ -1406,7 +1410,7 @@
             margin-bottom: 1rem;
         }
     </style>
-    <link rel="stylesheet" href="assets/user-management.css">
+    <link rel="stylesheet" href="assets/user-management.css?v=20260204">
 </head>
 <body>
     <!-- Login/Register Overlay -->
@@ -1646,6 +1650,12 @@
                     <a href="#" class="nav-link" data-page="user-management">
                         <span class="nav-icon">👥</span>
                         User Management
+                    </a>
+                </li>
+                <li class="nav-item" data-roles="admin">
+                    <a href="/user-management-v2" class="nav-link" onclick="event.stopPropagation(); window.open('/user-management-v2', '_blank', 'noopener'); return false;">
+                        <span class="nav-icon">🧰</span>
+                        User Management (V2)
                     </a>
                 </li>
                 <li class="nav-item" data-roles="admin,agent,customer">
@@ -3043,11 +3053,14 @@
 
         // Update navigation menu visibility based on user role
         function updateNavigationVisibility() {
-            const userRole = authState.user?.role;
+            const userRole = normalizeRole(authState.user?.role);
             if (!userRole) return;
 
             document.querySelectorAll('.nav-item').forEach(item => {
-                const allowedRoles = (item.dataset.roles || '').split(',');
+                const allowedRoles = (item.dataset.roles || '')
+                    .split(',')
+                    .map(r => r.trim())
+                    .filter(Boolean);
                 item.style.display = allowedRoles.includes(userRole) ? 'block' : 'none';
             });
         }
@@ -3102,6 +3115,7 @@
 
         // Apply role-based permissions throughout the UI
         function applyRoleBasedPermissions(userRole) {
+            userRole = normalizeRole(userRole);
             console.log('Applying permissions for role:', userRole);
             
             // Get all elements with data-roles attribute
@@ -3116,7 +3130,10 @@
                     return; // Skip this element
                 }
                 
-                const allowedRoles = element.getAttribute('data-roles').split(',');
+                const allowedRoles = element.getAttribute('data-roles')
+                    .split(',')
+                    .map(r => r.trim())
+                    .filter(Boolean);
                 if (allowedRoles.includes(userRole)) {
                     element.style.display = '';
                     element.classList.remove('role-hidden');
@@ -4305,8 +4322,36 @@
             }, 3000);
         }
 
+        function ensurePageInMain(pageId) {
+            const pageEl = document.getElementById(pageId);
+            if (!pageEl) return { exists: false };
+
+            const mainEl = document.querySelector('main');
+            if (!mainEl) return { exists: true, inMain: false };
+
+            if (!mainEl.contains(pageEl)) {
+                mainEl.appendChild(pageEl);
+                return { exists: true, inMain: true, moved: true };
+            }
+
+            return { exists: true, inMain: true, moved: false };
+        }
+
+        function verifyCriticalDom() {
+            // User Management has been the most common “blank page” failure mode.
+            const um = ensurePageInMain('user-management');
+            if (!um.exists) {
+                console.warn('⚠️ user-management page node is missing from DOM (stale/cached HTML likely)');
+                showDiscreteNotification('User Management UI missing (stale build). Hard refresh: Ctrl+F5.', 'error');
+            } else if (um.moved) {
+                console.warn('ℹ️ user-management existed but was outside <main>; moved into <main>.');
+                showDiscreteNotification('Fixed layout: moved User Management into main content.', 'info');
+            }
+        }
+
         // Centralized page switcher (used by nav + role redirects)
         function showPage(targetPage) {
+            const previousActivePageId = document.querySelector('.page.active')?.id || 'dashboard';
             try {
                 const pages = document.querySelectorAll('.page');
                 const navLinks = document.querySelectorAll('.nav-link');
@@ -4314,8 +4359,12 @@
 
                 if (!page) {
                     console.error('❌ showPage: page not found:', targetPage);
+                    showDiscreteNotification(`Page "${targetPage}" not found. Hard refresh: Ctrl+F5.`, 'error');
                     return;
                 }
+
+                // If a page exists but ended up outside <main>, put it back.
+                ensurePageInMain(targetPage);
 
                 // Hide all pages first
                 pages.forEach(p => {
@@ -4359,10 +4408,49 @@
                         loadUsersList();
                     } else {
                         console.error('❌ No user-management loader found (loadUsers/loadUsersList)');
+                        showDiscreteNotification('User Management script failed to load. Hard refresh: Ctrl+F5.', 'error');
                     }
                 }
+
+                // Re-apply role-based visibility after navigation.
+                // applyRoleBasedPermissions never hides the active page.
+                if (typeof applyRoleBasedPermissions === 'function') {
+                    applyRoleBasedPermissions(authState?.user?.role);
+                }
+
+                // Final guard: if something still hid the active page, force it visible.
+                requestAnimationFrame(() => {
+                    const active = document.getElementById(targetPage);
+                    if (!active) return;
+                    const style = window.getComputedStyle(active);
+                    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+                        console.warn('⚠️ Active page ended up hidden; forcing visible:', targetPage, style.display, style.visibility, style.opacity);
+                        active.classList.add('active');
+                        active.classList.remove('role-hidden');
+                        active.removeAttribute('hidden');
+                        active.style.display = 'block';
+                        active.style.visibility = 'visible';
+                        active.style.opacity = '1';
+                        showDiscreteNotification('Recovered hidden page. Hard refresh (Ctrl+F5) if it reoccurs.', 'info');
+                    }
+                });
             } catch (err) {
                 console.error('❌ showPage failed:', err);
+                // Safety net: restore a page so the UI doesn't remain blank.
+                try {
+                    const fallback = document.getElementById(previousActivePageId) || document.getElementById('dashboard');
+                    if (fallback) {
+                        document.querySelectorAll('.page').forEach(p => {
+                            p.classList.remove('active');
+                            p.style.display = 'none';
+                        });
+                        fallback.classList.add('active');
+                        fallback.style.display = 'block';
+                        showDiscreteNotification('Recovered navigation error. Try again (Ctrl+F5 if needed).', 'error');
+                    }
+                } catch (_) {
+                    // ignore
+                }
             }
         }
 
@@ -4378,6 +4466,10 @@
 
             navLinks.forEach(link => {
                 link.addEventListener('click', (e) => {
+                    // Only handle SPA navigation links; allow real links (like User Management V2) to work normally.
+                    if (!link.dataset || !link.dataset.page) {
+                        return;
+                    }
                     e.preventDefault();
                     const targetPage = link.dataset.page;
 
@@ -5553,9 +5645,31 @@
         // Start the application
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('📱 DOM Content Loaded - Starting app initialization');
+
+            // Surface runtime JS errors as a toast to avoid silent blank screens.
+            window.addEventListener('error', (e) => {
+                try {
+                    console.error('💥 Window error:', e?.message || e);
+                    showDiscreteNotification(`Error: ${e?.message || 'Unknown error'}`, 'error');
+                } catch (_) {
+                    // ignore
+                }
+            });
+            window.addEventListener('unhandledrejection', (e) => {
+                try {
+                    console.error('💥 Unhandled rejection:', e?.reason || e);
+                    const msg = (e?.reason && (e.reason.message || String(e.reason))) || 'Unknown promise rejection';
+                    showDiscreteNotification(`Error: ${msg}`, 'error');
+                } catch (_) {
+                    // ignore
+                }
+            });
             
             // Initialize UI elements
             initializeUI();
+
+            // Quick sanity check for critical pages (helps diagnose blank User Management issues)
+            verifyCriticalDom();
             
             // Dispatch UI ready event
             if (!uiInitialized) {
@@ -5587,6 +5701,6 @@
             }
         });
     </script>
-    <script src="assets/user-management.js"></script>
+    <script src="assets/user-management.js?v=20260204"></script>
 </body>
 </html>
