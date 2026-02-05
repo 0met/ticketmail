@@ -211,8 +211,8 @@ function renderUsersTable() {
                     </span>
                 </td>
                 <td style="padding: 1rem; text-align: center;">
-                    <button onclick="editUser(${safeUserIdJs})" class="btn btn-sm" style="margin-right: 0.5rem;">✏️ Edit</button>
-                    <button onclick="deleteUser(${safeUserIdJs}, ${safeUserEmailJs})" class="btn btn-sm btn-danger">🗑️ Delete</button>
+                    <button onclick='editUser(${safeUserIdJs})' class="btn btn-sm" style="margin-right: 0.5rem;">✏️ Edit</button>
+                    <button onclick='deleteUser(${safeUserIdJs}, ${safeUserEmailJs})' class="btn btn-sm btn-danger">🗑️ Delete</button>
                 </td>
             </tr>
         `;
@@ -488,8 +488,8 @@ function renderCompaniesGrid() {
                 ${company.address ? `<p style="margin: 0.5rem 0; color: #64748b; font-size: 0.875rem;">📍 ${company.address}</p>` : ''}
                 
                 <div style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                    <button onclick="editCompany(${safeCompanyIdJs})" class="btn btn-sm" style="flex: 1;">✏️ Edit</button>
-                    <button onclick="viewCompanyDetails(${safeCompanyIdJs})" class="btn btn-sm btn-secondary" style="flex: 1;">👁️ View</button>
+                    <button onclick='editCompany(${safeCompanyIdJs})' class="btn btn-sm" style="flex: 1;">✏️ Edit</button>
+                    <button onclick='viewCompanyDetails(${safeCompanyIdJs})' class="btn btn-sm btn-secondary" style="flex: 1;">👁️ View</button>
                 </div>
             </div>
         `;
