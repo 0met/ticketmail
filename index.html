@@ -2107,9 +2107,9 @@
                                         id="newTicketCompany" 
                                         class="form-input" 
                                         placeholder="Type to search or create new company..."
-                                        list="companiesList"
+                                        list="ticketCompaniesList"
                                         oninput="filterCompanies(this.value)">
-                                    <datalist id="companiesList">
+                                    <datalist id="ticketCompaniesList">
                                         <!-- Companies will be loaded dynamically -->
                                     </datalist>
                                 </div>
@@ -4989,7 +4989,7 @@
                 const result = await response.json();
                 
                 if (result.success && result.companies) {
-                    const datalist = document.getElementById('companiesList');
+                    const datalist = document.getElementById('ticketCompaniesList');
                     datalist.innerHTML = result.companies.map(company => 
                         `<option value="${company.name}">${company.name}</option>`
                     ).join('');
