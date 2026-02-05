@@ -141,14 +141,18 @@ exports.handler = async (event, context) => {
             throw insertError;
         }
 
-        // Log activity
-        await logActivity(
-            sessionValidation.user.id, 
-            'company_created', 
-            'company', 
-            { companyId: company[0].id, companyName: name }, 
-            event.headers['x-forwarded-for'] || event.headers['x-real-ip']
-        );
+        // Log activity (best-effort; do not fail the request if logging fails)
+        try {
+            await logActivity(
+                sessionValidation.user.id,
+                'company_created',
+                'company',
+                { companyId: company.id, companyName: name },
+                event.headers['x-forwarded-for'] || event.headers['x-real-ip']
+            );
+        } catch (logErr) {
+            console.warn('Activity log failed (company_created):', logErr);
+        }
 
         return {
             statusCode: 200,
