@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Settings Test</title>
+</head>
+<body>
+    <h1>Debug Settings Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testDebugSettings() {
+            try {
+                const response = await fetch('/.netlify/functions/debug-settings');
+                const result = await response.json();
+                
+                document.getElementById('results').innerHTML = `
+                    <h2>Debug Results:</h2>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+                
+                console.log('Debug settings result:', result);
+            } catch (error) {
+                document.getElementById('results').innerHTML = `
+                    <h2>Error:</h2>
+                    <p style="color: red;">${error.message}</p>
+                `;
+                console.error('Debug settings error:', error);
+            }
+        }
+        
+        // Test immediately when page loads
+        testDebugSettings();
+    </script>
+</body>
+</html>

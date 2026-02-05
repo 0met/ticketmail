@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMail Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #2563eb;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .login-form, .dashboard {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom-color: #2563eb;
+            color: #2563eb;
+            font-weight: 500;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .user-list, .ticket-list {
+            margin-top: 20px;
+        }
+
+        .user-item, .ticket-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info, .ticket-info {
+            flex: 1;
+        }
+
+        .user-actions, .ticket-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status.active { background: #dcfce7; color: #166534; }
+        .status.inactive { background: #fee2e2; color: #991b1b; }
+        .status.open { background: #dbeafe; color: #1e40af; }
+        .status.closed { background: #f3f4f6; color: #374151; }
+
+        .alert {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .alert.success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .alert.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TicketMail Admin Dashboard</h1>
+            <p>Manage users, tickets, and system settings</p>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm" class="login-form">
+            <h2>Admin Login</h2>
+            <div id="loginAlert" class="alert hidden"></div>
+            <form id="loginFormElement">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" value="admin@ticketmail.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" value="Admin123!" required>
+                </div>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="dashboard hidden">
+            <div class="tabs">
+                <div class="tab active" data-tab="users">Users</div>
+                <div class="tab" data-tab="tickets">Tickets</div>
+                <div class="tab" data-tab="settings">Settings</div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="usersTab" class="tab-content active">
+                <h2>User Management</h2>
+                <button id="addUserBtn">Add New User</button>
+
+                <div id="addUserForm" class="hidden" style="margin-top: 20px; padding: 20px; background: #f9fafb; border-radius: 4px;">
+                    <h3>Add New User</h3>
+                    <div id="addUserAlert" class="alert hidden"></div>
+                    <form id="addUserFormElement">
+                        <div class="form-group">
+                            <label for="newUserEmail">Email</label>
+                            <input type="email" id="newUserEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newUserPassword">Password</label>
+                            <input type="password" id="newUserPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newUserFullName">Full Name</label>
+                            <input type="text" id="newUserFullName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newUserRole">Role</label>
+                            <select id="newUserRole" required>
+                                <option value="customer">Customer</option>
+                                <option value="agent">Agent</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="newUserCompany">Company</label>
+                            <input type="text" id="newUserCompany">
+                        </div>
+                        <button type="submit">Create User</button>
+                        <button type="button" id="cancelAddUser" class="btn-secondary">Cancel</button>
+                    </form>
+                </div>
+
+                <div id="usersList" class="user-list">
+                    <p>Loading users...</p>
+                </div>
+            </div>
+
+            <!-- Tickets Tab -->
+            <div id="ticketsTab" class="tab-content">
+                <h2>Ticket Management</h2>
+                <button id="createTicketBtn">Create New Ticket</button>
+
+                <div id="createTicketForm" class="hidden" style="margin-top: 20px; padding: 20px; background: #f9fafb; border-radius: 4px;">
+                    <h3>Create New Ticket</h3>
+                    <div id="createTicketAlert" class="alert hidden"></div>
+                    <form id="createTicketFormElement">
+                        <div class="form-group">
+                            <label for="ticketTitle">Title</label>
+                            <input type="text" id="ticketTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ticketDescription">Description</label>
+                            <textarea id="ticketDescription" rows="4" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="ticketPriority">Priority</label>
+                            <select id="ticketPriority" required>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="customerName">Customer Name</label>
+                            <input type="text" id="customerName">
+                        </div>
+                        <div class="form-group">
+                            <label for="customerEmail">Customer Email</label>
+                            <input type="email" id="customerEmail">
+                        </div>
+                        <div class="form-group">
+                            <label for="customerCompany">Customer Company</label>
+                            <input type="text" id="customerCompany">
+                        </div>
+                        <button type="submit">Create Ticket</button>
+                        <button type="button" id="cancelCreateTicket" class="btn-secondary">Cancel</button>
+                    </form>
+                </div>
+
+                <div id="ticketsList" class="ticket-list">
+                    <p>Loading tickets...</p>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settingsTab" class="tab-content">
+                <h2>System Settings</h2>
+                <div id="settingsAlert" class="alert hidden"></div>
+                <form id="passwordResetForm">
+                    <div class="form-group">
+                        <label for="resetEmail">Reset Password - Enter Email</label>
+                        <input type="email" id="resetEmail" placeholder="user@example.com">
+                    </div>
+                    <button type="submit">Send Reset Link</button>
+                </form>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center;">
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = window.location.origin + '/.netlify/functions';
+
+        // DOM Elements
+        const loginForm = document.getElementById('loginForm');
+        const dashboard = document.getElementById('dashboard');
+        const loginFormElement = document.getElementById('loginFormElement');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Tab management
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // State
+        let currentUser = null;
+        let currentSession = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            checkExistingSession();
+        });
+
+        function setupEventListeners() {
+            // Login
+            loginFormElement.addEventListener('submit', handleLogin);
+
+            // Logout
+            logoutBtn.addEventListener('click', handleLogout);
+
+            // Tabs
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+            });
+
+            // User management
+            document.getElementById('addUserBtn').addEventListener('click', showAddUserForm);
+            document.getElementById('cancelAddUser').addEventListener('click', hideAddUserForm);
+            document.getElementById('addUserFormElement').addEventListener('submit', handleAddUser);
+
+            // Ticket management
+            document.getElementById('createTicketBtn').addEventListener('click', showCreateTicketForm);
+            document.getElementById('cancelCreateTicket').addEventListener('click', hideCreateTicketForm);
+            document.getElementById('createTicketFormElement').addEventListener('submit', handleCreateTicket);
+
+            // Password reset
+            document.getElementById('passwordResetForm').addEventListener('submit', handlePasswordReset);
+        }
+
+        async function checkExistingSession() {
+            // Check if we have a stored session
+            const storedSession = localStorage.getItem('ticketmail_session');
+            if (storedSession) {
+                try {
+                    const session = JSON.parse(storedSession);
+                    // Validate session
+                    const response = await fetch(`${API_BASE}/auth-validate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionToken: session.token })
+                    });
+
+                    const result = await response.json();
+                    if (result.valid) {
+                        currentUser = result.user;
+                        currentSession = session;
+                        showDashboard();
+                        loadUsers();
+                        loadTickets();
+                    }
+                } catch (error) {
+                    console.error('Session validation failed:', error);
+                    localStorage.removeItem('ticketmail_session');
+                }
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth-login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentUser = result.user;
+                    currentSession = {
+                        token: result.sessionToken,
+                        expires: result.expiresAt
+                    };
+
+                    // Store session
+                    localStorage.setItem('ticketmail_session', JSON.stringify(currentSession));
+
+                    showDashboard();
+                    loadUsers();
+                    loadTickets();
+                } else {
+                    showAlert('loginAlert', result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('loginAlert', 'Login failed', 'error');
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('ticketmail_session');
+            currentUser = null;
+            currentSession = null;
+            showLogin();
+        }
+
+        function switchTab(tabName) {
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+        }
+
+        function showDashboard() {
+            loginForm.classList.add('hidden');
+            dashboard.classList.remove('hidden');
+        }
+
+        function showLogin() {
+            dashboard.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+        }
+
+        function showAlert(alertId, message, type) {
+            const alert = document.getElementById(alertId);
+            alert.textContent = message;
+            alert.className = `alert ${type}`;
+            alert.classList.remove('hidden');
+
+            setTimeout(() => {
+                alert.classList.add('hidden');
+            }, 5000);
+        }
+
+        // User Management
+        function showAddUserForm() {
+            document.getElementById('addUserForm').classList.remove('hidden');
+        }
+
+        function hideAddUserForm() {
+            document.getElementById('addUserForm').classList.add('hidden');
+            document.getElementById('addUserFormElement').reset();
+        }
+
+        async function handleAddUser(e) {
+            e.preventDefault();
+
+            const userData = {
+                email: document.getElementById('newUserEmail').value,
+                password: document.getElementById('newUserPassword').value,
+                fullName: document.getElementById('newUserFullName').value,
+                role: document.getElementById('newUserRole').value,
+                company: document.getElementById('newUserCompany').value,
+                createdBy: currentUser.id
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/create-user-enhanced`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('addUserAlert', 'User created successfully!', 'success');
+                    hideAddUserForm();
+                    loadUsers();
+                } else {
+                    showAlert('addUserAlert', result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('addUserAlert', 'Failed to create user', 'error');
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE}/list-users-enhanced`);
+                const result = await response.json();
+
+                if (result.success) {
+                    displayUsers(result.users);
+                }
+            } catch (error) {
+                console.error('Failed to load users:', error);
+            }
+        }
+
+        function displayUsers(users) {
+            const usersList = document.getElementById('usersList');
+
+            if (users.length === 0) {
+                usersList.innerHTML = '<p>No users found.</p>';
+                return;
+            }
+
+            usersList.innerHTML = users.map(user => `
+                <div class="user-item">
+                    <div class="user-info">
+                        <strong>${user.full_name}</strong> (${user.email})<br>
+                        <small>Role: ${user.role} | Status:
+                            <span class="status ${user.is_active ? 'active' : 'inactive'}">
+                                ${user.is_active ? 'Active' : 'Locked'}
+                            </span>
+                        </small>
+                    </div>
+                    <div class="user-actions">
+                        <button onclick="toggleUserLock(${user.id}, ${user.is_active})" class="btn-secondary">
+                            ${user.is_active ? 'Lock' : 'Unlock'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function toggleUserLock(userId, currentlyActive) {
+            const action = currentlyActive ? 'lock' : 'unlock';
+
+            try {
+                const response = await fetch(`${API_BASE}/manage-user`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId,
+                        action,
+                        performedBy: currentUser.id
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    loadUsers();
+                } else {
+                    alert('Failed to update user status');
+                }
+            } catch (error) {
+                alert('Error updating user status');
+            }
+        }
+
+        // Ticket Management
+        function showCreateTicketForm() {
+            document.getElementById('createTicketForm').classList.remove('hidden');
+        }
+
+        function hideCreateTicketForm() {
+            document.getElementById('createTicketForm').classList.add('hidden');
+            document.getElementById('createTicketFormElement').reset();
+        }
+
+        async function handleCreateTicket(e) {
+            e.preventDefault();
+
+            const ticketData = {
+                title: document.getElementById('ticketTitle').value,
+                description: document.getElementById('ticketDescription').value,
+                priority: document.getElementById('ticketPriority').value,
+                customerName: document.getElementById('customerName').value,
+                customerEmail: document.getElementById('customerEmail').value,
+                customerCompany: document.getElementById('customerCompany').value,
+                createdBy: currentUser.id
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/create-ticket`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(ticketData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('createTicketAlert', 'Ticket created successfully!', 'success');
+                    hideCreateTicketForm();
+                    loadTickets();
+                } else {
+                    showAlert('createTicketAlert', result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('createTicketAlert', 'Failed to create ticket', 'error');
+            }
+        }
+
+        async function loadTickets() {
+            try {
+                const response = await fetch(`${API_BASE}/get-tickets`);
+                const result = await response.json();
+
+                if (result.success) {
+                    displayTickets(result.tickets);
+                }
+            } catch (error) {
+                console.error('Failed to load tickets:', error);
+            }
+        }
+
+        function displayTickets(tickets) {
+            const ticketsList = document.getElementById('ticketsList');
+
+            if (tickets.length === 0) {
+                ticketsList.innerHTML = '<p>No tickets found.</p>';
+                return;
+            }
+
+            ticketsList.innerHTML = tickets.map(ticket => `
+                <div class="ticket-item">
+                    <div class="ticket-info">
+                        <strong>${ticket.title}</strong><br>
+                        <small>
+                            #${ticket.ticket_number} |
+                            Status: <span class="status ${ticket.status}">${ticket.status}</span> |
+                            Priority: ${ticket.priority}<br>
+                            Customer: ${ticket.customer_name || 'N/A'} (${ticket.customer_email || 'N/A'})
+                        </small>
+                    </div>
+                    <div class="ticket-actions">
+                        <button onclick="viewTicket('${ticket.ticket_number}')" class="btn-secondary">View</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewTicket(ticketNumber) {
+            // For now, just show an alert with ticket details
+            // In a real app, this would open a detailed view
+            alert(`Viewing ticket ${ticketNumber}\n\nFeature coming soon!`);
+        }
+
+        // Password Reset
+        async function handlePasswordReset(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('resetEmail').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/request-password-reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const result = await response.json();
+                showAlert('settingsAlert', result.message, 'success');
+                document.getElementById('resetEmail').value = '';
+            } catch (error) {
+                showAlert('settingsAlert', 'Failed to send reset email', 'error');
+            }
+        }
+
+        // Make functions global for onclick handlers
+        window.toggleUserLock = toggleUserLock;
+        window.viewTicket = viewTicket;
+    </script>
+</body>
+</html>
