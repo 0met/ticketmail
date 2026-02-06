@@ -9,6 +9,15 @@ let allUsers = [];
 let allCompanies = [];
 let filteredUsers = [];
 
+function escapeHtmlAttribute(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 console.log('🔍 loadUsers function type:', typeof loadUsers);
 console.log('🔍 window.loadUsers type:', typeof window.loadUsers);
 
@@ -165,8 +174,8 @@ function renderUsersTable() {
     `;
     
     filteredUsers.forEach(user => {
-        const safeUserIdJs = JSON.stringify(String(user.id));
-        const safeUserEmailJs = JSON.stringify(String(user.email || ''));
+        const safeUserIdAttr = escapeHtmlAttribute(user.id);
+        const safeUserEmailAttr = escapeHtmlAttribute(user.email || '');
         const roleColors = {
             admin: 'background: #ef4444; color: white;',
             agent: 'background: #f59e0b; color: white;',
@@ -211,8 +220,8 @@ function renderUsersTable() {
                     </span>
                 </td>
                 <td style="padding: 1rem; text-align: center;">
-                    <button onclick='editUser(${safeUserIdJs})' class="btn btn-sm" style="margin-right: 0.5rem;">✏️ Edit</button>
-                    <button onclick='deleteUser(${safeUserIdJs}, ${safeUserEmailJs})' class="btn btn-sm btn-danger">🗑️ Delete</button>
+                    <button type="button" class="btn btn-sm" style="margin-right: 0.5rem;" data-action="edit-user" data-user-id="${safeUserIdAttr}">✏️ Edit</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-action="delete-user" data-user-id="${safeUserIdAttr}" data-user-email="${safeUserEmailAttr}">🗑️ Delete</button>
                 </td>
             </tr>
         `;
@@ -256,6 +265,12 @@ function openUserModal(userId = null) {
     const modal = document.getElementById('userModal');
     const title = document.getElementById('userModalTitle');
     const form = document.getElementById('userForm');
+
+    if (!modal || !title || !form) {
+        console.error('User modal elements missing:', { modal, title, form });
+        showToast('User modal could not be opened (missing DOM)', 'error');
+        return;
+    }
     
     form.reset();
     document.getElementById('userId').value = '';
@@ -286,10 +301,14 @@ function openUserModal(userId = null) {
     }
     
     modal.style.display = 'flex';
+    modal.classList.add('active');
 }
 
 function closeUserModal() {
-    document.getElementById('userModal').style.display = 'none';
+    const modal = document.getElementById('userModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    modal.classList.remove('active');
 }
 
 async function saveUser(event) {
@@ -312,7 +331,7 @@ async function saveUser(event) {
         let response;
         if (userId) {
             // Update existing user
-            userData.userId = parseInt(userId);
+            userData.userId = userId;
             response = await fetch('/.netlify/functions/update-user', {
                 method: 'POST',
                 headers: {
@@ -350,6 +369,7 @@ async function saveUser(event) {
 }
 
 function editUser(userId) {
+    console.log('editUser() clicked:', userId);
     openUserModal(userId);
 }
 
@@ -450,7 +470,7 @@ function renderCompaniesGrid() {
     let html = '';
     
     allCompanies.forEach(company => {
-        const safeCompanyIdJs = JSON.stringify(String(company.id));
+        const safeCompanyIdAttr = escapeHtmlAttribute(company.id);
         const statusBadge = company.isActive 
             ? '<span style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem;">Active</span>'
             : '<span style="background: #6b7280; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem;">Inactive</span>';
@@ -488,8 +508,8 @@ function renderCompaniesGrid() {
                 ${company.address ? `<p style="margin: 0.5rem 0; color: #64748b; font-size: 0.875rem;">📍 ${company.address}</p>` : ''}
                 
                 <div style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                    <button onclick='editCompany(${safeCompanyIdJs})' class="btn btn-sm" style="flex: 1;">✏️ Edit</button>
-                    <button onclick='viewCompanyDetails(${safeCompanyIdJs})' class="btn btn-sm btn-secondary" style="flex: 1;">👁️ View</button>
+                    <button type="button" class="btn btn-sm" style="flex: 1;" data-action="edit-company" data-company-id="${safeCompanyIdAttr}">✏️ Edit</button>
+                    <button type="button" class="btn btn-sm btn-secondary" style="flex: 1;" data-action="view-company" data-company-id="${safeCompanyIdAttr}">👁️ View</button>
                 </div>
             </div>
         `;
@@ -515,7 +535,8 @@ function openCompanyModal(companyId = null) {
         title.textContent = 'Edit Company';
         
         // Load company data
-        const company = allCompanies.find(c => c.id === companyId);
+        const companyIdString = String(companyId);
+        const company = allCompanies.find(c => String(c.id) === companyIdString);
         if (company) {
             document.getElementById('companyId').value = company.id;
             document.getElementById('companyName').value = company.name || '';
@@ -532,10 +553,14 @@ function openCompanyModal(companyId = null) {
     }
     
     modal.style.display = 'flex';
+    modal.classList.add('active');
 }
 
 function closeCompanyModal() {
-    document.getElementById('companyModal').style.display = 'none';
+    const modal = document.getElementById('companyModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    modal.classList.remove('active');
 }
 
 async function saveCompany(event) {
@@ -591,7 +616,8 @@ function editCompany(companyId) {
 }
 
 function viewCompanyDetails(companyId) {
-    const company = allCompanies.find(c => c.id === companyId);
+    const companyIdString = String(companyId);
+    const company = allCompanies.find(c => String(c.id) === companyIdString);
     if (!company) return;
     
     alert(`Company Details:\n\nName: ${company.name}\nDomain: ${company.domain || 'N/A'}\nUsers: ${company.userCount}\nTickets: ${company.ticketCount}\nIndustry: ${company.industry || 'N/A'}\nSize: ${company.size || 'N/A'}`);
@@ -773,6 +799,38 @@ if (typeof window !== 'undefined') {
 
 // Initialize form handlers when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
+    // Delegate clicks for dynamically-rendered action buttons
+    document.addEventListener('click', (event) => {
+        const actionEl = event.target.closest('[data-action]');
+        if (!actionEl) return;
+
+        const action = actionEl.getAttribute('data-action');
+        try {
+            if (action === 'edit-user') {
+                event.preventDefault();
+                editUser(actionEl.dataset.userId);
+            } else if (action === 'delete-user') {
+                event.preventDefault();
+                deleteUser(actionEl.dataset.userId, actionEl.dataset.userEmail);
+            } else if (action === 'edit-company') {
+                event.preventDefault();
+                editCompany(actionEl.dataset.companyId);
+            } else if (action === 'view-company') {
+                event.preventDefault();
+                viewCompanyDetails(actionEl.dataset.companyId);
+            }
+        } catch (e) {
+            console.error('Action handler failed:', action, e);
+            showToast('Error: ' + (e?.message || String(e)), 'error');
+        }
+    });
+
+    // User form submission handler (in addition to inline onsubmit)
+    const userForm = document.getElementById('userForm');
+    if (userForm) {
+        userForm.addEventListener('submit', saveUser);
+    }
+
     // Company form submission handler
     const companyForm = document.getElementById('companyForm');
     if (companyForm) {
