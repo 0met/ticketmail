@@ -798,7 +798,14 @@ if (typeof window !== 'undefined') {
 }
 
 // Initialize form handlers when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
+function initUserManagementBindings() {
+    if (typeof window !== 'undefined') {
+        if (window.__ticketmailUserMgmtBindingsInit) return;
+        window.__ticketmailUserMgmtBindingsInit = true;
+    }
+
+    console.log('✅ User Management bindings initialized');
+
     // Delegate clicks for dynamically-rendered action buttons
     document.addEventListener('click', (event) => {
         const actionEl = event.target.closest('[data-action]');
@@ -836,4 +843,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (companyForm) {
         companyForm.addEventListener('submit', saveCompany);
     }
-});
+}
+
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initUserManagementBindings);
+    } else {
+        initUserManagementBindings();
+    }
+}
