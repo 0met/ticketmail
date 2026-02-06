@@ -220,8 +220,8 @@ function renderUsersTable() {
                     </span>
                 </td>
                 <td style="padding: 1rem; text-align: center;">
-                    <button type="button" class="btn btn-sm" style="margin-right: 0.5rem;" data-action="edit-user" data-user-id="${safeUserIdAttr}">✏️ Edit</button>
-                    <button type="button" class="btn btn-sm btn-danger" data-action="delete-user" data-user-id="${safeUserIdAttr}" data-user-email="${safeUserEmailAttr}">🗑️ Delete</button>
+                    <button type="button" class="btn btn-sm" style="margin-right: 0.5rem;" data-action="edit-user" data-user-id="${safeUserIdAttr}" onclick="editUser(this.dataset.userId)">✏️ Edit</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-action="delete-user" data-user-id="${safeUserIdAttr}" data-user-email="${safeUserEmailAttr}" onclick="deleteUser(this.dataset.userId, this.dataset.userEmail)">🗑️ Delete</button>
                 </td>
             </tr>
         `;
@@ -508,8 +508,8 @@ function renderCompaniesGrid() {
                 ${company.address ? `<p style="margin: 0.5rem 0; color: #64748b; font-size: 0.875rem;">📍 ${company.address}</p>` : ''}
                 
                 <div style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                    <button type="button" class="btn btn-sm" style="flex: 1;" data-action="edit-company" data-company-id="${safeCompanyIdAttr}">✏️ Edit</button>
-                    <button type="button" class="btn btn-sm btn-secondary" style="flex: 1;" data-action="view-company" data-company-id="${safeCompanyIdAttr}">👁️ View</button>
+                    <button type="button" class="btn btn-sm" style="flex: 1;" data-action="edit-company" data-company-id="${safeCompanyIdAttr}" onclick="editCompany(this.dataset.companyId)">✏️ Edit</button>
+                    <button type="button" class="btn btn-sm btn-secondary" style="flex: 1;" data-action="view-company" data-company-id="${safeCompanyIdAttr}" onclick="viewCompanyDetails(this.dataset.companyId)">👁️ View</button>
                 </div>
             </div>
         `;
