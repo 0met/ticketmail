@@ -55,6 +55,34 @@ exports.handler = async (event, context) => {
             actions.push('user_settings table already exists');
         }
 
+        // Ensure timestamp columns exist for last-sync tracking
+        // (Older installs may be missing these columns.)
+        const columns = await sql`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'user_settings'
+              AND column_name IN ('created_at', 'updated_at');
+        `;
+
+        const columnSet = new Set(columns.map(c => c.column_name));
+        if (!columnSet.has('created_at')) {
+            await sql`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`;
+            actions.push('Added created_at column');
+        }
+        if (!columnSet.has('updated_at')) {
+            await sql`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`;
+            actions.push('Added updated_at column');
+        }
+
+        // Backfill any null timestamps
+        await sql`
+            UPDATE user_settings
+            SET created_at = COALESCE(created_at, CURRENT_TIMESTAMP),
+                updated_at = COALESCE(updated_at, created_at, CURRENT_TIMESTAMP)
+            WHERE created_at IS NULL OR updated_at IS NULL;
+        `;
+
         // Check current settings count
         const settingsCount = await sql`
             SELECT COUNT(*) as count FROM user_settings
