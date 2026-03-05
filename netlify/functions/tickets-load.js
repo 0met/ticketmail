@@ -99,6 +99,29 @@ exports.handler = async (event, context) => {
 
     } catch (error) {
         console.error('Error in tickets-load function:', error);
+
+        const msg = String(error && error.message ? error.message : error);
+        const lower = msg.toLowerCase();
+        const isMissingTable =
+            lower.includes("could not find the table 'public.tickets'") ||
+            (lower.includes('tickets') && lower.includes('schema cache')) ||
+            lower.includes('relation "tickets" does not exist') ||
+            lower.includes('relation tickets does not exist');
+
+        if (isMissingTable) {
+            return {
+                statusCode: 400,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    success: false,
+                    error: 'Tickets table does not exist in Supabase yet. Initialize the tickets table first, then reload.',
+                    hint: 'Visit /.netlify/functions/init-tickets-table (requires SUPABASE_DB_URL configured) OR create the tickets table in Supabase SQL editor.'
+                })
+            };
+        }
         
         return {
             statusCode: 500,

@@ -1,4 +1,4 @@
-const { getUserSettings, saveTicket, touchUserSettingsUpdatedAt } = require('./lib/database');
+const { getDatabase, getUserSettings, saveTicket, touchUserSettingsUpdatedAt } = require('./lib/database');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 
@@ -246,6 +246,44 @@ function isDuplicateTicketError(error) {
     );
 }
 
+function isMissingTicketsTableError(error) {
+    const msg = String(error && error.message ? error.message : error).toLowerCase();
+    return (
+        msg.includes("could not find the table 'public.tickets'") ||
+        (msg.includes('tickets') && msg.includes('schema cache')) ||
+        msg.includes('relation "tickets" does not exist') ||
+        msg.includes('relation tickets does not exist')
+    );
+}
+
+async function verifyTicketsTableExists() {
+    const supabase = getDatabase();
+    if (!supabase || typeof supabase.from !== 'function') {
+        // Local DB adapter path; nothing to verify here.
+        return { ok: true };
+    }
+
+    const { error } = await supabase
+        .from('tickets')
+        .select('id')
+        .limit(1);
+
+    if (!error) {
+        return { ok: true };
+    }
+
+    if (isMissingTicketsTableError(error)) {
+        return {
+            ok: false,
+            statusCode: 400,
+            error: 'Tickets table does not exist in Supabase yet. Initialize the tickets table first, then retry syncing.',
+            hint: 'Visit /.netlify/functions/init-tickets-table (requires SUPABASE_DB_URL configured) OR create the tickets table in Supabase SQL editor.'
+        };
+    }
+
+    return { ok: false, statusCode: 500, error: `Database error while verifying tickets table: ${error.message}` };
+}
+
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
@@ -352,6 +390,23 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({
                     success: false,
                     error: 'Invalid Gmail settings. Missing email or app password.'
+                })
+            };
+        }
+
+        // Fail fast if the tickets table is missing, before connecting to IMAP.
+        const ticketsCheck = await verifyTicketsTableExists();
+        if (!ticketsCheck.ok) {
+            return {
+                statusCode: ticketsCheck.statusCode || 500,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    success: false,
+                    error: ticketsCheck.error,
+                    hint: ticketsCheck.hint
                 })
             };
         }
@@ -463,6 +518,8 @@ exports.handler = async (event, context) => {
                         if (isDuplicateTicketError(saveError)) {
                             ticketsDuplicate++;
                             console.log(`Duplicate ticket detected (already ingested): ${email.subject}`);
+                        } else if (isMissingTicketsTableError(saveError)) {
+                            console.error('Tickets table missing while saving ticket:', saveError.message);
                         } else {
                             console.error('Error saving ticket:', saveError.message, ticket);
                         }

@@ -1,5 +1,71 @@
 # TicketMail Database Setup Guide
 
+## ✅ Supabase-Only Setup (Current)
+
+This project currently uses **Supabase Postgres** for persistence (settings + tickets). If sync says it ran but no tickets show up, it's usually because `public.tickets` doesn't exist yet.
+
+### Option A: Initialize via Netlify Functions (recommended)
+
+- Initialize settings table: `/.netlify/functions/init-settings-table`
+- Initialize tickets table: `/.netlify/functions/init-tickets-table`
+
+These endpoints require your Netlify environment to have `SUPABASE_DB_URL` (or `DATABASE_URL`) set to your Supabase Postgres connection string.
+
+### Option B: Create tables in Supabase SQL Editor
+
+Run this in Supabase (SQL Editor):
+
+```sql
+-- 1) user_settings (stores Gmail + encrypted app password)
+create table if not exists public.user_settings (
+  id bigserial primary key,
+  gmail_address text not null,
+  app_password text not null,
+  refresh_interval integer default 15,
+  default_status varchar(50) default 'new',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- 2) tickets (stores ingested emails as tickets)
+create table if not exists public.tickets (
+  id bigserial primary key,
+  ticket_number varchar(32) unique,
+  subject text not null,
+  from_email text not null,
+  to_email text,
+  body text,
+  status varchar(50) default 'new',
+  priority varchar(20) default 'medium',
+  category varchar(100) default 'general',
+  message_id text unique not null,
+  email_id text unique,
+  date_received timestamptz not null default now(),
+  received_at timestamptz,
+  is_manual boolean default false,
+  source varchar(50) default 'email',
+  customer_name text,
+  customer_id text,
+  customer_phone text,
+  customer_email text,
+  company_id text,
+  resolution_time integer,
+  closed_at timestamptz,
+  created_by text,
+  assigned_to text,
+  customer_company text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists idx_tickets_status on public.tickets(status);
+create index if not exists idx_tickets_date_received on public.tickets(date_received);
+create index if not exists idx_tickets_message_id on public.tickets(message_id);
+create index if not exists idx_tickets_ticket_number on public.tickets(ticket_number);
+```
+
+After creating `public.tickets`, run `Sync Emails Now` again and reload the Tickets page.
+
 ## 🎯 Current Issue
 The setup is failing because the database tables haven't been created yet. The DATABASE_URL is working (we can connect), but the user management tables need to be created first.
 
