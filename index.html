@@ -493,7 +493,10 @@
             <div id="ticketModal" class="modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2 class="modal-title" id="ticketModalTitle">Ticket Details</h2>
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <h2 class="modal-title" id="ticketModalTitle">Ticket Details</h2>
+                            <div id="conversationRowCount" style="font-size: 0.75rem; color: #6b7280;">Conversation rows: —</div>
+                        </div>
                         <button class="close-modal" onclick="closeTicketModal()">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -3418,7 +3421,10 @@
             document.getElementById('ticketModal').innerHTML = `
                 <div class="modal-content" style="max-width: 90vw; max-height: 90vh; overflow-y: auto;">
                     <div class="modal-header">
-                        <h2 class="modal-title">${currentTicket.subject || '(No Subject)'}</h2>
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <h2 class="modal-title">${currentTicket.subject || '(No Subject)'}</h2>
+                            <div id="conversationRowCount" style="font-size: 0.75rem; color: #6b7280;">Conversation rows: …</div>
+                        </div>
                         <button class="close-modal" onclick="closeTicketModal()">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -3978,6 +3984,12 @@
         }
 
         // Conversation history
+        function setConversationRowCountDisplay(text) {
+            const el = document.getElementById('conversationRowCount');
+            if (!el) return;
+            el.textContent = text;
+        }
+
         async function loadConversationHistory(ticketId) {
             try {
                 const response = await fetch(`/.netlify/functions/get-conversation?ticketId=${ticketId}`, {
@@ -4008,6 +4020,12 @@
 
         function renderConversationHistory(conversation, meta = {}) {
             const container = document.getElementById('conversationList');
+
+            if (meta && meta.needsSetup) {
+                setConversationRowCountDisplay('Conversation rows: unavailable');
+            } else {
+                setConversationRowCountDisplay(`Conversation rows: ${conversation.length}`);
+            }
             
             if (conversation.length === 0) {
                 if (meta && meta.needsSetup) {
@@ -4081,6 +4099,13 @@
                 container.innerHTML = itemHtml;
             } else {
                 container.insertAdjacentHTML('beforeend', itemHtml);
+            }
+
+            try {
+                const rowCount = container.querySelectorAll('.conversation-item').length;
+                setConversationRowCountDisplay(`Conversation rows: ${rowCount}`);
+            } catch {
+                // Ignore DOM count issues
             }
         }
 
