@@ -114,9 +114,17 @@ exports.handler = async (event, context) => {
             });
         } catch (dbError) {
             console.error('Database error saving settings:', dbError);
+
+            const msg = String(dbError && dbError.message ? dbError.message : dbError);
+            const lower = msg.toLowerCase();
+
+            const isMissingTable =
+                lower.includes("could not find the table 'public.user_settings'") ||
+                (lower.includes('user_settings') && lower.includes('schema cache')) ||
+                lower.includes('relation "user_settings" does not exist');
             
             // Check if it's a table not found error
-            if (dbError.message.includes('relation "user_settings" does not exist')) {
+            if (isMissingTable) {
                 return {
                     statusCode: 400,
                     headers: {
@@ -125,8 +133,8 @@ exports.handler = async (event, context) => {
                     },
                     body: JSON.stringify({
                         success: false,
-                        error: 'User settings table does not exist. Please initialize the database first.',
-                        hint: 'Contact administrator or visit /.netlify/functions/init-settings-table'
+                        error: 'User settings table does not exist in Supabase yet. Initialize the table first, then retry saving settings.',
+                        hint: 'Visit /.netlify/functions/init-settings-table (requires DATABASE_URL configured) OR create the table in Supabase SQL editor.'
                     })
                 };
             }
