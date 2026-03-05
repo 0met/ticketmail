@@ -259,6 +259,101 @@ function isDuplicateTicketError(error) {
     );
 }
 
+function extractTicketNumberFromSubject(subject) {
+    if (!subject) return null;
+    const raw = String(subject);
+    // Accept both bare and bracketed ticket numbers.
+    // Examples: TK-2026-000123, [TK-2026-000123]
+    const match = raw.match(/\bTK-\d{4}-\d{4,}\b/i);
+    if (!match || !match[0]) return null;
+    return match[0].toUpperCase();
+}
+
+function isColumnMissingErrorMessage(error) {
+    const msg = String(error && error.message ? error.message : '').toLowerCase();
+    return msg.includes('column') && msg.includes('does not exist');
+}
+
+async function findExistingTicketByNumber(ticketNumber) {
+    if (!ticketNumber) return null;
+
+    try {
+        const supabase = getDatabase();
+        if (!supabase || typeof supabase.from !== 'function') {
+            return null;
+        }
+
+        const { data, error } = await supabase
+            .from('tickets')
+            .select('id, ticket_number')
+            .eq('ticket_number', ticketNumber)
+            .limit(1);
+
+        if (error) {
+            if (isColumnMissingErrorMessage(error)) {
+                return null;
+            }
+            console.warn('Ticket lookup by ticket_number failed:', error.message);
+            return null;
+        }
+
+        if (data && data.length > 0) {
+            return data[0];
+        }
+
+        return null;
+    } catch (error) {
+        console.warn('Exception while looking up ticket by number:', error && error.message ? error.message : error);
+        return null;
+    }
+}
+
+async function attachInboundEmailToTicket({ ticketId, email }) {
+    try {
+        const supabase = getDatabase();
+        if (!supabase || typeof supabase.from !== 'function') {
+            return { ok: false, reason: 'no_supabase' };
+        }
+
+        const payload = {
+            ticket_id: ticketId,
+            message_type: 'inbound',
+            from_email: email.from || null,
+            to_email: email.to || null,
+            subject: email.subject || null,
+            message: (email.body || '').slice(0, 8000)
+        };
+
+        const { error } = await supabase
+            .from('ticket_conversations')
+            .insert(payload);
+
+        if (error) {
+            const msg = String(error.message || '').toLowerCase();
+            if (msg.includes('ticket_conversations') && (msg.includes('does not exist') || msg.includes('relation') || msg.includes('schema cache'))) {
+                return { ok: false, reason: 'missing_table' };
+            }
+            console.warn('Failed to insert inbound conversation row:', error.message);
+            return { ok: false, reason: 'insert_failed' };
+        }
+
+        // Best-effort bump updated_at
+        try {
+            await supabase
+                .from('tickets')
+                .update({ updated_at: new Date().toISOString() })
+                .eq('id', ticketId);
+        } catch (_) {
+            // ignore
+        }
+
+        return { ok: true };
+    } catch (error) {
+        console.warn('Exception while attaching inbound email:', error && error.message ? error.message : error);
+        return { ok: false, reason: 'exception' };
+    }
+}
+
 function isMissingTicketsTableError(error) {
     const msg = String(error && error.message ? error.message : error).toLowerCase();
     return (
@@ -537,6 +632,7 @@ exports.handler = async (event, context) => {
         console.log('Processing emails for tickets...');
         let ticketsCreated = 0;
         let ticketsDuplicate = 0;
+        let ticketsUpdated = 0;
         let ticketEmailsHandled = 0;
 
         // Log parsed email subjects for debugging
@@ -549,6 +645,26 @@ exports.handler = async (event, context) => {
 
         for (const email of emails) {
             try {
+                // If the subject contains a ticket number, prefer appending to the existing ticket
+                // instead of creating a duplicate ticket for replies/forwards.
+                const ticketNumberInSubject = extractTicketNumberFromSubject(email.subject);
+                if (ticketNumberInSubject) {
+                    const existing = await findExistingTicketByNumber(ticketNumberInSubject);
+                    if (existing && existing.id) {
+                        const attached = await attachInboundEmailToTicket({
+                            ticketId: existing.id,
+                            email
+                        });
+
+                        if (attached.ok) {
+                            ticketsUpdated++;
+                            ticketEmailsHandled += 1;
+                            console.log(`Appended inbound email to existing ticket ${ticketNumberInSubject} (id=${existing.id})`);
+                            continue;
+                        }
+                    }
+                }
+
                 // Check if this is a support ticket
                 if (isTicketEmail(email)) {
                     console.log('Creating ticket for email:', email.subject);
@@ -597,7 +713,7 @@ exports.handler = async (event, context) => {
 
         // Mark messages as seen if we handled any ticket emails.
         // This prevents endlessly reprocessing emails when inserts fail due to duplicates.
-        if (fetchedUids && fetchedUids.length > 0 && (ticketsCreated > 0 || ticketsDuplicate > 0)) {
+        if (fetchedUids && fetchedUids.length > 0 && (ticketsCreated > 0 || ticketsDuplicate > 0 || ticketsUpdated > 0)) {
             try {
                 console.log('Marking processed messages as \\Seen for uids:', fetchedUids.slice(0, 10));
                 imap.addFlags(fetchedUids, '\\Seen', (err) => {
@@ -613,7 +729,9 @@ exports.handler = async (event, context) => {
         await recordLastSyncResult({
             at: syncStartedAt,
             status: 'success',
-            message: 'Email sync completed successfully',
+            message: ticketsUpdated > 0
+                ? `Email sync completed successfully (appended ${ticketsUpdated} replies)`
+                : 'Email sync completed successfully',
             processed: emails.length,
             created: ticketsCreated,
             duplicates: ticketsDuplicate
@@ -632,6 +750,7 @@ exports.handler = async (event, context) => {
                 processed: emails.length,
                 tickets: ticketsCreated,
                 duplicates: ticketsDuplicate,
+                appended: ticketsUpdated,
                 details: emails.map(email => ({
                     subject: email && email.subject ? email.subject : null,
                     from: email && email.from ? email.from : null,
