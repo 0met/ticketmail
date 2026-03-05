@@ -62,9 +62,14 @@ function fetchEmails(imap, searchCriteria = ['OR', 'UNSEEN', ['SINCE', new Date(
                     return;
                 }
 
-                // Limit the number of emails to process
-                const emailIds = results.slice(0, maxEmails);
-                console.log(`Processing ${emailIds.length} emails`);
+                // Limit the number of emails to process.
+                // IMAP search results are typically oldest->newest; we want the MOST RECENT messages
+                // so we don't get stuck reprocessing the same old set when maxEmails is small.
+                const sorted = results
+                    .slice()
+                    .sort((a, b) => Number(a) - Number(b));
+                const emailIds = sorted.slice(-maxEmails);
+                console.log(`Processing ${emailIds.length} emails (most recent)`);
 
                 const emails = [];
                 const emailPromises = [];
@@ -447,8 +452,13 @@ exports.handler = async (event, context) => {
 
         // Fetch emails
             console.log('Fetching emails...');
-            const searchCriteria = testAll ? ['ALL'] : ['UNSEEN'];
-            const maxEmails = testAll ? (requestBody.maxEmails || 50) : 5; // larger for testAll
+            // Default behavior should be resilient even if emails are marked as read.
+            // Use UNSEEN OR SINCE (last 24h) then de-dup via message_id in DB.
+            const sinceIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const searchCriteria = testAll
+                ? ['ALL']
+                : ['OR', 'UNSEEN', ['SINCE', sinceIso]];
+            const maxEmails = testAll ? (requestBody.maxEmails || 50) : 10; // larger default to reduce "stuck" behavior
             console.log(`Using search criteria: ${JSON.stringify(searchCriteria)}, maxEmails: ${maxEmails}`);
         const fetched = await fetchEmails(imap, searchCriteria, maxEmails);
         const emails = Array.isArray(fetched) ? fetched : (fetched.emails || []);
