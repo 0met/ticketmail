@@ -371,3 +371,42 @@
 #newTicketModal small {
     color: rgba(15, 23, 42, 0.62) !important;
 }
+
+/* Tickets page list cards (scoped to Tickets page only) */
+#tickets .tickets-grid .ticket-card,
+#tickets .tickets-list .ticket-card {
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(14px) saturate(140%);
+    box-shadow:
+        0 18px 54px rgba(0, 0, 0, 0.16),
+        0 0 0 1px rgba(255, 255, 255, 0.10) inset,
+        0 0 70px rgba(99, 102, 241, 0.10);
+}
+
+#tickets .tickets-grid .ticket-card:hover,
+#tickets .tickets-list .ticket-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.44);
+    box-shadow:
+        0 26px 74px rgba(0, 0, 0, 0.22),
+        0 0 0 1px rgba(255, 255, 255, 0.14) inset,
+        0 0 90px rgba(168, 85, 247, 0.12);
+}
+
+#tickets .tickets-list .ticket-card.selected {
+    background: rgba(255, 255, 255, 0.66);
+    border-color: rgba(99, 102, 241, 0.40);
+    box-shadow:
+        0 30px 90px rgba(0, 0, 0, 0.24),
+        0 0 0 1px rgba(255, 255, 255, 0.14) inset,
+        0 0 110px rgba(99, 102, 241, 0.16);
+}
+
+#tickets .ticket-subject {
+    color: rgba(15, 23, 42, 0.92);
+}
+
+#tickets .ticket-meta {
+    color: rgba(15, 23, 42, 0.62);
+}
