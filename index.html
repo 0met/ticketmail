@@ -80,6 +80,7 @@
                             style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
                         <option value="">Select a role...</option>
                         <option value="admin">🛡️ Admin - Full system access</option>
+                        <option value="super_user">⭐ Super User - Full ticket access</option>
                         <option value="agent">👨‍💼 Agent - Handle tickets and customers</option>
                         <option value="customer">👤 Customer - Create and manage own tickets</option>
                     </select>
@@ -228,7 +229,7 @@
                         Dashboard
                     </a>
                 </li>
-                <li class="nav-item" data-roles="admin,agent">
+                <li class="nav-item" data-roles="admin,super_user,agent">
                     <a href="#" class="nav-link" data-page="tickets">
                         <span class="nav-icon">🎫</span>
                         Tickets
@@ -240,7 +241,7 @@
                         My Tickets
                     </a>
                 </li>
-                <li class="nav-item" data-roles="admin,agent">
+                <li class="nav-item" data-roles="admin,super_user,agent">
                     <a href="#" class="nav-link" data-page="analytics">
                         <span class="nav-icon">📈</span>
                         Analytics
@@ -252,7 +253,7 @@
                         User Management
                     </a>
                 </li>
-                <li class="nav-item" data-roles="admin,agent,customer">
+                <li class="nav-item" data-roles="admin,super_user,agent,customer">
                     <a href="#" class="nav-link" data-page="settings">
                         <span class="nav-icon">⚙️</span>
                         Settings
@@ -285,7 +286,7 @@
 
         <main class="main-content">
             <!-- Dashboard Page -->
-            <div id="dashboard" class="page active">
+            <div id="dashboard" class="page active" data-roles="admin,super_user,agent,customer">
                 <div class="page-header" style="margin-bottom: 2rem;">
                     <h1 class="page-title" style="font-size: 1.875rem; font-weight: 400; color: #1f2937; margin-bottom: 0;">SaaS Dashboard</h1>
                 </div>
@@ -432,7 +433,7 @@
             </div>
 
             <!-- Tickets Page -->
-            <div id="tickets" class="page">
+            <div id="tickets" class="page" data-roles="admin,super_user,agent">
                 <div class="page-header">
                     <h1 class="page-title">Tickets</h1>
                     <p class="page-subtitle">Manage your email tickets</p>
@@ -1735,6 +1736,12 @@
                     document.body.classList.add('admin-mode');
                     document.body.classList.remove('agent-mode', 'customer-mode');
                     break;
+
+                case 'super_user':
+                    // Super Users: full ticket visibility like admin
+                    document.body.classList.add('admin-mode');
+                    document.body.classList.remove('agent-mode', 'customer-mode');
+                    break;
                     
                 case 'agent':
                     // Agents see ticket management but not user management
@@ -1763,12 +1770,12 @@
             const permissions = authState.permissions || [];
 
             // Admin actions
-            if (userRole === 'admin' || permissions.includes('admin_access')) {
+            if (userRole === 'admin' || userRole === 'super_user' || permissions.includes('admin_access')) {
                 enableAdminActions();
             }
 
             // Agent actions  
-            if (userRole === 'admin' || userRole === 'agent' || permissions.includes('ticket_management')) {
+            if (userRole === 'admin' || userRole === 'super_user' || userRole === 'agent' || permissions.includes('ticket_management')) {
                 enableAgentActions();
             }
 
@@ -2749,6 +2756,9 @@
                 const cacheParam = Date.now();
                 const response = await fetch(`/.netlify/functions/tickets-load?cache=${cacheParam}`, {
                     method: 'GET'
+                    ,headers: {
+                        ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
+                    }
                 });
                 
                 console.log('Load tickets response status:', response.status);
@@ -2920,17 +2930,16 @@
             const container = document.getElementById('customerTicketsList');
             if (!container) return;
 
-            const userEmail = authState && authState.user && authState.user.email ? authState.user.email : null;
-            if (!userEmail) {
-                container.innerHTML = '<div class="ticket-card"><p style="text-align: center; color: #64748b;">Unable to determine your email.</p></div>';
-                return;
-            }
-
             container.innerHTML = '<div class="ticket-card"><p style="text-align: center; color: #64748b;">Loading your tickets…</p></div>';
 
             try {
                 const cacheParam = Date.now();
-                const response = await fetch(`/.netlify/functions/tickets-load?cache=${cacheParam}`, { method: 'GET' });
+                const response = await fetch(`/.netlify/functions/tickets-load?cache=${cacheParam}`, {
+                    method: 'GET',
+                    headers: {
+                        ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
+                    }
+                });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -2943,8 +2952,7 @@
                 const allTickets = Array.isArray(result.tickets) ? result.tickets : [];
                 // Keep modal behavior consistent: openTicketModal looks in appState.tickets.
                 appState.tickets = allTickets;
-                const mine = allTickets.filter((t) => ticketBelongsToCustomer(t, userEmail));
-                renderCustomerTickets(mine);
+                renderCustomerTickets(allTickets);
             } catch (error) {
                 console.error('Error loading customer tickets:', error);
                 container.innerHTML = '<div class="ticket-card"><p style="text-align: center; color: #64748b;">Failed to load your tickets.</p></div>';

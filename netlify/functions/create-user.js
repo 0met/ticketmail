@@ -74,15 +74,16 @@ exports.handler = async (event, context) => {
         }
 
         // Validate role
-        const validRoles = ['admin', 'agent', 'customer'];
-        if (!validRoles.includes(role)) {
+        const normalizedRole = String(role || '').trim().toLowerCase();
+        const validRoles = ['admin', 'super_user', 'agent', 'customer'];
+        if (!validRoles.includes(normalizedRole)) {
             return {
                 statusCode: 400,
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ success: false, error: 'Invalid role. Must be admin, agent, or customer' })
+                body: JSON.stringify({ success: false, error: 'Invalid role. Must be admin, super_user, agent, or customer' })
             };
         }
 
@@ -103,7 +104,7 @@ exports.handler = async (event, context) => {
         const userData = {
             email,
             fullName,
-            role,
+            role: normalizedRole,
             password,
             companyId: companyId || null,
             department: department || null,

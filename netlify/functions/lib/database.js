@@ -712,6 +712,8 @@ function mapTicketRecord(ticket) {
 
     return {
         id: ticket.id,
+        companyId: ticket.company_id ?? null,
+        company_id: ticket.company_id ?? null,
         ticketNumber: derivedTicketNumber,
         ticket_number: derivedTicketNumber,
         subject: ticket.subject,

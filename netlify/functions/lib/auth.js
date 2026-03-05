@@ -157,7 +157,9 @@ async function validateSession(sessionToken) {
             id: session.user_id,
             email: session.users.email,
             fullName: session.users.full_name,
-            role: session.users.role
+            role: session.users.role,
+            companyId: session.users.company_id ?? null,
+            company_id: session.users.company_id ?? null
         }
     };
 }
@@ -174,6 +176,8 @@ async function getUserPermissions(userId) {
     switch (user.role) {
         case 'admin':
             return ['read', 'write', 'delete', 'manage_users', 'manage_system'];
+        case 'super_user':
+            return ['read', 'write', 'manage_tickets'];
         case 'agent':
             return ['read', 'write', 'manage_tickets'];
         case 'customer':

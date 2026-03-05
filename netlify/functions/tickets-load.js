@@ -1,4 +1,58 @@
-const { getTickets } = require('./lib/database');
+const { getTickets, getDatabase } = require('./lib/database');
+const { validateSession } = require('./lib/auth');
+
+function getBearerToken(headers) {
+    const authHeader = (headers && (headers.authorization || headers.Authorization)) || null;
+    if (!authHeader) return null;
+    const raw = String(authHeader).trim();
+    if (raw.toLowerCase().startsWith('bearer ')) {
+        return raw.slice('bearer '.length).trim();
+    }
+    return raw;
+}
+
+function normalizeRole(role) {
+    const r = String(role || '').trim().toLowerCase();
+    if (r === 'superuser' || r === 'super-user' || r === 'super user') return 'super_user';
+    return r || 'customer';
+}
+
+async function getUserCompanyId(userId) {
+    const supabase = getDatabase();
+    const { data, error } = await supabase
+        .from('users')
+        .select('company_id')
+        .eq('id', userId)
+        .single();
+
+    if (error) {
+        // If users table isn't available for some reason, default to no company restriction.
+        console.warn('Could not load user company_id:', error.message || error);
+        return null;
+    }
+
+    return data ? (data.company_id ?? null) : null;
+}
+
+function filterTicketsForViewer({ tickets, role, companyId }) {
+    const safeTickets = Array.isArray(tickets) ? tickets : [];
+    const normalizedRole = normalizeRole(role);
+    const viewerCompanyId = companyId == null ? null : String(companyId);
+
+    if (normalizedRole === 'admin' || normalizedRole === 'super_user') {
+        return safeTickets;
+    }
+
+    if (normalizedRole === 'agent') {
+        // Agents can be "locked" to a company by setting users.company_id.
+        if (!viewerCompanyId) return safeTickets;
+        return safeTickets.filter(t => String(t.company_id ?? t.companyId ?? '') === viewerCompanyId);
+    }
+
+    // Customers only see their company tickets.
+    if (!viewerCompanyId) return [];
+    return safeTickets.filter(t => String(t.company_id ?? t.companyId ?? '') === viewerCompanyId);
+}
 
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
@@ -31,6 +85,31 @@ exports.handler = async (event, context) => {
     }
 
     try {
+        // Auth required
+        const token = getBearerToken(event.headers || {});
+        if (!token) {
+            return {
+                statusCode: 401,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ success: false, error: 'Unauthorized' })
+            };
+        }
+
+        const session = await validateSession(token);
+        if (!session.valid) {
+            return {
+                statusCode: 401,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ success: false, error: session.error || 'Invalid session' })
+            };
+        }
+
         // Get query parameters
         const params = event.queryStringParameters || {};
         const limit = parseInt(params.limit) || 100;
@@ -51,7 +130,13 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Load tickets from database
+        const viewerRole = normalizeRole(session.user && session.user.role);
+        const viewerCompanyIdFromSession = session.user ? (session.user.company_id ?? session.user.companyId ?? null) : null;
+        const viewerCompanyId = viewerCompanyIdFromSession != null
+            ? viewerCompanyIdFromSession
+            : await getUserCompanyId(session.user && session.user.id);
+
+        // Load tickets from database (then filter server-side)
         const tickets = await getTickets(limit);
 
         // Filter by status if provided
@@ -74,13 +159,20 @@ exports.handler = async (event, context) => {
             filteredTickets = tickets.filter(ticket => ticket.status === status);
         }
 
-        // Calculate statistics
+        // Apply visibility rules
+        filteredTickets = filterTicketsForViewer({
+            tickets: filteredTickets,
+            role: viewerRole,
+            companyId: viewerCompanyId
+        });
+
+        // Calculate statistics (visible set)
         const stats = {
-            total: tickets.length,
-            new: tickets.filter(t => t.status === 'new').length,
-            open: tickets.filter(t => t.status === 'open').length,
-            pending: tickets.filter(t => t.status === 'pending').length,
-            closed: tickets.filter(t => t.status === 'closed').length
+            total: filteredTickets.length,
+            new: filteredTickets.filter(t => t.status === 'new').length,
+            open: filteredTickets.filter(t => t.status === 'open').length,
+            pending: filteredTickets.filter(t => t.status === 'pending').length,
+            closed: filteredTickets.filter(t => t.status === 'closed').length
         };
 
         return {
@@ -93,7 +185,11 @@ exports.handler = async (event, context) => {
                 success: true,
                 tickets: filteredTickets,
                 stats: stats,
-                count: filteredTickets.length
+                count: filteredTickets.length,
+                viewer: {
+                    role: viewerRole,
+                    companyId: viewerCompanyId
+                }
             })
         };
 
