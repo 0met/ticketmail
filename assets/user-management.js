@@ -9,6 +9,12 @@ let allUsers = [];
 let allCompanies = [];
 let filteredUsers = [];
 
+function normalizeRoleValue(role) {
+    const raw = String(role || '').trim().toLowerCase();
+    if (raw === 'superuser' || raw === 'super-user' || raw === 'super user') return 'super_user';
+    return raw;
+}
+
 function escapeHtmlAttribute(value) {
     return String(value)
         .replace(/&/g, '&amp;')
@@ -272,6 +278,13 @@ function openUserModal(userId = null) {
         showToast('User modal could not be opened (missing DOM)', 'error');
         return;
     }
+
+    // Ensure modal isn't hidden by a parent page/tab container.
+    // Keeping it attached to <body> avoids display:none on ancestor nodes.
+    if (modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
+    }
+    modal.style.zIndex = '9999';
     
     form.reset();
     document.getElementById('userId').value = '';
@@ -287,13 +300,16 @@ function openUserModal(userId = null) {
             document.getElementById('userId').value = user.id;
             document.getElementById('userFullName').value = user.fullName || '';
             document.getElementById('userEmail').value = user.email || '';
-            document.getElementById('userRole').value = user.role || 'customer';
+            document.getElementById('userRole').value = normalizeRoleValue(user.role || 'customer') || 'customer';
             document.getElementById('userCompany').value = user.companyId || '';
             document.getElementById('userDepartment').value = user.department || '';
             document.getElementById('userJobTitle').value = user.jobTitle || '';
             document.getElementById('userPhone').value = user.phone || '';
             document.getElementById('userIsActive').checked = user.isActive;
             document.getElementById('userPassword').removeAttribute('required');
+        } else {
+            // If the in-memory list isn't ready, keep the modal open but block saving until userId is present.
+            console.warn('User not found in memory yet (allUsers not loaded?):', userIdString);
         }
     } else {
         title.textContent = 'Add New User';
@@ -319,7 +335,7 @@ async function saveUser(event) {
     const userData = {
         fullName: document.getElementById('userFullName').value,
         email: document.getElementById('userEmail').value,
-        role: document.getElementById('userRole').value,
+        role: normalizeRoleValue(document.getElementById('userRole').value),
         companyId: document.getElementById('userCompany').value || null,
         department: document.getElementById('userDepartment').value || null,
         jobTitle: document.getElementById('userJobTitle').value || null,
@@ -342,6 +358,11 @@ async function saveUser(event) {
                 body: JSON.stringify(userData)
             });
         } else {
+            // If we reached here from an Edit flow and userId was never set, don't accidentally create duplicates.
+            const title = document.getElementById('userModalTitle')?.textContent || '';
+            if (title.toLowerCase().includes('edit')) {
+                throw new Error('Cannot save changes: missing userId. Click Refresh, then Edit again.');
+            }
             // Create new user
             userData.createdBy = authState.user.id;
             response = await fetch('/.netlify/functions/create-user', {

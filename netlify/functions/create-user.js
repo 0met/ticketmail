@@ -74,7 +74,10 @@ exports.handler = async (event, context) => {
         }
 
         // Validate role
-        const normalizedRole = String(role || '').trim().toLowerCase();
+        let normalizedRole = String(role || '').trim().toLowerCase();
+        if (normalizedRole === 'superuser' || normalizedRole === 'super-user' || normalizedRole === 'super user') {
+            normalizedRole = 'super_user';
+        }
         const validRoles = ['admin', 'super_user', 'agent', 'customer'];
         if (!validRoles.includes(normalizedRole)) {
             return {
