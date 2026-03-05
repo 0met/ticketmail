@@ -410,3 +410,164 @@
 #tickets .ticket-meta {
     color: rgba(15, 23, 42, 0.62);
 }
+
+/* Glass pages: Dashboard, Analytics, Settings, User Management */
+#dashboard.page,
+#analytics.page,
+#settings.page,
+#user-management.page {
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    backdrop-filter: blur(18px) saturate(140%);
+    box-shadow:
+        0 34px 120px rgba(0, 0, 0, 0.34),
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+#dashboard .page-header,
+#analytics .page-header,
+#settings .page-header,
+#user-management .page-header {
+    border-bottom-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Dashboard */
+#dashboard .dashboard-filter {
+    background: rgba(255, 255, 255, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.34) !important;
+    backdrop-filter: blur(12px) saturate(140%);
+}
+
+#dashboard .dashboard-filter:focus {
+    border-color: rgba(99, 102, 241, 0.55) !important;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.22) !important;
+}
+
+#dashboard .metric-card,
+#dashboard .chart-card {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(14px) saturate(140%);
+    box-shadow:
+        0 18px 54px rgba(0, 0, 0, 0.16),
+        0 0 0 1px rgba(255, 255, 255, 0.10) inset,
+        0 0 80px rgba(99, 102, 241, 0.10);
+}
+
+#dashboard .metric-card:hover {
+    box-shadow:
+        0 26px 74px rgba(0, 0, 0, 0.22),
+        0 0 0 1px rgba(255, 255, 255, 0.14) inset,
+        0 0 90px rgba(168, 85, 247, 0.12);
+}
+
+/* Analytics */
+#analytics .chart-container {
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(14px) saturate(140%);
+    box-shadow:
+        0 18px 54px rgba(0, 0, 0, 0.16),
+        0 0 0 1px rgba(255, 255, 255, 0.10) inset,
+        0 0 70px rgba(99, 102, 241, 0.10);
+}
+
+#analytics .breakdown-item,
+#analytics .trend-item {
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    backdrop-filter: blur(12px) saturate(140%);
+}
+
+#analytics .performance-table {
+    background: rgba(255, 255, 255, 0.58);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#analytics .performance-table th {
+    background: rgba(255, 255, 255, 0.70);
+}
+
+#analytics .performance-table th,
+#analytics .performance-table td {
+    border-bottom-color: rgba(15, 23, 42, 0.10);
+}
+
+#analytics .stat-card {
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow:
+        0 22px 64px rgba(0, 0, 0, 0.22),
+        0 0 0 1px rgba(255, 255, 255, 0.10) inset;
+}
+
+/* Settings */
+#settings .settings-section {
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 12px;
+    padding: 1.75rem;
+    backdrop-filter: blur(14px) saturate(140%);
+    box-shadow:
+        0 18px 54px rgba(0, 0, 0, 0.16),
+        0 0 0 1px rgba(255, 255, 255, 0.10) inset;
+}
+
+#settings .form-input {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(148, 163, 184, 0.70);
+}
+
+#settings .form-input:focus {
+    border-color: rgba(99, 102, 241, 0.55);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.22);
+}
+
+#settings div[style*="background: #f8fafc"] {
+    background: rgba(255, 255, 255, 0.55) !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    backdrop-filter: blur(14px) saturate(140%);
+}
+
+#settings div[style*="border-top: 1px solid #e2e8f0"] {
+    border-top-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* User Management */
+#user-management .tab-navigation {
+    border-bottom-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+#user-management .tab-btn:hover {
+    background: rgba(255, 255, 255, 0.14) !important;
+}
+
+#user-management .filters-container,
+#user-management .data-table,
+#user-management .company-card {
+    background: rgba(255, 255, 255, 0.55) !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    backdrop-filter: blur(14px) saturate(140%);
+    box-shadow:
+        0 18px 54px rgba(0, 0, 0, 0.16),
+        0 0 0 1px rgba(255, 255, 255, 0.10) inset;
+}
+
+#user-management .data-table thead th {
+    background: rgba(255, 255, 255, 0.70) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+#user-management .data-table tbody td {
+    border-bottom-color: rgba(15, 23, 42, 0.10) !important;
+}
+
+#user-management .data-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.18) !important;
+}
+
+#user-management input[style*="border: 1px solid #d1d5db"],
+#user-management select[style*="border: 1px solid #d1d5db"] {
+    background: rgba(255, 255, 255, 0.72) !important;
+    border-color: rgba(148, 163, 184, 0.70) !important;
+}
