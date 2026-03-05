@@ -1,4 +1,4 @@
-const { getUserSettings, saveTicket } = require('./lib/database');
+const { getUserSettings, saveTicket, touchUserSettingsUpdatedAt } = require('./lib/database');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 
@@ -234,6 +234,18 @@ function getTicketStatus(email) {
     return 'new';
 }
 
+function isDuplicateTicketError(error) {
+    if (!error) return false;
+    const message = String(error.message || '').toLowerCase();
+    const code = String(error.code || '').toLowerCase();
+    return (
+        code === '23505' ||
+        message.includes('duplicate') ||
+        message.includes('unique constraint') ||
+        message.includes('message_id')
+    );
+}
+
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
@@ -407,6 +419,8 @@ exports.handler = async (event, context) => {
         // Process emails and create tickets
         console.log('Processing emails for tickets...');
         let ticketsCreated = 0;
+        let ticketsDuplicate = 0;
+        let ticketEmailsHandled = 0;
 
         // Log parsed email subjects for debugging
         try {
@@ -421,6 +435,7 @@ exports.handler = async (event, context) => {
                 // Check if this is a support ticket
                 if (isTicketEmail(email)) {
                     console.log('Creating ticket for email:', email.subject);
+                    ticketEmailsHandled += 1;
                     
                     const ticket = {
                         subject: email.subject,
@@ -445,7 +460,12 @@ exports.handler = async (event, context) => {
                             console.error('Failed to save ticket:', ticket);
                         }
                     } catch (saveError) {
-                        console.error('Error saving ticket:', saveError.message, ticket);
+                        if (isDuplicateTicketError(saveError)) {
+                            ticketsDuplicate++;
+                            console.log(`Duplicate ticket detected (already ingested): ${email.subject}`);
+                        } else {
+                            console.error('Error saving ticket:', saveError.message, ticket);
+                        }
                     }
                 } else {
                     console.log('Email not identified as ticket:', email.subject);
@@ -456,8 +476,9 @@ exports.handler = async (event, context) => {
             }
         }
 
-        // Only mark messages as seen if they resulted in tickets
-        if (fetchedUids && fetchedUids.length > 0 && ticketsCreated > 0) {
+        // Mark messages as seen if we handled any ticket emails.
+        // This prevents endlessly reprocessing emails when inserts fail due to duplicates.
+        if (fetchedUids && fetchedUids.length > 0 && (ticketsCreated > 0 || ticketsDuplicate > 0)) {
             try {
                 console.log('Marking processed messages as \\Seen for uids:', fetchedUids.slice(0, 10));
                 imap.addFlags(fetchedUids, '\\Seen', (err) => {
@@ -468,6 +489,10 @@ exports.handler = async (event, context) => {
                 console.error('Exception while setting flags:', flagErr.message || flagErr);
             }
         }
+
+        // Record last sync timestamp (best-effort)
+        await touchUserSettingsUpdatedAt(new Date().toISOString());
+
         return {
             statusCode: 200,
             headers: {
@@ -479,6 +504,7 @@ exports.handler = async (event, context) => {
                 message: `Email sync completed successfully`,
                 processed: emails.length,
                 tickets: ticketsCreated,
+                duplicates: ticketsDuplicate,
                 details: emails.map(email => ({
                     subject: email && email.subject ? email.subject : null,
                     from: email && email.from ? email.from : null,

@@ -77,6 +77,30 @@ function isColumnMissingError(error, columnName) {
     return error.message.toLowerCase().includes(columnName.toLowerCase());
 }
 
+async function touchUserSettingsUpdatedAt(isoTimestamp = new Date().toISOString()) {
+    try {
+        const supabase = getDatabase();
+
+        const { error } = await supabase
+            .from('user_settings')
+            .update({ updated_at: isoTimestamp })
+            .neq('id', 0);
+
+        if (error) {
+            if (isColumnMissingError(error, 'updated_at')) {
+                return false;
+            }
+            throw error;
+        }
+
+        return true;
+    } catch (error) {
+        // Best-effort; syncing tickets shouldn't fail if we can't record the timestamp.
+        console.warn('Could not touch user_settings.updated_at:', error && error.message ? error.message : error);
+        return false;
+    }
+}
+
 // Database connection - initialized on demand
 let supabase = null;
 
@@ -189,7 +213,30 @@ async function getUserSettings() {
 async function saveUserSettings(settings) {
     try {
         const supabase = getDatabase();
-        const encryptedPassword = encryptData(settings.appPassword);
+        let encryptedPassword = null;
+
+        if (settings.appPassword) {
+            encryptedPassword = encryptData(settings.appPassword);
+        } else {
+            const { data, error } = await supabase
+                .from('user_settings')
+                .select('app_password')
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (error) {
+                console.error('Error fetching existing user settings password:', error);
+                throw error;
+            }
+
+            if (data && data.length > 0) {
+                encryptedPassword = data[0].app_password;
+            }
+        }
+
+        if (!encryptedPassword) {
+            throw new Error('App password is required');
+        }
 
         // Delete existing settings
         const { error: deleteError } = await supabase
@@ -233,6 +280,28 @@ async function saveTicket(ticket) {
 
         if (!identifier) {
             throw new Error('Ticket is missing a message identifier');
+        }
+
+        // Avoid duplicate tickets even if the DB doesn't enforce a unique constraint.
+        try {
+            const { data: existing, error: lookupError } = await supabase
+                .from('tickets')
+                .select('id')
+                .eq('message_id', identifier)
+                .limit(1);
+
+            if (lookupError) {
+                if (!isColumnMissingError(lookupError, 'message_id')) {
+                    throw lookupError;
+                }
+            } else if (existing && existing.length > 0) {
+                const dup = new Error('Duplicate message_id - ticket already exists');
+                dup.code = '23505';
+                throw dup;
+            }
+        } catch (error) {
+            // Re-throw duplicates and real lookup errors; ignore missing-column edge cases.
+            throw error;
         }
 
         const ticketDate = ticket.date ? new Date(ticket.date) : new Date();
@@ -816,6 +885,7 @@ module.exports = {
     getTickets,
     updateTicketStatus,
     updateTicket,
+    touchUserSettingsUpdatedAt,
     encryptData,
     decryptData
 };

@@ -13,6 +13,9 @@
 [functions]
   node_bundler = "zisi"
 
+[functions."tickets-sync-scheduled"]
+  schedule = "*/15 * * * *"
+
 [[headers]]
   for = "/*"
   [headers.values]

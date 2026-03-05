@@ -889,7 +889,7 @@
                     <!-- Email Integration Settings -->
                     <div class="settings-section">
                         <h3 style="margin-bottom: 1rem; color: #374151;">📧 Email Integration</h3>
-                        <p style="color: #6b7280; margin-bottom: 2rem;">Configure Gmail API settings for email ticket management</p>
+                        <p style="color: #6b7280; margin-bottom: 2rem;">Configure Gmail IMAP settings for email ticket ingestion</p>
                         
                         <form id="settingsForm">
                             <div class="form-group">
@@ -900,40 +900,17 @@
                             <div class="form-group">
                                 <label class="form-label">App Password</label>
                                 <input type="password" id="appPassword" class="form-input" placeholder="Enter your Gmail app password">
-                                <small style="color: #64748b;">Use the app password you generated in Gmail settings</small>
+                                <small id="appPasswordHint" style="color: #64748b;">Use the app password you generated in Gmail settings</small>
                             </div>
 
-                    <div class="form-group">
-                        <label class="form-label">IMAP Server</label>
-                        <input type="text" id="imapServer" class="form-input" value="imap.gmail.com" readonly>
-                    </div>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+                                <button type="button" class="btn btn-secondary" onclick="fetchEmails()">🔄 Sync Emails Now</button>
+                            </div>
 
-                    <div class="form-group">
-                        <label class="form-label">IMAP Port</label>
-                        <input type="number" id="imapPort" class="form-input" value="993" readonly>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Auto-refresh Interval (minutes)</label>
-                        <input type="number" id="refreshInterval" class="form-input" value="5" min="1" max="60">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Default Ticket Status</label>
-                        <select id="defaultStatus" class="form-input">
-                            <option value="new">New</option>
-                            <option value="open">Open</option>
-                        </select>
-                    </div>
-
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                        <button type="button" class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
-                        <button type="button" class="btn btn-secondary" onclick="testConnection()">🔗 Test Connection</button>
-                        <button type="button" class="btn btn-secondary" onclick="testNetlifyFunctions()">🧪 Test Functions</button>
-                        <button type="button" class="btn btn-success" onclick="validateEnvironment()">✅ Validate Environment</button>
-                        <button type="button" class="btn btn-info" onclick="testSavedSettings()">🔍 Test Saved Settings</button>
-                        <button type="button" class="btn btn-warning" onclick="updateDatabaseSchema()">🔧 Update Database Schema</button>
-                    </div>
+                            <div style="margin-top: 0.75rem; color: #64748b; font-size: 0.875rem;">
+                                <strong>Last sync:</strong> <span id="lastSyncValue">Loading…</span>
+                            </div>
                 </form>
 
                 <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
@@ -944,10 +921,10 @@
                             <li>Enable 2-step verification in your Gmail account</li>
                             <li>Generate an App Password in Gmail Security settings</li>
                             <li>Enter your Gmail address and app password above</li>
-                            <li>Click "Test Connection" to verify the setup</li>
-                            <li>Save settings and start managing tickets!</li>
+                            <li>Save settings to store them securely</li>
+                            <li>Tickets sync server-side every 15 minutes (use “Sync Emails Now” for immediate testing)</li>
                         </ol>
-                        <p><em>Note: This demo uses client-side storage. For production, consider using a secure backend service.</em></p>
+                        <p><em>Note: App passwords are stored encrypted in the database and are never saved in your browser.</em></p>
                     </div>
                 </div>
             </div>
@@ -2281,35 +2258,45 @@
             tickets: [],
             settings: {
                 gmailAddress: '',
-                appPassword: '',
-                refreshInterval: 5,
-                defaultStatus: 'new'
-            },
-            isConnected: false
+                hasAppPassword: false
+            }
         };
 
-        // Load settings from localStorage on page load
-        function loadSettings() {
-            const savedSettings = localStorage.getItem('ticketSystemSettings');
-            if (savedSettings) {
-                appState.settings = { ...appState.settings, ...JSON.parse(savedSettings) };
-                populateSettingsForm();
-                
-                // Auto-test connection if we have saved credentials
-                const hasCredentials = appState.settings.gmailAddress && appState.settings.appPassword;
-                if (hasCredentials) {
-                    console.log('Found saved Gmail credentials, auto-testing connection...');
-                    testConnection(true); // Pass true for silent mode
+        // Load settings from backend on page load
+        async function loadSettings() {
+            try {
+                const response = await fetch('/.netlify/functions/get-settings', { method: 'GET' });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+
+                const result = await response.json();
+                if (result && result.success && result.settings) {
+                    appState.settings.gmailAddress = result.settings.gmailAddress || '';
+                    appState.settings.hasAppPassword = !!result.settings.hasAppPassword;
+                } else {
+                    appState.settings.gmailAddress = '';
+                    appState.settings.hasAppPassword = false;
+                }
+            } catch (error) {
+                console.warn('Failed to load settings from backend:', error.message);
+            } finally {
+                populateSettingsForm();
             }
         }
 
         // Populate settings form with saved data
         function populateSettingsForm() {
             document.getElementById('gmailAddress').value = appState.settings.gmailAddress || '';
-            document.getElementById('appPassword').value = appState.settings.appPassword || '';
-            document.getElementById('refreshInterval').value = appState.settings.refreshInterval || 5;
-            document.getElementById('defaultStatus').value = appState.settings.defaultStatus || 'new';
+            // Never populate secrets from storage.
+            document.getElementById('appPassword').value = '';
+
+            const hint = document.getElementById('appPasswordHint');
+            if (hint) {
+                hint.textContent = appState.settings.hasAppPassword
+                    ? 'App password is already saved (leave blank to keep existing).'
+                    : 'Use the app password you generated in Gmail settings.';
+            }
         }
 
         // Save settings to localStorage and database
@@ -2354,11 +2341,12 @@
         });
 
         async function saveSettings() {
+            const gmailAddress = document.getElementById('gmailAddress').value;
+            const appPassword = document.getElementById('appPassword').value;
+
             const settings = {
-                gmailAddress: document.getElementById('gmailAddress').value,
-                appPassword: document.getElementById('appPassword').value,
-                refreshInterval: parseInt(document.getElementById('refreshInterval').value),
-                defaultStatus: document.getElementById('defaultStatus').value
+                gmailAddress,
+                ...(appPassword ? { appPassword } : {})
             };
 
             try {
@@ -2381,10 +2369,17 @@
                 console.log('Response result:', result);
                 
                 if (result.success) {
-                    appState.settings = { ...appState.settings, ...settings };
-                    localStorage.setItem('ticketSystemSettings', JSON.stringify(settings));
+                    appState.settings.gmailAddress = gmailAddress;
+                    if (appPassword) {
+                        appState.settings.hasAppPassword = true;
+                    }
+                    document.getElementById('appPassword').value = '';
                     alert('✅ Settings saved successfully!');
                     updateConnectionStatus();
+                    populateSettingsForm();
+                    if (typeof loadSyncStatus === 'function') {
+                        loadSyncStatus();
+                    }
                 } else {
                     alert('❌ Error saving settings: ' + (result.error || 'Unknown error'));
                 }
@@ -2392,51 +2387,6 @@
                 console.error('Full error details:', error);
                 alert('❌ Network error: ' + error.message);
             }
-        }
-
-        // Test Gmail connection
-        async function testConnection(silent = false) {
-            const gmail = document.getElementById('gmailAddress').value;
-            const password = document.getElementById('appPassword').value;
-
-            if (!gmail || !password) {
-                if (!silent) {
-                    alert('❌ Please enter both Gmail address and app password');
-                }
-                return false;
-            }
-
-            // Show progress only if not silent
-            if (!silent) {
-                alert('🔄 Testing connection...');
-            } else {
-                console.log('🔄 Auto-testing Gmail connection...');
-            }
-            
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    if (gmail.includes('@gmail.com') && password.length >= 16) {
-                        appState.isConnected = true;
-                        updateConnectionStatus();
-                        
-                        if (!silent) {
-                            alert('✅ Connection successful!');
-                        } else {
-                            console.log('✅ Gmail connection restored automatically');
-                            // Show discrete notification
-                            showDiscreteNotification('Gmail connection restored', 'success');
-                        }
-                        resolve(true);
-                    } else {
-                        if (!silent) {
-                            alert('❌ Connection failed. Please check your credentials.');
-                        } else {
-                            console.log('❌ Auto-connection failed');
-                        }
-                        resolve(false);
-                    }
-                }, silent ? 500 : 2000); // Faster for silent mode
-            });
         }
 
         // Test Netlify Functions
@@ -2591,22 +2541,23 @@
         // Update connection status display
         function updateConnectionStatus() {
             const statusElement = document.getElementById('connectionStatus');
-            const hasCredentials = appState.settings.gmailAddress && appState.settings.appPassword;
+            const hasCredentials = appState.settings.gmailAddress && appState.settings.hasAppPassword;
             
-            if (hasCredentials && appState.isConnected) {
+            if (hasCredentials) {
                 statusElement.className = 'connection-status status-connected';
-                statusElement.innerHTML = '<span class="status-dot dot-green"></span><span>Gmail: Connected</span>';
+                statusElement.innerHTML = '<span class="status-dot dot-green"></span><span>Gmail: Configured</span>';
             } else {
                 statusElement.className = 'connection-status status-disconnected';
-                statusElement.innerHTML = '<span class="status-dot dot-red"></span><span>Gmail: Not Connected</span>';
+                statusElement.innerHTML = '<span class="status-dot dot-red"></span><span>Gmail: Not Configured</span>';
             }
         }
 
         // Fetch emails using Netlify function
         async function fetchEmails(silent = false) {
-            if (!appState.isConnected) {
+            const hasCredentials = appState.settings.gmailAddress && appState.settings.hasAppPassword;
+            if (!hasCredentials) {
                 if (!silent) {
-                    alert('❌ Please configure and test your Gmail connection first');
+                    alert('❌ Please configure your Gmail settings first');
                 }
                 return;
             }
@@ -2645,6 +2596,10 @@
                     }
                     console.log('📧 Email sync completed, calling loadTickets() to refresh from database...');
                     await loadTickets(); // Load the updated tickets
+
+                    if (typeof loadSyncStatus === 'function') {
+                        loadSyncStatus();
+                    }
                 } else {
                     if (silent) {
                         console.error('Auto-sync failed:', result.error);
@@ -2660,6 +2615,48 @@
                 } else {
                     alert('❌ Network error: ' + error.message);
                 }
+            }
+        }
+
+        function formatLocalTimestamp(iso) {
+            try {
+                if (!iso) return 'Never';
+                const date = new Date(iso);
+                if (Number.isNaN(date.getTime())) return String(iso);
+                return date.toLocaleString();
+            } catch (_) {
+                return String(iso || 'Never');
+            }
+        }
+
+        async function loadSyncStatus() {
+            const el = document.getElementById('lastSyncValue');
+            if (!el) return;
+
+            el.textContent = 'Loading…';
+            try {
+                const response = await fetch('/.netlify/functions/get-sync-status', { method: 'GET' });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+
+                if (result && result.success) {
+                    const ts = result.lastSyncAt;
+                    const source = result.source;
+                    if (!ts) {
+                        el.textContent = 'Never';
+                    } else if (source === 'tickets.created_at') {
+                        el.textContent = `${formatLocalTimestamp(ts)} (last ticket created)`;
+                    } else {
+                        el.textContent = formatLocalTimestamp(ts);
+                    }
+                } else {
+                    el.textContent = 'Unavailable';
+                }
+            } catch (error) {
+                console.warn('Failed to load sync status:', error.message);
+                el.textContent = 'Unavailable';
             }
         }
 
@@ -3016,6 +3013,10 @@
                     refreshAnalytics();
                 } else if (targetPage === 'tickets' && typeof loadTickets === 'function') {
                     loadTickets();
+                } else if (targetPage === 'settings') {
+                    if (typeof loadSyncStatus === 'function') {
+                        loadSyncStatus();
+                    }
                 } else if (targetPage === 'user-management') {
                     // Ensure Users tab is visible
                     if (typeof window.switchUserTab === 'function') {
@@ -3112,25 +3113,17 @@
             }
 
             console.log('🚀 Initializing authenticated application...');
-            loadSettings();
+            await loadSettings();
             updateConnectionStatus();
             initNavigation();
+
+            // Prime sync status (Settings page also refreshes on open)
+            if (typeof loadSyncStatus === 'function') {
+                loadSyncStatus();
+            }
             
             // Load tickets when the app initializes
             loadTickets();
-            
-            // Wait a moment for settings to load, then set up auto-refresh if connected
-            setTimeout(() => {
-                if (appState.isConnected) {
-                    console.log('Setting up auto-refresh interval:', appState.settings.refreshInterval, 'minutes');
-                    setInterval(() => {
-                        if (appState.isConnected) {
-                            console.log('Auto-refreshing emails...');
-                            fetchEmails(true); // Pass true for silent mode
-                        }
-                    }, appState.settings.refreshInterval * 60 * 1000);
-                }
-            }, 3000); // Give time for auto-connection to complete
         }
 
         // Utility function to truncate text
