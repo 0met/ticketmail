@@ -656,12 +656,19 @@ exports.handler = async (event, context) => {
                             email
                         });
 
+                        // Regardless of whether we could log the conversation,
+                        // do NOT create a new ticket when we can positively match an existing ticket number.
+                        // This prevents duplicates from reply threads.
+                        ticketsUpdated++;
+                        ticketEmailsHandled += 1;
+
                         if (attached.ok) {
-                            ticketsUpdated++;
-                            ticketEmailsHandled += 1;
                             console.log(`Appended inbound email to existing ticket ${ticketNumberInSubject} (id=${existing.id})`);
-                            continue;
+                        } else {
+                            console.warn(`Matched ticket ${ticketNumberInSubject} but could not log conversation (${attached.reason || 'unknown'}). Skipping new ticket to prevent duplicates.`);
                         }
+
+                        continue;
                     }
                 }
 
