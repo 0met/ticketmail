@@ -822,6 +822,8 @@ exports.handler = async (event, context) => {
                                 attachOk: attached.ok === true,
                                 attachReason: attached.ok ? null : attached.reason,
                                 attachDetail: attached.ok ? null : (attached.detail || null),
+                                attachFallbackSql: Boolean(attached && attached.fallbackSql),
+                                attachDeduped: Boolean(attached && attached.deduped),
                                 action: attached.ok ? 'appended_to_existing' : 'matched_existing_no_log'
                             });
                         }

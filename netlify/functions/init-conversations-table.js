@@ -83,7 +83,9 @@ exports.handler = async (event, context) => {
         await ensure(sql`CREATE INDEX IF NOT EXISTS idx_ticket_conversations_created_at ON ticket_conversations(created_at);`);
         await ensure(sql`CREATE INDEX IF NOT EXISTS idx_ticket_conversations_email_message_id ON ticket_conversations(email_message_id);`);
         // Prevent duplicate inserts when re-syncing the last 24h window.
-        await ensure(sql`CREATE UNIQUE INDEX IF NOT EXISTS uniq_ticket_conversations_email_message_id ON ticket_conversations(email_message_id) WHERE email_message_id IS NOT NULL;`);
+        // Use a non-partial unique index so INSERT ... ON CONFLICT (email_message_id) works reliably.
+        // (Postgres allows multiple NULLs in UNIQUE indexes by default.)
+        await ensure(sql`CREATE UNIQUE INDEX IF NOT EXISTS uniq_ticket_conversations_email_message_id ON ticket_conversations(email_message_id);`);
 
         const count = await sql`SELECT COUNT(*)::int as count FROM ticket_conversations;`;
 
