@@ -528,6 +528,13 @@
                                 <div class="response-section">
                                     <h3 style="margin-bottom: 1rem; color: #1f2937;">Send Response</h3>
                                     <div class="response-form">
+                                        <input
+                                            type="text"
+                                            id="responseCc"
+                                            class="form-input"
+                                            placeholder="CC (optional): person@example.com, other@example.com"
+                                            style="margin-bottom: 0.75rem;"
+                                        >
                                         <textarea 
                                             id="responseText" 
                                             class="response-textarea" 
@@ -536,7 +543,7 @@
                                         <div class="response-actions">
                                             <div>
                                                 <label style="font-size: 0.875rem; color: #6b7280;">
-                                                    <input type="checkbox" id="sendCopy" checked> Send copy to customer
+                                                    <input type="checkbox" id="sendCopy" checked> Send copy to myself
                                                 </label>
                                             </div>
                                             <button class="btn btn-primary" onclick="sendResponse()">
@@ -3437,9 +3444,10 @@
 
                                 <div class="response-section">
                                     <h3 style="font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 1rem;">SEND RESPONSE</h3>
+                                    <input id="responseCc" class="form-input" placeholder="CC (optional): person@example.com, other@example.com" style="margin-bottom: 0.75rem;" />
                                     <textarea id="responseText" class="response-textarea" placeholder="Type your response here..." style="width: 100%; min-height: 120px; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; font-size: 0.875rem;"></textarea>
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem;">
-                                        <label style="font-size: 0.875rem; color: #6b7280;"><input type="checkbox" id="sendCopy" checked> Send copy to customer</label>
+                                        <label style="font-size: 0.875rem; color: #6b7280;"><input type="checkbox" id="sendCopy" checked> Send copy to myself</label>
                                         <button class="btn btn-primary" onclick="sendResponse()">📧 Send Response</button>
                                     </div>
                                 </div>
@@ -4090,6 +4098,7 @@
         async function sendResponse() {
             const responseText = document.getElementById('responseText').value.trim();
             const sendCopy = document.getElementById('sendCopy').checked;
+            const ccRaw = (document.getElementById('responseCc')?.value || '').trim();
 
             if (!responseText) {
                 alert('❌ Please enter a response message');
@@ -4098,6 +4107,30 @@
 
             if (!currentTicket) {
                 alert('❌ No ticket selected');
+                return;
+            }
+
+            const toEmail =
+                currentTicket.customer_email ||
+                currentTicket.customerEmail ||
+                extractEmailAddress(currentTicket.from_email || currentTicket.from) ||
+                extractEmailAddress(currentTicket.from) ||
+                null;
+
+            if (!toEmail) {
+                alert('❌ Could not determine the customer email for this ticket');
+                return;
+            }
+
+            const ccList = ccRaw
+                ? ccRaw
+                    .split(/[,;\n]+/)
+                    .map((s) => extractEmailAddress(s))
+                    .filter(Boolean)
+                : [];
+
+            if (ccRaw && ccList.length === 0) {
+                alert('❌ CC field must contain valid email address(es)');
                 return;
             }
 
@@ -4110,7 +4143,8 @@
                     },
                     body: JSON.stringify({
                         ticketId: currentTicket.id,
-                        to: currentTicket.from,
+                        to: toEmail,
+                        cc: ccList,
                         subject: `Re: ${currentTicket.subject}`,
                         message: responseText,
                         sendCopy: sendCopy
@@ -4121,7 +4155,8 @@
                 
                 if (result.success) {
                     // Add to conversation history
-                    addToConversationHistory(currentTicket.id, 'outbound', responseText, new Date());
+                    const ccNote = ccList.length ? `CC: ${ccList.join(', ')}\n\n` : '';
+                    addToConversationHistory(currentTicket.id, 'outbound', `${ccNote}${responseText}`, new Date());
                     
                     // Update ticket status to 'open' if it was 'new'
                     if (currentTicket.status === 'new') {
@@ -4130,6 +4165,8 @@
 
                     // Clear the response form
                     document.getElementById('responseText').value = '';
+                    const ccEl = document.getElementById('responseCc');
+                    if (ccEl) ccEl.value = '';
                     
                     alert('✅ Response sent successfully!');
                 } else {
