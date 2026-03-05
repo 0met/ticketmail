@@ -5,6 +5,11 @@ function isMissingRelation(error) {
     return msg.includes('does not exist') || msg.includes('relation') || msg.includes('schema cache');
 }
 
+function isSchemaCache(error) {
+    const msg = (error && error.message ? String(error.message) : '').toLowerCase();
+    return msg.includes('schema cache') || msg.includes('could not find the table');
+}
+
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
@@ -49,6 +54,7 @@ exports.handler = async (event, context) => {
 
         if (error) {
             if (isMissingRelation(error)) {
+                const likelySchemaCache = isSchemaCache(error);
                 return {
                     statusCode: 200,
                     headers: {
@@ -61,7 +67,9 @@ exports.handler = async (event, context) => {
                         count: 0,
                         needsSetup: true,
                         initUrl: '/.netlify/functions/init-conversations-table',
-                        setupHint: 'Run the initializer once (requires SUPABASE_DB_URL in Netlify), or create the ticket_conversations table in Supabase SQL editor.'
+                        setupHint: likelySchemaCache
+                            ? 'ticket_conversations exists but is not accessible via the current Supabase key/role yet (schema cache / permissions). Ensure Netlify has SUPABASE_SERVICE_ROLE_KEY set, or grant the anon role access + policies.'
+                            : 'Run the initializer once (requires SUPABASE_DB_URL in Netlify), or create the ticket_conversations table in Supabase SQL editor.'
                     })
                 };
             }

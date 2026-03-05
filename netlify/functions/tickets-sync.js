@@ -281,6 +281,35 @@ function isUniqueViolation(error) {
     return code === '23505' || msg.includes('duplicate key') || msg.includes('unique constraint');
 }
 
+function classifyConversationError(error) {
+    const msg = String(error && error.message ? error.message : error).toLowerCase();
+    if (!msg) return { reason: 'unknown', detail: null };
+
+    // PostgREST commonly returns this when the role/key can't access the table
+    // OR when schema cache hasn't refreshed yet.
+    if (msg.includes('schema cache') || msg.includes("could not find the table")) {
+        return { reason: 'schema_cache', detail: msg.slice(0, 300) };
+    }
+
+    if (msg.includes('permission denied')) {
+        return { reason: 'permission_denied', detail: msg.slice(0, 300) };
+    }
+
+    if (msg.includes('row-level security') || msg.includes('rls')) {
+        return { reason: 'rls', detail: msg.slice(0, 300) };
+    }
+
+    if (msg.includes('does not exist') || (msg.includes('relation') && msg.includes('ticket_conversations'))) {
+        return { reason: 'missing_table', detail: msg.slice(0, 300) };
+    }
+
+    if (isUniqueViolation(error)) {
+        return { reason: 'duplicate', detail: msg.slice(0, 300) };
+    }
+
+    return { reason: 'insert_failed', detail: msg.slice(0, 300) };
+}
+
 async function findExistingTicketByNumber(ticketNumber) {
     if (!ticketNumber) return null;
 
@@ -343,9 +372,18 @@ async function attachInboundEmailToTicket({ ticketId, email }) {
         }
 
         if (insertError) {
-            const msg = String(insertError.message || '').toLowerCase();
-            if (msg.includes('ticket_conversations') && (msg.includes('does not exist') || msg.includes('relation') || msg.includes('schema cache'))) {
-                return { ok: false, reason: 'missing_table' };
+            const classified = classifyConversationError(insertError);
+
+            if (classified.reason === 'schema_cache') {
+                return { ok: false, reason: 'schema_cache', detail: classified.detail };
+            }
+
+            if (classified.reason === 'missing_table') {
+                return { ok: false, reason: 'missing_table', detail: classified.detail };
+            }
+
+            if (classified.reason === 'permission_denied' || classified.reason === 'rls') {
+                return { ok: false, reason: classified.reason, detail: classified.detail };
             }
 
             // If the table exists but the column doesn't (older schema), retry without email_message_id.
@@ -365,8 +403,9 @@ async function attachInboundEmailToTicket({ ticketId, email }) {
                     if (isUniqueViolation(fallbackError)) {
                         return { ok: true, deduped: true };
                     }
+                    const fallbackClassified = classifyConversationError(fallbackError);
                     console.warn('Failed to insert inbound conversation row (fallback):', fallbackError.message);
-                    return { ok: false, reason: 'insert_failed' };
+                    return { ok: false, reason: fallbackClassified.reason || 'insert_failed', detail: fallbackClassified.detail };
                 }
                 return { ok: true, fallback: true };
             }
@@ -376,7 +415,7 @@ async function attachInboundEmailToTicket({ ticketId, email }) {
             }
 
             console.warn('Failed to insert inbound conversation row:', insertError.message);
-            return { ok: false, reason: 'insert_failed' };
+            return { ok: false, reason: classified.reason || 'insert_failed', detail: classified.detail };
         }
 
         // Best-effort bump updated_at
@@ -392,7 +431,8 @@ async function attachInboundEmailToTicket({ ticketId, email }) {
         return { ok: true };
     } catch (error) {
         console.warn('Exception while attaching inbound email:', error && error.message ? error.message : error);
-        return { ok: false, reason: 'exception' };
+        const classified = classifyConversationError(error);
+        return { ok: false, reason: classified.reason || 'exception', detail: classified.detail };
     }
 }
 
@@ -747,6 +787,7 @@ exports.handler = async (event, context) => {
                                 matchedTicketId: existing.id,
                                 attachOk: attached.ok === true,
                                 attachReason: attached.ok ? null : attached.reason,
+                                attachDetail: attached.ok ? null : (attached.detail || null),
                                 action: attached.ok ? 'appended_to_existing' : 'matched_existing_no_log'
                             });
                         }
@@ -918,6 +959,8 @@ exports.handler = async (event, context) => {
                     testAll: testAll,
                     searchCriteria: searchCriteria,
                     maxEmails: maxEmails
+                    ,usingServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
+                    ,usingAnonKey: Boolean(process.env.SUPABASE_ANON_KEY)
                 }
             })
         };
