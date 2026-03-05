@@ -412,24 +412,9 @@
 }
 
 /* Glass pages: Dashboard, Analytics, Settings, User Management */
-#dashboard.page,
-#analytics.page,
-#settings.page,
-#user-management.page {
-    background: rgba(255, 255, 255, 0.34);
-    border: 1px solid rgba(255, 255, 255, 0.26);
-    backdrop-filter: blur(18px) saturate(140%);
-    box-shadow:
-        0 34px 120px rgba(0, 0, 0, 0.34),
-        0 0 0 1px rgba(255, 255, 255, 0.08) inset;
-}
-
-#dashboard .page-header,
-#analytics .page-header,
-#settings .page-header,
-#user-management .page-header {
-    border-bottom-color: rgba(255, 255, 255, 0.18);
-}
+/* Intentionally keep these pages using the base white `.page` surface
+   so they match the Tickets page container. Only card-like elements
+   inside these pages get the glass surface treatment. */
 
 /* Dashboard */
 #dashboard .dashboard-filter {
@@ -445,16 +430,18 @@
 
 #dashboard .metric-card,
 #dashboard .chart-card {
-    background: rgba(255, 255, 255, 0.72);
-    border-color: rgba(255, 255, 255, 0.30);
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.32);
     backdrop-filter: blur(14px) saturate(140%);
     box-shadow:
         0 18px 54px rgba(0, 0, 0, 0.16),
         0 0 0 1px rgba(255, 255, 255, 0.10) inset,
-        0 0 80px rgba(99, 102, 241, 0.10);
+        0 0 70px rgba(99, 102, 241, 0.10);
 }
 
 #dashboard .metric-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.44);
     box-shadow:
         0 26px 74px rgba(0, 0, 0, 0.22),
         0 0 0 1px rgba(255, 255, 255, 0.14) inset,
@@ -463,8 +450,8 @@
 
 /* Analytics */
 #analytics .chart-container {
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.32);
     backdrop-filter: blur(14px) saturate(140%);
     box-shadow:
         0 18px 54px rgba(0, 0, 0, 0.16),
@@ -474,19 +461,23 @@
 
 #analytics .breakdown-item,
 #analytics .trend-item {
-    background: rgba(255, 255, 255, 0.74);
-    border: 1px solid rgba(255, 255, 255, 0.26);
-    backdrop-filter: blur(12px) saturate(140%);
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(14px) saturate(140%);
+    box-shadow:
+        0 18px 54px rgba(0, 0, 0, 0.16),
+        0 0 0 1px rgba(255, 255, 255, 0.10) inset;
 }
 
 #analytics .performance-table {
-    background: rgba(255, 255, 255, 0.70);
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.32);
     border-radius: 10px;
     overflow: hidden;
 }
 
 #analytics .performance-table th {
-    background: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.70);
 }
 
 #analytics .performance-table th,
@@ -503,8 +494,8 @@
 
 /* Settings */
 #settings .settings-section {
-    background: rgba(255, 255, 255, 0.70);
-    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.32);
     border-radius: 12px;
     padding: 1.75rem;
     backdrop-filter: blur(14px) saturate(140%);
@@ -524,8 +515,8 @@
 }
 
 #settings div[style*="background: #f8fafc"] {
-    background: rgba(255, 255, 255, 0.70) !important;
-    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    background: rgba(255, 255, 255, 0.58) !important;
+    border: 1px solid rgba(255, 255, 255, 0.32) !important;
     backdrop-filter: blur(14px) saturate(140%);
 }
 
@@ -545,8 +536,8 @@
 #user-management .filters-container,
 #user-management .data-table,
 #user-management .company-card {
-    background: rgba(255, 255, 255, 0.70) !important;
-    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    background: rgba(255, 255, 255, 0.58) !important;
+    border: 1px solid rgba(255, 255, 255, 0.32) !important;
     backdrop-filter: blur(14px) saturate(140%);
     box-shadow:
         0 18px 54px rgba(0, 0, 0, 0.16),
@@ -554,7 +545,7 @@
 }
 
 #user-management .data-table thead th {
-    background: rgba(255, 255, 255, 0.82) !important;
+    background: rgba(255, 255, 255, 0.70) !important;
     border-bottom-color: rgba(255, 255, 255, 0.22) !important;
 }
 
