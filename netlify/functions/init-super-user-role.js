@@ -54,7 +54,9 @@ exports.handler = async (event, context) => {
         for (const row of constraints || []) {
             const name = row.conname;
             if (!name) continue;
-            await sql`ALTER TABLE public.users DROP CONSTRAINT IF EXISTS ${sql(name)}`;
+            // Neon serverless client doesn't support identifier placeholders; build safely-quoted SQL.
+            const escaped = String(name).replace(/"/g, '""');
+            await sql(`ALTER TABLE public.users DROP CONSTRAINT IF EXISTS "${escaped}"`);
         }
 
         // Add the new constraint (idempotent-ish: if it already exists, this will error)
