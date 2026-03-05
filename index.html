@@ -3408,6 +3408,8 @@
             const customerPhone = currentTicket.customer_phone || currentTicket.customerPhone || '';
             const customerCompany = currentTicket.customer_company || currentTicket.customerCompany || currentTicket.companyName || currentTicket.company_name || '';
             const assignedTo = currentTicket.assigned_to || currentTicket.assignedTo || '';
+            const userRole = normalizeRole(authState?.user?.role);
+            const canMergeTickets = userRole === 'admin' || userRole === 'agent';
 
             const escapeAttr = (val) => {
                 return String(val ?? '')
@@ -3543,6 +3545,17 @@
                                             <select id="ticketAssigneeDropdown" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;">
                                                 <option value="">Unassigned</option>
                                             </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="background: white; padding: 1.25rem; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 1.5rem; display: ${canMergeTickets ? 'block' : 'none'};">
+                                    <h3 style="font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 1rem;">MERGE</h3>
+                                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                        <input id="mergeTargetTicket" type="text" placeholder="Target ticket # or ID" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+                                        <button id="mergeTicketBtn" class="btn btn-secondary" style="width: 100%;" onclick="mergeCurrentTicket()">🔀 Merge into Target</button>
+                                        <div style="font-size: 0.75rem; color: #6b7280; line-height: 1.4;">
+                                            Moves conversation history to the target and closes this ticket.
                                         </div>
                                     </div>
                                 </div>
@@ -4106,6 +4119,74 @@
                 setConversationRowCountDisplay(`Conversation rows: ${rowCount}`);
             } catch {
                 // Ignore DOM count issues
+            }
+        }
+
+        async function mergeCurrentTicket() {
+            try {
+                if (!currentTicket) {
+                    alert('❌ No ticket selected');
+                    return;
+                }
+
+                const role = normalizeRole(authState?.user?.role);
+                if (role !== 'admin' && role !== 'agent') {
+                    alert('❌ Only admins and agents can merge tickets');
+                    return;
+                }
+
+                const targetEl = document.getElementById('mergeTargetTicket');
+                const targetTicket = String(targetEl ? targetEl.value : '').trim();
+                if (!targetTicket) {
+                    alert('❌ Enter a target ticket # or ID');
+                    return;
+                }
+
+                const confirmMsg = `Merge this ticket into ${targetTicket}?\n\nThis will move conversation history to the target and close this ticket.`;
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
+
+                const btn = document.getElementById('mergeTicketBtn');
+                const originalText = btn ? btn.textContent : null;
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Merging...';
+                }
+
+                const response = await fetch('/.netlify/functions/merge-tickets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
+                    },
+                    body: JSON.stringify({
+                        sourceTicketId: currentTicket.id,
+                        targetTicket
+                    })
+                });
+
+                const result = await response.json();
+                if (!result || !result.success) {
+                    throw new Error(result && result.error ? result.error : 'Merge failed');
+                }
+
+                alert('✅ Tickets merged. This ticket is now closed.');
+                closeTicketModal();
+
+                // Refresh list
+                if (typeof fetchEmails === 'function') {
+                    await fetchEmails();
+                }
+            } catch (error) {
+                console.error('Merge ticket error:', error);
+                alert('❌ Failed to merge tickets: ' + error.message);
+            } finally {
+                const btn = document.getElementById('mergeTicketBtn');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '🔀 Merge into Target';
+                }
             }
         }
 
