@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { neon } = require('@neondatabase/serverless');
 const crypto = require('crypto-js');
 function getLocalDB() {
     // IMPORTANT: database-local depends on native sqlite3.
@@ -145,6 +146,21 @@ async function recordLastSyncResult({
 
 // Database connection - initialized on demand
 let supabase = null;
+let sqlDb = null;
+
+function getSqlDatabase() {
+    const dbUrl = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
+    if (!dbUrl) {
+        throw new Error('SUPABASE_DB_URL (or DATABASE_URL) environment variable is not set');
+    }
+
+    if (sqlDb) {
+        return sqlDb;
+    }
+
+    sqlDb = neon(dbUrl);
+    return sqlDb;
+}
 
 // Initialize database connection
 function initializeConnection() {
@@ -921,6 +937,7 @@ async function updateTicket(ticketId, updates) {
 
 module.exports = {
     getDatabase,
+    getSqlDatabase,
     getUserSettings,
     saveUserSettings,
     saveTicket,

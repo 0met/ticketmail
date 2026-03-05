@@ -1,4 +1,4 @@
-const { getDatabase, getUserSettings, saveTicket, touchUserSettingsUpdatedAt, recordLastSyncResult } = require('./lib/database');
+const { getDatabase, getSqlDatabase, getUserSettings, saveTicket, touchUserSettingsUpdatedAt, recordLastSyncResult } = require('./lib/database');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 
@@ -375,7 +375,41 @@ async function attachInboundEmailToTicket({ ticketId, email }) {
             const classified = classifyConversationError(insertError);
 
             if (classified.reason === 'schema_cache') {
-                return { ok: false, reason: 'schema_cache', detail: classified.detail };
+                // Fallback: write directly via SUPABASE_DB_URL to avoid PostgREST schema-cache mismatch.
+                try {
+                    const sql = getSqlDatabase();
+                    const emailMessageId = email.messageId || email.message_id || null;
+                    const fromEmail = email.from || null;
+                    const toEmail = email.to || null;
+                    const subject = email.subject || null;
+                    const message = (email.body || '').slice(0, 8000);
+
+                    // Idempotent insert when email_message_id exists
+                    if (emailMessageId) {
+                        await sql`
+                            INSERT INTO ticket_conversations (ticket_id, email_message_id, message_type, from_email, to_email, subject, message)
+                            VALUES (${ticketId}, ${emailMessageId}, 'inbound', ${fromEmail}, ${toEmail}, ${subject}, ${message})
+                            ON CONFLICT (email_message_id) DO NOTHING;
+                        `;
+                    } else {
+                        await sql`
+                            INSERT INTO ticket_conversations (ticket_id, message_type, from_email, to_email, subject, message)
+                            VALUES (${ticketId}, 'inbound', ${fromEmail}, ${toEmail}, ${subject}, ${message});
+                        `;
+                    }
+
+                    // Best-effort bump updated_at
+                    try {
+                        await sql`UPDATE tickets SET updated_at = NOW() WHERE id = ${ticketId};`;
+                    } catch (_) {
+                        // ignore
+                    }
+
+                    return { ok: true, fallbackSql: true };
+                } catch (e) {
+                    const extra = String(e && e.message ? e.message : e);
+                    return { ok: false, reason: 'schema_cache', detail: (classified.detail || '') + ' | sql_fallback_failed: ' + extra.slice(0, 200) };
+                }
             }
 
             if (classified.reason === 'missing_table') {
