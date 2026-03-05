@@ -42,7 +42,7 @@ function connectToImap(settings, timeoutMs = 15000) {
 }
 
 // Fixed email fetching function with proper async handling
-function fetchEmails(imap, searchCriteria = ['OR', 'UNSEEN', ['SINCE', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()]], maxEmails = 10) {
+function fetchEmails(imap, searchCriteria = ['OR', 'UNSEEN', ['SINCE', new Date(Date.now() - 24 * 60 * 60 * 1000)]], maxEmails = 10) {
     return new Promise((resolve, reject) => {
         imap.openBox('INBOX', false, (err, box) => {
             if (err) {
@@ -298,15 +298,15 @@ exports.handler = async (event, context) => {
             statusCode: 200,
             headers: {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, Authorization'
             },
             body: ''
         };
     }
 
-    // Only allow POST requests
-    if (event.httpMethod !== 'POST') {
+    // Allow GET (easy manual testing in browser) and POST (used by UI + scheduled sync)
+    if (event.httpMethod !== 'POST' && event.httpMethod !== 'GET') {
         return {
             statusCode: 405,
             headers: {
@@ -315,7 +315,7 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({
                 success: false,
-                error: 'Method not allowed. Use POST.'
+                error: 'Method not allowed. Use GET or POST.'
             })
         };
     }
@@ -454,10 +454,10 @@ exports.handler = async (event, context) => {
             console.log('Fetching emails...');
             // Default behavior should be resilient even if emails are marked as read.
             // Use UNSEEN OR SINCE (last 24h) then de-dup via message_id in DB.
-            const sinceIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const sinceDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
             const searchCriteria = testAll
                 ? ['ALL']
-                : ['OR', 'UNSEEN', ['SINCE', sinceIso]];
+                : ['OR', 'UNSEEN', ['SINCE', sinceDate]];
             const maxEmails = testAll ? (requestBody.maxEmails || 50) : 10; // larger default to reduce "stuck" behavior
             console.log(`Using search criteria: ${JSON.stringify(searchCriteria)}, maxEmails: ${maxEmails}`);
         const fetched = await fetchEmails(imap, searchCriteria, maxEmails);
