@@ -205,7 +205,8 @@
         0 0 0 1px rgba(255, 255, 255, 0.14) inset,
         0 0 120px rgba(99, 102, 241, 0.20);
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 #ticketModal .modal-content::before {
@@ -309,7 +310,8 @@
         0 0 0 1px rgba(255, 255, 255, 0.14) inset,
         0 0 120px rgba(99, 102, 241, 0.20);
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 #newTicketModal .modal-content::before {
