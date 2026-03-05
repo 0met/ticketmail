@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-const { getDatabase, getUserSettings } = require('./lib/database');
+const { getDatabase, getSqlDatabase, getUserSettings } = require('./lib/database');
 
 function parseJsonBody(event) {
     const body = event && event.body;
@@ -18,6 +18,11 @@ function parseJsonBody(event) {
 function isMissingRelation(error) {
     const msg = (error && error.message ? String(error.message) : '').toLowerCase();
     return msg.includes('does not exist') || msg.includes('relation') || msg.includes('schema cache');
+}
+
+function isSchemaCache(error) {
+    const msg = (error && error.message ? String(error.message) : '').toLowerCase();
+    return msg.includes('schema cache') || msg.includes('could not find the table');
 }
 
 function isMissingColumn(error) {
@@ -88,7 +93,41 @@ async function insertOutboundConversation(supabase, row) {
             .insert(fullInsert);
         if (error) {
             if (isUniqueViolation(error)) return { ok: true, deduped: true };
-            if (isMissingRelation(error)) return { ok: false, reason: 'missing_table' };
+            if (isMissingRelation(error)) {
+                // If Supabase REST can't see the table (schema cache), try direct SQL via SUPABASE_DB_URL.
+                if (isSchemaCache(error)) {
+                    try {
+                        const sql = getSqlDatabase();
+                        const emailMessageId = row.emailMessageId || null;
+                        const ticketId = row.ticketId;
+                        const fromEmail = row.from || null;
+                        const toEmail = row.to || null;
+                        const subject = row.subject || null;
+                        const message = String(row.message || '').slice(0, 8000);
+
+                        if (emailMessageId) {
+                            await sql`
+                                INSERT INTO ticket_conversations (ticket_id, email_message_id, message_type, from_email, to_email, subject, message)
+                                SELECT ${ticketId}, ${emailMessageId}, 'outbound', ${fromEmail}, ${toEmail}, ${subject}, ${message}
+                                WHERE NOT EXISTS (
+                                    SELECT 1 FROM ticket_conversations WHERE email_message_id = ${emailMessageId}
+                                );
+                            `;
+                        } else {
+                            await sql`
+                                INSERT INTO ticket_conversations (ticket_id, message_type, from_email, to_email, subject, message)
+                                VALUES (${ticketId}, 'outbound', ${fromEmail}, ${toEmail}, ${subject}, ${message});
+                            `;
+                        }
+
+                        return { ok: true, fallbackSql: true };
+                    } catch (e) {
+                        return { ok: false, reason: 'missing_table', error: e };
+                    }
+                }
+
+                return { ok: false, reason: 'missing_table' };
+            }
             if (isMissingColumn(error)) {
                 const { error: fallbackError } = await supabase
                     .from('ticket_conversations')

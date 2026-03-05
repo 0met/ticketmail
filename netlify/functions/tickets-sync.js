@@ -384,12 +384,16 @@ async function attachInboundEmailToTicket({ ticketId, email }) {
                     const subject = email.subject || null;
                     const message = (email.body || '').slice(0, 8000);
 
-                    // Idempotent insert when email_message_id exists
+                    // Idempotent insert when email_message_id exists.
+                    // Avoid ON CONFLICT inference because older installs may have a partial unique index,
+                    // which Postgres can't use for ON CONFLICT (column_list) matching.
                     if (emailMessageId) {
                         await sql`
                             INSERT INTO ticket_conversations (ticket_id, email_message_id, message_type, from_email, to_email, subject, message)
-                            VALUES (${ticketId}, ${emailMessageId}, 'inbound', ${fromEmail}, ${toEmail}, ${subject}, ${message})
-                            ON CONFLICT (email_message_id) DO NOTHING;
+                            SELECT ${ticketId}, ${emailMessageId}, 'inbound', ${fromEmail}, ${toEmail}, ${subject}, ${message}
+                            WHERE NOT EXISTS (
+                                SELECT 1 FROM ticket_conversations WHERE email_message_id = ${emailMessageId}
+                            );
                         `;
                     } else {
                         await sql`
