@@ -588,6 +588,9 @@ exports.handler = async (event, context) => {
             const queryTestAll = event.queryStringParameters && (event.queryStringParameters.testAll === 'true' || event.queryStringParameters.testAll === '1');
             const testAll = requestBody.testAll === true || queryTestAll === true;
 
+            const queryDebug = event.queryStringParameters && (event.queryStringParameters.debug === 'true' || event.queryStringParameters.debug === '1');
+            const debug = requestBody.debug === true || queryDebug === true;
+
         // Fetch emails
             console.log('Fetching emails...');
             // Default behavior should be resilient even if emails are marked as read.
@@ -633,7 +636,10 @@ exports.handler = async (event, context) => {
         let ticketsCreated = 0;
         let ticketsDuplicate = 0;
         let ticketsUpdated = 0;
+        let ticketsSkipped = 0;
         let ticketEmailsHandled = 0;
+
+        const perEmailDebug = debug ? [] : null;
 
         // Log parsed email subjects for debugging
         try {
@@ -645,9 +651,32 @@ exports.handler = async (event, context) => {
 
         for (const email of emails) {
             try {
+                const emailSubject = email && email.subject ? String(email.subject) : '';
+                const emailFrom = email && email.from ? String(email.from) : '';
+
                 // If the subject contains a ticket number, prefer appending to the existing ticket
                 // instead of creating a duplicate ticket for replies/forwards.
-                const ticketNumberInSubject = extractTicketNumberFromSubject(email.subject);
+                const ticketNumberInSubject = extractTicketNumberFromSubject(emailSubject);
+
+                // IMPORTANT: Gmail often delivers a copy of your own outbound responses back into INBOX
+                // (especially if you BCC yourself). Those should never create new tickets.
+                // If we can see a ticket token in the subject and the sender is our own mailbox, skip it.
+                const settingsMailbox = settings && settings.gmailAddress ? String(settings.gmailAddress).toLowerCase() : null;
+                const fromLower = emailFrom.toLowerCase();
+                if (ticketNumberInSubject && settingsMailbox && fromLower.includes(settingsMailbox)) {
+                    ticketsSkipped++;
+                    ticketEmailsHandled += 1;
+                    if (perEmailDebug) {
+                        perEmailDebug.push({
+                            subject: emailSubject,
+                            from: emailFrom,
+                            ticketNumberInSubject,
+                            action: 'skipped_outbound_copy'
+                        });
+                    }
+                    continue;
+                }
+
                 if (ticketNumberInSubject) {
                     const existing = await findExistingTicketByNumber(ticketNumberInSubject);
                     if (existing && existing.id) {
@@ -666,6 +695,18 @@ exports.handler = async (event, context) => {
                             console.log(`Appended inbound email to existing ticket ${ticketNumberInSubject} (id=${existing.id})`);
                         } else {
                             console.warn(`Matched ticket ${ticketNumberInSubject} but could not log conversation (${attached.reason || 'unknown'}). Skipping new ticket to prevent duplicates.`);
+                        }
+
+                        if (perEmailDebug) {
+                            perEmailDebug.push({
+                                subject: emailSubject,
+                                from: emailFrom,
+                                ticketNumberInSubject,
+                                matchedTicketId: existing.id,
+                                attachOk: attached.ok === true,
+                                attachReason: attached.ok ? null : attached.reason,
+                                action: attached.ok ? 'appended_to_existing' : 'matched_existing_no_log'
+                            });
                         }
 
                         continue;
@@ -696,31 +737,97 @@ exports.handler = async (event, context) => {
                         if (savedTicket) {
                             ticketsCreated++;
                             console.log(`Ticket created successfully for: ${email.subject}`);
+
+                            if (perEmailDebug) {
+                                perEmailDebug.push({
+                                    subject: emailSubject,
+                                    from: emailFrom,
+                                    ticketNumberInSubject,
+                                    action: 'created_ticket',
+                                    createdTicketId: savedTicket.id || null,
+                                    createdTicketNumber: savedTicket.ticket_number || null
+                                });
+                            }
                         } else {
                             console.error('Failed to save ticket:', ticket);
+
+                            if (perEmailDebug) {
+                                perEmailDebug.push({
+                                    subject: emailSubject,
+                                    from: emailFrom,
+                                    ticketNumberInSubject,
+                                    action: 'failed_to_save'
+                                });
+                            }
                         }
                     } catch (saveError) {
                         if (isDuplicateTicketError(saveError)) {
                             ticketsDuplicate++;
                             console.log(`Duplicate ticket detected (already ingested): ${email.subject}`);
+
+                            if (perEmailDebug) {
+                                perEmailDebug.push({
+                                    subject: emailSubject,
+                                    from: emailFrom,
+                                    ticketNumberInSubject,
+                                    action: 'duplicate_message_id'
+                                });
+                            }
                         } else if (isMissingTicketsTableError(saveError)) {
                             console.error('Tickets table missing while saving ticket:', saveError.message);
+
+                            if (perEmailDebug) {
+                                perEmailDebug.push({
+                                    subject: emailSubject,
+                                    from: emailFrom,
+                                    ticketNumberInSubject,
+                                    action: 'tickets_table_missing'
+                                });
+                            }
                         } else {
                             console.error('Error saving ticket:', saveError.message, ticket);
+
+                            if (perEmailDebug) {
+                                perEmailDebug.push({
+                                    subject: emailSubject,
+                                    from: emailFrom,
+                                    ticketNumberInSubject,
+                                    action: 'save_error',
+                                    error: saveError && saveError.message ? saveError.message : String(saveError)
+                                });
+                            }
                         }
                     }
                 } else {
                     console.log('Email not identified as ticket:', email.subject);
+
+                    if (perEmailDebug) {
+                        perEmailDebug.push({
+                            subject: emailSubject,
+                            from: emailFrom,
+                            ticketNumberInSubject,
+                            action: 'not_a_ticket'
+                        });
+                    }
                 }
             } catch (ticketError) {
                 console.error('Error creating ticket for email:', email.subject, ticketError);
                 // Continue processing other emails
+
+                if (perEmailDebug) {
+                    perEmailDebug.push({
+                        subject: email && email.subject ? String(email.subject) : null,
+                        from: email && email.from ? String(email.from) : null,
+                        action: 'exception',
+                        error: ticketError && ticketError.message ? ticketError.message : String(ticketError)
+                    });
+                }
             }
         }
 
         // Mark messages as seen if we handled any ticket emails.
         // This prevents endlessly reprocessing emails when inserts fail due to duplicates.
-        if (fetchedUids && fetchedUids.length > 0 && (ticketsCreated > 0 || ticketsDuplicate > 0 || ticketsUpdated > 0)) {
+        if (fetchedUids && fetchedUids.length > 0 && (ticketsCreated > 0 || ticketsDuplicate > 0 || ticketsUpdated > 0 || ticketsSkipped > 0)) {
             try {
                 console.log('Marking processed messages as \\Seen for uids:', fetchedUids.slice(0, 10));
                 imap.addFlags(fetchedUids, '\\Seen', (err) => {
@@ -758,11 +865,13 @@ exports.handler = async (event, context) => {
                 tickets: ticketsCreated,
                 duplicates: ticketsDuplicate,
                 appended: ticketsUpdated,
+                skipped: ticketsSkipped,
                 details: emails.map(email => ({
                     subject: email && email.subject ? email.subject : null,
                     from: email && email.from ? email.from : null,
                     isTicket: !!email && isTicketEmail(email)
                 })),
+                ...(perEmailDebug ? { debugEmails: perEmailDebug } : {}),
                 debug: {
                     testAll: testAll,
                     searchCriteria: searchCriteria,

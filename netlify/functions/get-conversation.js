@@ -59,7 +59,9 @@ exports.handler = async (event, context) => {
                         success: true,
                         conversation: [],
                         count: 0,
-                        needsSetup: true
+                        needsSetup: true,
+                        initUrl: '/.netlify/functions/init-conversations-table',
+                        setupHint: 'Run the initializer once (requires SUPABASE_DB_URL in Netlify), or create the ticket_conversations table in Supabase SQL editor.'
                     })
                 };
             }

@@ -76,7 +76,9 @@ exports.handler = async (event, context) => {
                     headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         success: false,
-                        error: 'ticket_conversations table is not set up in Supabase yet.'
+                        needsSetup: true,
+                        initUrl: '/.netlify/functions/init-conversations-table',
+                        error: 'Conversation history is not set up yet (ticket_conversations table missing).'
                     })
                 };
             }
