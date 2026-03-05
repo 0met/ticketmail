@@ -48,6 +48,7 @@ exports.handler = async (event, context) => {
                 CREATE TABLE ticket_conversations (
                     id BIGSERIAL PRIMARY KEY,
                     ticket_id BIGINT NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+                    email_message_id TEXT,
                     message_type TEXT NOT NULL DEFAULT 'system',
                     from_email TEXT,
                     to_email TEXT,
@@ -71,6 +72,7 @@ exports.handler = async (event, context) => {
         };
 
         await ensure(sql`ALTER TABLE ticket_conversations ADD COLUMN IF NOT EXISTS message_type TEXT;`);
+        await ensure(sql`ALTER TABLE ticket_conversations ADD COLUMN IF NOT EXISTS email_message_id TEXT;`);
         await ensure(sql`ALTER TABLE ticket_conversations ADD COLUMN IF NOT EXISTS from_email TEXT;`);
         await ensure(sql`ALTER TABLE ticket_conversations ADD COLUMN IF NOT EXISTS to_email TEXT;`);
         await ensure(sql`ALTER TABLE ticket_conversations ADD COLUMN IF NOT EXISTS subject TEXT;`);
@@ -79,6 +81,9 @@ exports.handler = async (event, context) => {
 
         await ensure(sql`CREATE INDEX IF NOT EXISTS idx_ticket_conversations_ticket_id ON ticket_conversations(ticket_id);`);
         await ensure(sql`CREATE INDEX IF NOT EXISTS idx_ticket_conversations_created_at ON ticket_conversations(created_at);`);
+        await ensure(sql`CREATE INDEX IF NOT EXISTS idx_ticket_conversations_email_message_id ON ticket_conversations(email_message_id);`);
+        // Prevent duplicate inserts when re-syncing the last 24h window.
+        await ensure(sql`CREATE UNIQUE INDEX IF NOT EXISTS uniq_ticket_conversations_email_message_id ON ticket_conversations(email_message_id) WHERE email_message_id IS NOT NULL;`);
 
         const count = await sql`SELECT COUNT(*)::int as count FROM ticket_conversations;`;
 

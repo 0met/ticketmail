@@ -274,6 +274,13 @@ function isColumnMissingErrorMessage(error) {
     return msg.includes('column') && msg.includes('does not exist');
 }
 
+function isUniqueViolation(error) {
+    if (!error) return false;
+    const code = String(error.code || '').toLowerCase();
+    const msg = String(error.message || '').toLowerCase();
+    return code === '23505' || msg.includes('duplicate key') || msg.includes('unique constraint');
+}
+
 async function findExistingTicketByNumber(ticketNumber) {
     if (!ticketNumber) return null;
 
@@ -317,6 +324,7 @@ async function attachInboundEmailToTicket({ ticketId, email }) {
 
         const payload = {
             ticket_id: ticketId,
+            email_message_id: email.messageId || email.message_id || null,
             message_type: 'inbound',
             from_email: email.from || null,
             to_email: email.to || null,
@@ -324,16 +332,50 @@ async function attachInboundEmailToTicket({ ticketId, email }) {
             message: (email.body || '').slice(0, 8000)
         };
 
-        const { error } = await supabase
-            .from('ticket_conversations')
-            .insert(payload);
+        let insertError = null;
+        try {
+            const { error } = await supabase
+                .from('ticket_conversations')
+                .insert(payload);
+            insertError = error;
+        } catch (e) {
+            insertError = e;
+        }
 
-        if (error) {
-            const msg = String(error.message || '').toLowerCase();
+        if (insertError) {
+            const msg = String(insertError.message || '').toLowerCase();
             if (msg.includes('ticket_conversations') && (msg.includes('does not exist') || msg.includes('relation') || msg.includes('schema cache'))) {
                 return { ok: false, reason: 'missing_table' };
             }
-            console.warn('Failed to insert inbound conversation row:', error.message);
+
+            // If the table exists but the column doesn't (older schema), retry without email_message_id.
+            if (isColumnMissingErrorMessage(insertError)) {
+                const fallback = {
+                    ticket_id: ticketId,
+                    message_type: 'inbound',
+                    from_email: email.from || null,
+                    to_email: email.to || null,
+                    subject: email.subject || null,
+                    message: (email.body || '').slice(0, 8000)
+                };
+                const { error: fallbackError } = await supabase
+                    .from('ticket_conversations')
+                    .insert(fallback);
+                if (fallbackError) {
+                    if (isUniqueViolation(fallbackError)) {
+                        return { ok: true, deduped: true };
+                    }
+                    console.warn('Failed to insert inbound conversation row (fallback):', fallbackError.message);
+                    return { ok: false, reason: 'insert_failed' };
+                }
+                return { ok: true, fallback: true };
+            }
+
+            if (isUniqueViolation(insertError)) {
+                return { ok: true, deduped: true };
+            }
+
+            console.warn('Failed to insert inbound conversation row:', insertError.message);
             return { ok: false, reason: 'insert_failed' };
         }
 

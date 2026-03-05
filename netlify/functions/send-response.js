@@ -25,6 +25,13 @@ function isMissingColumn(error) {
     return msg.includes('column') && msg.includes('does not exist');
 }
 
+function isUniqueViolation(error) {
+    if (!error) return false;
+    const code = String(error.code || '').toLowerCase();
+    const msg = String(error.message || '').toLowerCase();
+    return code === '23505' || msg.includes('duplicate key') || msg.includes('unique constraint');
+}
+
 function extractEmail(value) {
     if (!value) return null;
     const raw = String(value).trim();
@@ -70,6 +77,7 @@ async function insertOutboundConversation(supabase, row) {
 
     const fullInsert = {
         ...baseInsert,
+        ...(row.emailMessageId ? { email_message_id: row.emailMessageId } : {}),
         to_email: row.to,
         subject: row.subject
     };
@@ -79,12 +87,14 @@ async function insertOutboundConversation(supabase, row) {
             .from('ticket_conversations')
             .insert(fullInsert);
         if (error) {
+            if (isUniqueViolation(error)) return { ok: true, deduped: true };
             if (isMissingRelation(error)) return { ok: false, reason: 'missing_table' };
             if (isMissingColumn(error)) {
                 const { error: fallbackError } = await supabase
                     .from('ticket_conversations')
                     .insert(baseInsert);
                 if (fallbackError) {
+                    if (isUniqueViolation(fallbackError)) return { ok: true, deduped: true };
                     if (isMissingRelation(fallbackError)) return { ok: false, reason: 'missing_table' };
                     return { ok: false, reason: 'insert_failed', error: fallbackError };
                 }
@@ -95,6 +105,7 @@ async function insertOutboundConversation(supabase, row) {
         return { ok: true };
     } catch (error) {
         if (isMissingRelation(error)) return { ok: false, reason: 'missing_table' };
+        if (isUniqueViolation(error)) return { ok: true, deduped: true };
         return { ok: false, reason: 'exception', error };
     }
 }
@@ -220,7 +231,8 @@ exports.handler = async (event, context) => {
             from: settings.gmailAddress,
             to: toAddress,
             subject,
-            message
+            message,
+            emailMessageId: info && info.messageId ? info.messageId : null
         });
 
         // Best-effort ticket timestamp bump
