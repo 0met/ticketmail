@@ -1,10 +1,11 @@
 const { neon } = require('@neondatabase/serverless');
 
 function getDatabase() {
-    if (!process.env.DATABASE_URL) {
-        throw new Error('DATABASE_URL environment variable is not set');
+    const dbUrl = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
+    if (!dbUrl) {
+        throw new Error('SUPABASE_DB_URL (or DATABASE_URL) environment variable is not set');
     }
-    return neon(process.env.DATABASE_URL);
+    return neon(dbUrl);
 }
 
 exports.handler = async (event, context) => {
@@ -111,7 +112,8 @@ exports.handler = async (event, context) => {
         console.error('Error stack:', error.stack);
 
         const msg = String(error && error.message ? error.message : error);
-        const isMissingDbUrl = msg.toLowerCase().includes('database_url') && msg.toLowerCase().includes('not set');
+        const lower = msg.toLowerCase();
+        const isMissingDbUrl = (lower.includes('supabase_db_url') || lower.includes('database_url')) && lower.includes('not set');
 
         if (isMissingDbUrl) {
             return {
@@ -122,8 +124,8 @@ exports.handler = async (event, context) => {
                 },
                 body: JSON.stringify({
                     success: false,
-                    error: 'Cannot initialize tables because DATABASE_URL is not configured in Netlify environment variables.',
-                    hint: 'Set DATABASE_URL to your Supabase Postgres connection string (or run the CREATE TABLE statement in Supabase SQL editor).'
+                    error: 'Cannot initialize tables because SUPABASE_DB_URL (or DATABASE_URL) is not configured in Netlify environment variables.',
+                    hint: 'Set SUPABASE_DB_URL to your Supabase Postgres connection string (Settings → Database → Connection string), or run the CREATE TABLE statement in Supabase SQL editor.'
                 })
             };
         }
