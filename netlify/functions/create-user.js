@@ -5,7 +5,17 @@ function parseJsonBody(event) {
     if (body == null) return null;
     if (typeof body === 'object') return body;
 
-    const raw = String(body).trim();
+    let raw = String(body);
+    // Netlify may send base64-encoded bodies
+    if (event && event.isBase64Encoded) {
+        try {
+            raw = Buffer.from(raw, 'base64').toString('utf8');
+        } catch {
+            // ignore, fall back to raw
+        }
+    }
+
+    raw = raw.trim();
 
     try {
         return JSON.parse(raw);
@@ -59,17 +69,43 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const { email, fullName, role, password, createdBy, companyId, department, jobTitle, phone } = parseJsonBody(event) || {};
+        const parsed = parseJsonBody(event) || {};
+
+        // Accept a few aliases (older UI / different clients)
+        const email = parsed.email ?? parsed.userEmail ?? parsed.username ?? null;
+        const fullName = parsed.fullName ?? parsed.full_name ?? parsed.name ?? parsed.userFullName ?? null;
+        const role = parsed.role ?? parsed.userRole ?? null;
+        const password = parsed.password ?? parsed.userPassword ?? null;
+        const createdBy = parsed.createdBy ?? parsed.created_by ?? null;
+        const companyId = parsed.companyId ?? parsed.company_id ?? null;
+        const department = parsed.department ?? null;
+        const jobTitle = parsed.jobTitle ?? parsed.job_title ?? null;
+        const phone = parsed.phone ?? null;
 
         // Validate required fields
         if (!email || !fullName || !role || !password) {
+            const missing = [
+                !email ? 'email' : null,
+                !fullName ? 'fullName' : null,
+                !role ? 'role' : null,
+                !password ? 'password' : null
+            ].filter(Boolean);
             return {
                 statusCode: 400,
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ success: false, error: 'Email, full name, role, and password are required' })
+                body: JSON.stringify({
+                    success: false,
+                    error: 'Email, full name, role, and password are required',
+                    missing,
+                    debug: {
+                        bodyType: typeof (event && event.body),
+                        isBase64Encoded: !!(event && event.isBase64Encoded),
+                        parsedKeys: Object.keys(parsed || {}).filter(k => k !== 'password' && k !== 'userPassword')
+                    }
+                })
             };
         }
 

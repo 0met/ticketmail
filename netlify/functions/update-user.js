@@ -21,6 +21,23 @@ function getBearerToken(headers) {
     return authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : authHeader;
 }
 
+function parseJsonBody(event) {
+    const body = event && event.body;
+    if (body == null) return null;
+    if (typeof body === 'object') return body;
+
+    let raw = String(body);
+    if (event && event.isBase64Encoded) {
+        try {
+            raw = Buffer.from(raw, 'base64').toString('utf8');
+        } catch {
+            // ignore
+        }
+    }
+
+    return JSON.parse(raw);
+}
+
 function normalizeRole(role) {
     const raw = String(role || '').trim().toLowerCase();
     if (raw === 'superuser' || raw === 'super-user' || raw === 'super user') return 'super_user';
@@ -86,7 +103,7 @@ exports.handler = async (event, context) => {
             };
         }
 
-        const { userId, fullName, email, role, isActive, password, companyId, department, jobTitle, phone } = JSON.parse(event.body);
+        const { userId, fullName, email, role, isActive, password, companyId, department, jobTitle, phone } = parseJsonBody(event) || {};
         const supabase = getSupabaseClient();
 
         if (!userId) {
