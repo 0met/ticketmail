@@ -2600,6 +2600,27 @@
                 console.log('Sync result:', result);
                 
                 if (result.success) {
+                    // UX: update the Settings sync widgets immediately (no refresh required)
+                    try {
+                        const nowIso = new Date().toISOString();
+                        const lastSyncEl = document.getElementById('lastSyncValue');
+                        const lastSyncResultEl = document.getElementById('lastSyncResultValue');
+
+                        if (lastSyncEl) {
+                            lastSyncEl.textContent = formatLocalTimestamp(nowIso);
+                        }
+
+                        if (lastSyncResultEl) {
+                            const processed = typeof result.processed === 'number' ? result.processed : (Number(result.processed) || 0);
+                            const created = typeof result.tickets === 'number' ? result.tickets : (Number(result.tickets) || 0);
+                            const duplicates = typeof result.duplicates === 'number' ? result.duplicates : (Number(result.duplicates) || 0);
+                            const parts = [`processed ${processed}`, `created ${created}`, `duplicates ${duplicates}`];
+                            lastSyncResultEl.textContent = `Success — ${formatLocalTimestamp(nowIso)} (${parts.join(', ')})`;
+                        }
+                    } catch (_) {
+                        // ignore
+                    }
+
                     if (silent) {
                         // Show discrete notification for auto-refresh
                         const processed = result.processed || 0;
@@ -2686,6 +2707,8 @@
                                     ? 'Failed'
                                     : (r.status ? String(r.status) : 'Unknown');
 
+                            const at = r.at ? ` — ${formatLocalTimestamp(r.at)}` : '';
+
                             const parts = [];
                             if (typeof r.processed === 'number') parts.push(`processed ${r.processed}`);
                             if (typeof r.created === 'number') parts.push(`created ${r.created}`);
@@ -2693,7 +2716,7 @@
 
                             const counts = parts.length ? ` (${parts.join(', ')})` : '';
                             const msg = (label !== 'Success' && r.message) ? ` — ${String(r.message)}` : '';
-                            resultEl.textContent = `${label}${counts}${msg}`;
+                            resultEl.textContent = `${label}${at}${counts}${msg}`;
                         }
                     }
                 } else {
@@ -3367,7 +3390,9 @@
             const ticketNumberVal = currentTicket.ticket_number || currentTicket.ticketNumber || currentTicket.ticket || 'TK-XXXX';
             const createdAtRaw = currentTicket.created_at || currentTicket.date || currentTicket.createdAt || currentTicket.received_at || currentTicket.receivedAt;
             const updatedAtRaw = currentTicket.updated_at || currentTicket.updatedAt || currentTicket.created_at || createdAtRaw;
-            const customerEmail = currentTicket.customer_email || currentTicket.customerEmail || currentTicket.from_email || '';
+            const messageFromRaw = currentTicket.from_email || currentTicket.from || '';
+            const extractedFromEmail = extractEmailAddress(messageFromRaw);
+            const customerEmail = currentTicket.customer_email || currentTicket.customerEmail || extractedFromEmail || currentTicket.from_email || '';
             const customerName = currentTicket.customer_name || currentTicket.customerName || extractNameFromEmail(currentTicket.from_email) || '';
             const customerId = currentTicket.customer_id || currentTicket.customerId || '';
             const customerPhone = currentTicket.customer_phone || currentTicket.customerPhone || '';
