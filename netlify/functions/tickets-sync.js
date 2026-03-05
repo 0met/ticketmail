@@ -2,15 +2,6 @@ const { getDatabase, getUserSettings, saveTicket, touchUserSettingsUpdatedAt } =
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 
-function formatImapDate(value) {
-    const date = value instanceof Date ? value : new Date(value);
-    if (!date || Number.isNaN(date.getTime())) {
-        return null;
-    }
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${date.getDate()}-${months[date.getMonth()]}-${date.getFullYear()}`;
-}
-
 function sanitizeSearchCriteria(criteria) {
     if (!criteria) return ['UNSEEN'];
     if (!Array.isArray(criteria)) return [String(criteria)];
@@ -58,7 +49,7 @@ function connectToImap(settings, timeoutMs = 15000) {
 }
 
 // Fixed email fetching function with proper async handling
-function fetchEmails(imap, searchCriteria = ['OR', 'UNSEEN', ['SINCE', formatImapDate(Date.now() - 24 * 60 * 60 * 1000)]], maxEmails = 10) {
+function fetchEmails(imap, searchCriteria = [['OR', 'UNSEEN', ['SINCE', new Date(Date.now() - 24 * 60 * 60 * 1000)]]], maxEmails = 10) {
     return new Promise((resolve, reject) => {
         imap.openBox('INBOX', false, (err, box) => {
             if (err) {
@@ -471,10 +462,10 @@ exports.handler = async (event, context) => {
             console.log('Fetching emails...');
             // Default behavior should be resilient even if emails are marked as read.
             // Use UNSEEN OR SINCE (last 24h) then de-dup via message_id in DB.
-            const sinceDate = formatImapDate(Date.now() - 24 * 60 * 60 * 1000);
+            const sinceDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
             const searchCriteria = testAll
                 ? ['ALL']
-                : ['OR', 'UNSEEN', ['SINCE', sinceDate]];
+                : [['OR', 'UNSEEN', ['SINCE', sinceDate]]];
             const maxEmails = testAll ? (requestBody.maxEmails || 50) : 10; // larger default to reduce "stuck" behavior
             console.log(`Using search criteria: ${JSON.stringify(searchCriteria)}, maxEmails: ${maxEmails}`);
         const fetched = await fetchEmails(imap, searchCriteria, maxEmails);
