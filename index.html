@@ -4151,7 +4151,27 @@
                     })
                 });
 
-                const result = await response.json();
+                const rawText = await response.text();
+                let result = null;
+                try {
+                    result = rawText ? JSON.parse(rawText) : null;
+                } catch (_) {
+                    result = null;
+                }
+
+                if (!response.ok) {
+                    const errMsg =
+                        (result && (result.error || result.message))
+                        || rawText
+                        || `HTTP error! status: ${response.status}`;
+                    alert('❌ Failed to send response: ' + errMsg);
+                    return;
+                }
+
+                if (!result) {
+                    alert('❌ Failed to send response: Unexpected server response');
+                    return;
+                }
                 
                 if (result.success) {
                     // Add to conversation history
@@ -4170,7 +4190,8 @@
                     
                     alert('✅ Response sent successfully!');
                 } else {
-                    alert('❌ Failed to send response: ' + result.error);
+                    const errMsg = result.error || result.message || 'Unknown error';
+                    alert('❌ Failed to send response: ' + errMsg);
                 }
             } catch (error) {
                 console.error('Error sending response:', error);
