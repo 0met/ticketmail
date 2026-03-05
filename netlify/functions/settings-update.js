@@ -33,6 +33,16 @@ exports.handler = async (event, context) => {
         // Parse request body
         const settings = JSON.parse(event.body);
 
+        // Normalize inputs
+        settings.gmailAddress = String(settings.gmailAddress || '').trim().toLowerCase();
+        if (settings.appPassword !== undefined && settings.appPassword !== null) {
+            // Gmail app passwords may be pasted with spaces; strip all whitespace.
+            settings.appPassword = String(settings.appPassword).replace(/\s+/g, '');
+            if (!settings.appPassword) {
+                delete settings.appPassword;
+            }
+        }
+
         // Validate required fields
         if (!settings.gmailAddress) {
             return {

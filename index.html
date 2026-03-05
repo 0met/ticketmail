@@ -2341,8 +2341,9 @@
         });
 
         async function saveSettings() {
-            const gmailAddress = document.getElementById('gmailAddress').value;
-            const appPassword = document.getElementById('appPassword').value;
+            const gmailAddress = String(document.getElementById('gmailAddress').value || '').trim();
+            // Gmail app passwords are often shown with spaces; strip all whitespace.
+            const appPassword = String(document.getElementById('appPassword').value || '').replace(/\s+/g, '');
 
             const settings = {
                 gmailAddress,
@@ -2361,11 +2362,23 @@
                 console.log('Response status:', response.status);
                 console.log('Response headers:', response.headers);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                let result = null;
+                try {
+                    result = await response.json();
+                } catch (_) {
+                    result = null;
                 }
-                
-                const result = await response.json();
+
+                if (!response.ok) {
+                    const message = (result && (result.error || result.message))
+                        ? (result.error || result.message)
+                        : `HTTP error! status: ${response.status}`;
+
+                    const hint = result && result.hint ? `\n\nHint: ${result.hint}` : '';
+                    alert('❌ ' + message + hint);
+                    return;
+                }
+
                 console.log('Response result:', result);
                 
                 if (result.success) {
