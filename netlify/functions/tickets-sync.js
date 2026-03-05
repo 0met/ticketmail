@@ -1,4 +1,4 @@
-const { getDatabase, getUserSettings, saveTicket, touchUserSettingsUpdatedAt } = require('./lib/database');
+const { getDatabase, getUserSettings, saveTicket, touchUserSettingsUpdatedAt, recordLastSyncResult } = require('./lib/database');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 
@@ -329,6 +329,7 @@ exports.handler = async (event, context) => {
     }
 
     let imap = null;
+    const syncStartedAt = new Date().toISOString();
 
     try {
         console.log('Starting email sync process...');
@@ -342,6 +343,12 @@ exports.handler = async (event, context) => {
         } catch (settingsError) {
             console.error('Error getting user settings:', settingsError);
             console.error('Settings error stack:', settingsError.stack);
+
+            await recordLastSyncResult({
+                at: syncStartedAt,
+                status: 'fail',
+                message: `Database error while fetching settings: ${settingsError.message}`
+            });
             
             // Check if it's a table not found error
             if (settingsError.message.includes('relation "user_settings" does not exist') || 
@@ -377,6 +384,13 @@ exports.handler = async (event, context) => {
         
         if (!settings) {
             console.log('No settings found in database - likely not configured yet');
+
+            await recordLastSyncResult({
+                at: syncStartedAt,
+                status: 'fail',
+                message: 'Gmail settings not found in database'
+            });
+
             return {
                 statusCode: 400,
                 headers: {
@@ -394,6 +408,13 @@ exports.handler = async (event, context) => {
         // Validate settings
         if (!settings.gmailAddress || !settings.appPassword) {
             console.log('Invalid settings - missing email or password');
+
+            await recordLastSyncResult({
+                at: syncStartedAt,
+                status: 'fail',
+                message: 'Invalid Gmail settings: missing email or app password'
+            });
+
             return {
                 statusCode: 400,
                 headers: {
@@ -410,6 +431,13 @@ exports.handler = async (event, context) => {
         // Fail fast if the tickets table is missing, before connecting to IMAP.
         const ticketsCheck = await verifyTicketsTableExists();
         if (!ticketsCheck.ok) {
+
+            await recordLastSyncResult({
+                at: syncStartedAt,
+                status: 'fail',
+                message: ticketsCheck.error
+            });
+
             return {
                 statusCode: ticketsCheck.statusCode || 500,
                 headers: {
@@ -432,6 +460,13 @@ exports.handler = async (event, context) => {
             console.log('Connected to Gmail successfully');
         } catch (imapError) {
             console.error('IMAP connection failed:', imapError);
+
+            await recordLastSyncResult({
+                at: syncStartedAt,
+                status: 'fail',
+                message: `Failed to connect to Gmail: ${imapError.message}`
+            });
+
             return {
                 statusCode: 400,
                 headers: {
@@ -474,6 +509,15 @@ exports.handler = async (event, context) => {
         console.log(`Found ${emails.length} emails`);
 
         if (emails.length === 0) {
+            await recordLastSyncResult({
+                at: syncStartedAt,
+                status: 'success',
+                message: 'No new emails found',
+                processed: 0,
+                created: 0,
+                duplicates: 0
+            });
+            await touchUserSettingsUpdatedAt(syncStartedAt);
             return {
                 statusCode: 200,
                 headers: {
@@ -566,7 +610,15 @@ exports.handler = async (event, context) => {
         }
 
         // Record last sync timestamp (best-effort)
-        await touchUserSettingsUpdatedAt(new Date().toISOString());
+        await recordLastSyncResult({
+            at: syncStartedAt,
+            status: 'success',
+            message: 'Email sync completed successfully',
+            processed: emails.length,
+            created: ticketsCreated,
+            duplicates: ticketsDuplicate
+        });
+        await touchUserSettingsUpdatedAt(syncStartedAt);
 
         return {
             statusCode: 200,
@@ -596,6 +648,13 @@ exports.handler = async (event, context) => {
     } catch (error) {
         console.error('Error in email sync:', error);
         console.error('Error stack:', error.stack);
+
+        await recordLastSyncResult({
+            at: syncStartedAt,
+            status: 'fail',
+            message: error && error.message ? error.message : String(error)
+        });
+        await touchUserSettingsUpdatedAt(syncStartedAt);
         
         return {
             statusCode: 500,

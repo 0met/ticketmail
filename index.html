@@ -911,6 +911,10 @@
                             <div style="margin-top: 0.75rem; color: #64748b; font-size: 0.875rem;">
                                 <strong>Last sync:</strong> <span id="lastSyncValue">Loading…</span>
                             </div>
+
+                            <div style="margin-top: 0.25rem; color: #64748b; font-size: 0.875rem;">
+                                <strong>Last sync result:</strong> <span id="lastSyncResultValue">Loading…</span>
+                            </div>
                 </form>
 
                 <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
@@ -2644,9 +2648,11 @@
 
         async function loadSyncStatus() {
             const el = document.getElementById('lastSyncValue');
-            if (!el) return;
+            const resultEl = document.getElementById('lastSyncResultValue');
+            if (!el && !resultEl) return;
 
-            el.textContent = 'Loading…';
+            if (el) el.textContent = 'Loading…';
+            if (resultEl) resultEl.textContent = 'Loading…';
             try {
                 const response = await fetch('/.netlify/functions/get-sync-status', { method: 'GET' });
                 if (!response.ok) {
@@ -2657,19 +2663,47 @@
                 if (result && result.success) {
                     const ts = result.lastSyncAt;
                     const source = result.source;
-                    if (!ts) {
-                        el.textContent = 'Never';
-                    } else if (source === 'tickets.created_at') {
-                        el.textContent = `${formatLocalTimestamp(ts)} (last ticket created)`;
-                    } else {
-                        el.textContent = formatLocalTimestamp(ts);
+
+                    if (el) {
+                        if (!ts) {
+                            el.textContent = 'Never';
+                        } else if (source === 'tickets.created_at') {
+                            el.textContent = `${formatLocalTimestamp(ts)} (last ticket created)`;
+                        } else {
+                            el.textContent = formatLocalTimestamp(ts);
+                        }
+                    }
+
+                    if (resultEl) {
+                        const r = result.lastSyncResult;
+                        if (!r) {
+                            resultEl.textContent = 'Unavailable';
+                        } else {
+                            const rawStatus = String(r.status || '').toLowerCase();
+                            const label = rawStatus === 'success'
+                                ? 'Success'
+                                : (rawStatus === 'fail' || rawStatus === 'failed' || rawStatus === 'error')
+                                    ? 'Failed'
+                                    : (r.status ? String(r.status) : 'Unknown');
+
+                            const parts = [];
+                            if (typeof r.processed === 'number') parts.push(`processed ${r.processed}`);
+                            if (typeof r.created === 'number') parts.push(`created ${r.created}`);
+                            if (typeof r.duplicates === 'number') parts.push(`duplicates ${r.duplicates}`);
+
+                            const counts = parts.length ? ` (${parts.join(', ')})` : '';
+                            const msg = (label !== 'Success' && r.message) ? ` — ${String(r.message)}` : '';
+                            resultEl.textContent = `${label}${counts}${msg}`;
+                        }
                     }
                 } else {
-                    el.textContent = 'Unavailable';
+                    if (el) el.textContent = 'Unavailable';
+                    if (resultEl) resultEl.textContent = 'Unavailable';
                 }
             } catch (error) {
                 console.warn('Failed to load sync status:', error.message);
-                el.textContent = 'Unavailable';
+                if (el) el.textContent = 'Unavailable';
+                if (resultEl) resultEl.textContent = 'Unavailable';
             }
         }
 

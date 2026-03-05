@@ -46,12 +46,23 @@ exports.handler = async (event, context) => {
         try {
             const { data, error } = await supabase
                 .from('user_settings')
-                .select('updated_at, created_at, gmail_address')
+                .select('updated_at, created_at, gmail_address, last_sync_at, last_sync_status, last_sync_message, last_sync_processed, last_sync_created, last_sync_duplicates')
                 .order('created_at', { ascending: false })
                 .limit(1);
 
             if (!error && data && data.length > 0) {
                 settingsRow = data[0];
+            }
+            if (error) {
+                // Older installs may not have last_sync_* columns yet; retry minimal select.
+                const { data: fallbackData, error: fallbackError } = await supabase
+                    .from('user_settings')
+                    .select('updated_at, created_at, gmail_address')
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                if (!fallbackError && fallbackData && fallbackData.length > 0) {
+                    settingsRow = fallbackData[0];
+                }
             }
         } catch (_) {
             // ignore
@@ -81,6 +92,24 @@ exports.handler = async (event, context) => {
             source = 'tickets.created_at';
         }
 
+        const lastSyncResult = settingsRow && (
+            settingsRow.last_sync_at ||
+            settingsRow.last_sync_status ||
+            settingsRow.last_sync_message ||
+            settingsRow.last_sync_processed !== undefined ||
+            settingsRow.last_sync_created !== undefined ||
+            settingsRow.last_sync_duplicates !== undefined
+        )
+            ? {
+                at: settingsRow.last_sync_at || null,
+                status: settingsRow.last_sync_status || null,
+                message: settingsRow.last_sync_message || null,
+                processed: settingsRow.last_sync_processed ?? null,
+                created: settingsRow.last_sync_created ?? null,
+                duplicates: settingsRow.last_sync_duplicates ?? null
+            }
+            : null;
+
         return {
             statusCode: 200,
             headers: {
@@ -91,7 +120,8 @@ exports.handler = async (event, context) => {
                 success: true,
                 now: new Date().toISOString(),
                 lastSyncAt,
-                source
+                source,
+                lastSyncResult
             })
         };
     } catch (error) {

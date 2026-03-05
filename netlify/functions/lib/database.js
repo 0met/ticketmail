@@ -101,6 +101,48 @@ async function touchUserSettingsUpdatedAt(isoTimestamp = new Date().toISOString(
     }
 }
 
+async function recordLastSyncResult({
+    at = new Date().toISOString(),
+    status = null,
+    message = null,
+    processed = null,
+    created = null,
+    duplicates = null
+} = {}) {
+    try {
+        const supabase = getDatabase();
+
+        const update = {
+            last_sync_at: at,
+            ...(status !== null ? { last_sync_status: status } : {}),
+            ...(message !== null ? { last_sync_message: String(message).slice(0, 500) } : {}),
+            ...(processed !== null ? { last_sync_processed: processed } : {}),
+            ...(created !== null ? { last_sync_created: created } : {}),
+            ...(duplicates !== null ? { last_sync_duplicates: duplicates } : {})
+        };
+
+        const { error } = await supabase
+            .from('user_settings')
+            .update(update)
+            .neq('id', 0);
+
+        if (error) {
+            // Best-effort: older installs may not have the columns yet.
+            const msg = String(error.message || '').toLowerCase();
+            const likelyMissingColumn = msg.includes('last_sync_') || msg.includes('column') || msg.includes('does not exist');
+            if (likelyMissingColumn) {
+                return false;
+            }
+            throw error;
+        }
+
+        return true;
+    } catch (error) {
+        console.warn('Could not record last sync result:', error && error.message ? error.message : error);
+        return false;
+    }
+}
+
 // Database connection - initialized on demand
 let supabase = null;
 
@@ -886,6 +928,7 @@ module.exports = {
     updateTicketStatus,
     updateTicket,
     touchUserSettingsUpdatedAt,
+    recordLastSyncResult,
     encryptData,
     decryptData
 };

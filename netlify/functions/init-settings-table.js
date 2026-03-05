@@ -87,6 +87,16 @@ exports.handler = async (event, context) => {
             WHERE created_at IS NULL OR updated_at IS NULL;
         `;
 
+        // Columns used to show a minimal "Last sync result" in the UI
+        await sql`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS last_sync_at TIMESTAMP;`;
+        await sql`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS last_sync_status TEXT;`;
+        await sql`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS last_sync_message TEXT;`;
+        await sql`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS last_sync_processed INTEGER;`;
+        await sql`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS last_sync_created INTEGER;`;
+        await sql`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS last_sync_duplicates INTEGER;`;
+
+        actions.push('Ensured last_sync_* columns exist');
+
         // Check current settings count
         const settingsCount = await sql`
             SELECT COUNT(*) as count FROM user_settings
