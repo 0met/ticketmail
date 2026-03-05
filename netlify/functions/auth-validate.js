@@ -92,9 +92,13 @@ exports.handler = async (event, context) => {
             };
         }
 
-        const normalizedRole = (session.users.role || 'customer').toString().trim().toLowerCase();
+        let normalizedRole = (session.users.role || 'customer').toString().trim().toLowerCase();
+        if (normalizedRole === 'superuser' || normalizedRole === 'super-user' || normalizedRole === 'super user') {
+            normalizedRole = 'super_user';
+        }
         const permissionsByRole = {
             admin: ['admin_access', 'ticket_management', 'user_management', 'settings_access'],
+            super_user: ['ticket_management', 'settings_access'],
             agent: ['ticket_management', 'settings_access'],
             customer: ['customer_access', 'settings_access']
         };

@@ -2,6 +2,16 @@ const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
+function normalizeRole(role) {
+    const raw = String(role || '').trim().toLowerCase();
+    if (raw === 'superuser' || raw === 'super-user' || raw === 'super user') return 'super_user';
+    return raw;
+}
+
+function isValidRole(role) {
+    return ['admin', 'super_user', 'agent', 'customer'].includes(role);
+}
+
 exports.handler = async (event, context) => {
     // Handle CORS
     if (event.httpMethod === 'OPTIONS') {
@@ -55,7 +65,14 @@ exports.handler = async (event, context) => {
                         body: JSON.stringify({ success: false, error: 'Role is required for update_role action' })
                     };
                 }
-                updateFields.role = updateData.role;
+                updateFields.role = normalizeRole(updateData.role);
+                if (!updateFields.role || !isValidRole(updateFields.role)) {
+                    return {
+                        statusCode: 400,
+                        headers: { 'Access-Control-Allow-Origin': '*' },
+                        body: JSON.stringify({ success: false, error: 'Invalid role. Must be admin, super_user, agent, or customer' })
+                    };
+                }
                 break;
             case 'update_profile':
                 if (updateData.fullName) updateFields.full_name = updateData.fullName;

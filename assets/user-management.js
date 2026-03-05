@@ -178,6 +178,7 @@ function renderUsersTable() {
         const safeUserEmailAttr = escapeHtmlAttribute(user.email || '');
         const roleColors = {
             admin: 'background: #ef4444; color: white;',
+            super_user: 'background: #0ea5e9; color: white;',
             agent: 'background: #f59e0b; color: white;',
             customer: 'background: #8b5cf6; color: white;'
         };

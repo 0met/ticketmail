@@ -239,6 +239,7 @@ exports.handler = async (event, context) => {
                 total: (users || []).length,
                 roles: {
                     admin: (users || []).filter(u => u.role === 'admin').length,
+                    super_user: (users || []).filter(u => u.role === 'super_user').length,
                     agent: (users || []).filter(u => u.role === 'agent').length,
                     customer: (users || []).filter(u => u.role === 'customer').length
                 }

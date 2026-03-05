@@ -21,6 +21,16 @@ function getBearerToken(headers) {
     return authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : authHeader;
 }
 
+function normalizeRole(role) {
+    const raw = String(role || '').trim().toLowerCase();
+    if (raw === 'superuser' || raw === 'super-user' || raw === 'super user') return 'super_user';
+    return raw;
+}
+
+function isValidRole(role) {
+    return ['admin', 'super_user', 'agent', 'customer'].includes(role);
+}
+
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
@@ -112,7 +122,17 @@ exports.handler = async (event, context) => {
 
         if (fullName !== undefined) updates.full_name = fullName || null;
         if (email !== undefined) updates.email = email;
-        if (role !== undefined) updates.role = role;
+        if (role !== undefined) {
+            const normalizedRole = normalizeRole(role);
+            if (!normalizedRole || !isValidRole(normalizedRole)) {
+                return {
+                    statusCode: 400,
+                    headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ success: false, error: 'Invalid role. Must be admin, super_user, agent, or customer' })
+                };
+            }
+            updates.role = normalizedRole;
+        }
         if (typeof isActive === 'boolean') updates.is_active = isActive;
         if (companyId !== undefined) {
             updates.company_id = companyId === null || companyId === '' ? null : companyId;

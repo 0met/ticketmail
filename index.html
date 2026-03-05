@@ -223,7 +223,7 @@
             </div>
             
             <ul class="nav-menu">
-                <li class="nav-item" data-roles="admin,agent,customer">
+                <li class="nav-item" data-roles="admin,super_user,agent,customer">
                     <a href="#" class="nav-link active" data-page="dashboard">
                         <span class="nav-icon">📊</span>
                         Dashboard
@@ -1170,6 +1170,7 @@
                                         style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
                                         <option value="customer">Customer</option>
                                         <option value="agent">Agent</option>
+                                        <option value="super_user">⭐ Super User</option>
                                         <option value="admin">Admin</option>
                                     </select>
                                 </div>
@@ -1395,7 +1396,9 @@
         }
 
         function normalizeRole(role) {
-            return (role || 'customer').toString().trim().toLowerCase();
+            const raw = (role || 'customer').toString().trim().toLowerCase();
+            if (raw === 'superuser' || raw === 'super-user' || raw === 'super user') return 'super_user';
+            return raw;
         }
 
         function normalizeAuthUser(user) {
@@ -1770,7 +1773,7 @@
             const permissions = authState.permissions || [];
 
             // Admin actions
-            if (userRole === 'admin' || userRole === 'super_user' || permissions.includes('admin_access')) {
+            if (userRole === 'admin' || permissions.includes('admin_access')) {
                 enableAdminActions();
             }
 
