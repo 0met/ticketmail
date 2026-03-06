@@ -558,6 +558,144 @@
     background: rgba(255, 255, 255, 0.18) !important;
 }
 
+/* Dark Mode (site-wide) */
+html.theme-dark {
+    color-scheme: dark;
+}
+
+html.theme-dark body {
+    background: linear-gradient(135deg, #111827 0%, #1f2937 100%) !important;
+}
+
+html.theme-dark .sidebar {
+    background: linear-gradient(180deg, rgba(17, 24, 39, 0.72) 0%, rgba(17, 24, 39, 0.56) 100%) !important;
+    border-right-color: rgba(255, 255, 255, 0.10) !important;
+    box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+        0 0 120px rgba(99, 102, 241, 0.10) !important;
+}
+
+html.theme-dark .nav-link {
+    color: rgba(255, 255, 255, 0.82) !important;
+}
+
+html.theme-dark .nav-link:hover,
+html.theme-dark .nav-link.active {
+    background: rgba(255, 255, 255, 0.10) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: rgba(255, 255, 255, 0.96) !important;
+}
+
+html.theme-dark .main-content {
+    background: rgba(17, 24, 39, 0.12) !important;
+}
+
+html.theme-dark .page-header {
+    background: rgba(17, 24, 39, 0.58) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark .page-title {
+    color: #f9fafb !important;
+}
+
+html.theme-dark .page-subtitle {
+    color: rgba(229, 231, 235, 0.85) !important;
+}
+
+html.theme-dark .chart-container,
+html.theme-dark .ticket-card,
+html.theme-dark .ticket-detail-panel,
+html.theme-dark .filters-container,
+html.theme-dark .data-table,
+html.theme-dark .company-card,
+html.theme-dark .conversation-item,
+html.theme-dark .modal-content,
+html.theme-dark .login-card {
+    background: rgba(17, 24, 39, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark .modal-header,
+html.theme-dark .ticket-header,
+html.theme-dark .ticket-actions,
+html.theme-dark .ticket-response {
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark .chart-container h3,
+html.theme-dark #analytics h3[style],
+html.theme-dark #settings h3[style],
+html.theme-dark #settings h4[style] {
+    color: #e5e7eb !important;
+}
+
+html.theme-dark #settings p[style],
+html.theme-dark #analytics p[style],
+html.theme-dark #settings small,
+html.theme-dark #analytics small {
+    color: rgba(229, 231, 235, 0.78) !important;
+}
+
+html.theme-dark #settings div[style*="background: #f8fafc"],
+html.theme-dark #analytics div[style*="background: #f8fafc"] {
+    background: rgba(17, 24, 39, 0.55) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark .breakdown-item,
+html.theme-dark .trend-item {
+    background: rgba(17, 24, 39, 0.55) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark .breakdown-item,
+html.theme-dark .trend-item,
+html.theme-dark .performance-table,
+html.theme-dark .performance-table th,
+html.theme-dark .performance-table td {
+    color: #e5e7eb !important;
+}
+
+html.theme-dark .performance-table {
+    background: rgba(17, 24, 39, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark .performance-table th {
+    background: rgba(17, 24, 39, 0.72) !important;
+}
+
+html.theme-dark .performance-table th,
+html.theme-dark .performance-table td {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.theme-dark .form-input,
+html.theme-dark select,
+html.theme-dark textarea,
+html.theme-dark input[type="text"],
+html.theme-dark input[type="email"],
+html.theme-dark input[type="password"] {
+    background: rgba(17, 24, 39, 0.72) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f9fafb !important;
+}
+
+html.theme-dark .form-input::placeholder,
+html.theme-dark textarea::placeholder {
+    color: rgba(229, 231, 235, 0.55) !important;
+}
+
+html.theme-dark .setting-label {
+    color: #f9fafb !important;
+}
+
+html.theme-dark .setting-hint {
+    color: rgba(229, 231, 235, 0.78) !important;
+}
+
 #user-management input[style*="border: 1px solid #d1d5db"],
 #user-management select[style*="border: 1px solid #d1d5db"] {
     background: rgba(255, 255, 255, 0.72) !important;

@@ -877,6 +877,24 @@
                 </div>
 
                 <div class="settings-sections" style="display: grid; gap: 2rem;">
+                    <!-- Appearance Settings -->
+                    <div class="settings-section">
+                        <h3 style="margin-bottom: 1rem; color: #374151;">🌙 Appearance</h3>
+                        <p style="color: #6b7280; margin-bottom: 1.25rem;">Choose a theme for the app</p>
+
+                        <div class="setting-row">
+                            <div class="setting-row-text">
+                                <div class="setting-label">Dark Mode</div>
+                                <div class="setting-hint">Enable a darker theme for low-light environments</div>
+                            </div>
+
+                            <label class="toggle-switch" for="darkModeToggle">
+                                <input id="darkModeToggle" type="checkbox" onchange="toggleDarkMode(this.checked)">
+                                <span class="toggle-slider" aria-hidden="true"></span>
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- Branding Settings Section -->
                     <div class="settings-section">
                         <h3 style="margin-bottom: 1rem; color: #374151;">🎨 Branding Settings</h3>
@@ -4699,9 +4717,43 @@
             }
         });
 
+        const THEME_STORAGE_KEY = 'ticketmail_theme';
+
+        function applyTheme(theme) {
+            const normalized = theme === 'dark' ? 'dark' : 'light';
+            document.documentElement.classList.toggle('theme-dark', normalized === 'dark');
+            try {
+                localStorage.setItem(THEME_STORAGE_KEY, normalized);
+            } catch (_) {
+                // ignore
+            }
+
+            const toggle = document.getElementById('darkModeToggle');
+            if (toggle) {
+                toggle.checked = normalized === 'dark';
+            }
+        }
+
+        function initTheme() {
+            let saved = 'light';
+            try {
+                saved = localStorage.getItem(THEME_STORAGE_KEY) || 'light';
+            } catch (_) {
+                saved = 'light';
+            }
+            applyTheme(saved);
+        }
+
+        function toggleDarkMode(enabled) {
+            applyTheme(enabled ? 'dark' : 'light');
+        }
+
         // Start the application
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('📱 DOM Content Loaded - Starting app initialization');
+
+            // Apply saved theme early to avoid a flash of incorrect theme.
+            initTheme();
 
             // Surface runtime JS errors as a toast to avoid silent blank screens.
             window.addEventListener('error', (e) => {
