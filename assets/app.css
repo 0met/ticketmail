@@ -540,7 +540,9 @@
             width: 92%;
             max-width: 1000px; /* a bit wider for desktop */
             max-height: 92vh;
-            overflow-y: auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
 
@@ -577,6 +579,11 @@
 
         .modal-body {
             padding: 2rem;
+            overflow-y: auto;
+            flex: 1 1 auto;
+            /* Inset the scrollbar so it doesn't hug the rounded edge */
+            margin-right: 8px;
+            scrollbar-gutter: stable;
         }
 
         .ticket-details {
@@ -983,9 +990,18 @@
             width: 90%;
             max-width: 400px;
             max-height: 90vh;
-            overflow-y: auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             animation: slideUp 0.3s ease-out;
+        }
+
+        .login-form {
+            overflow-y: auto;
+            flex: 1 1 auto;
+            margin-right: 8px;
+            scrollbar-gutter: stable;
         }
 
         @keyframes slideUp {

@@ -205,8 +205,9 @@
         0 0 0 1px rgba(255, 255, 255, 0.14) inset,
         0 0 120px rgba(99, 102, 241, 0.20);
     position: relative;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 #ticketModal .modal-content::before {

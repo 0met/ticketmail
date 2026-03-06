@@ -64,7 +64,9 @@
     max-width: 600px;
     width: 90%;
     max-height: 90vh;
-    overflow-y: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     animation: slideUp 0.3s ease;
 }
 
@@ -106,6 +108,10 @@
 
 .modal-body {
     padding: 2rem;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    margin-right: 8px;
+    scrollbar-gutter: stable;
 }
 
 .modal-footer {
