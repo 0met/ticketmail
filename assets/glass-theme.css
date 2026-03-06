@@ -631,6 +631,33 @@ html.theme-dark .nav-link.active {
     color: rgba(255, 255, 255, 0.96) !important;
 }
 
+html.theme-dark .user-profile-bottom {
+    border-top-color: rgba(255, 255, 255, 0.10) !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
+}
+
+html.theme-dark .user-profile-card {
+    background: rgba(255, 255, 255, 0.10) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.30) !important;
+}
+
+html.theme-dark .user-profile-card:hover {
+    background: rgba(255, 255, 255, 0.14) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+html.theme-dark .user-role-badge span,
+html.theme-dark .user-role {
+    background: rgba(255, 255, 255, 0.16) !important;
+    color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.theme-dark .logout-btn {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: rgba(255, 255, 255, 0.82) !important;
+}
+
 html.theme-dark .main-content {
     background: rgba(17, 24, 39, 0.12) !important;
 }
