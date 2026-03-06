@@ -319,6 +319,7 @@ function openUserModal(userId = null) {
     
     modal.style.display = 'flex';
     modal.classList.add('active');
+    if (typeof window.updateScrollLock === 'function') window.updateScrollLock();
 }
 
 function closeUserModal() {
@@ -326,6 +327,7 @@ function closeUserModal() {
     if (!modal) return;
     modal.style.display = 'none';
     modal.classList.remove('active');
+    if (typeof window.updateScrollLock === 'function') window.updateScrollLock();
 }
 
 async function saveUser(event) {

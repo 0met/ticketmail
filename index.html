@@ -1402,6 +1402,41 @@
             return raw;
         }
 
+        function updateScrollLock() {
+            const html = document.documentElement;
+            const body = document.body;
+            if (!html || !body) return;
+
+            const isActiveModal = (id) => {
+                const el = document.getElementById(id);
+                return !!el && el.classList && el.classList.contains('active');
+            };
+
+            const isVisibleOverlay = (id) => {
+                const el = document.getElementById(id);
+                if (!el) return false;
+                const inlineDisplay = (el.style && el.style.display) || '';
+                if (inlineDisplay === 'none') return false;
+                try {
+                    return window.getComputedStyle(el).display !== 'none';
+                } catch (_) {
+                    return inlineDisplay !== 'none';
+                }
+            };
+
+            const shouldLock =
+                isActiveModal('ticketModal') ||
+                isActiveModal('newTicketModal') ||
+                isActiveModal('userModal') ||
+                isVisibleOverlay('loginOverlay') ||
+                isVisibleOverlay('userCreationOverlay');
+
+            html.classList.toggle('scroll-locked', shouldLock);
+            body.classList.toggle('scroll-locked', shouldLock);
+        }
+
+        window.updateScrollLock = updateScrollLock;
+
         function normalizeAuthUser(user) {
             if (!user || typeof user !== 'object') return null;
             return {
@@ -1423,12 +1458,14 @@
             
             document.getElementById('loginOverlay').style.display = 'flex';
             document.querySelector('.auth-required').style.display = 'none';
+            updateScrollLock();
         }
 
         function hideLoginOverlay() {
             console.log('🙈 Hiding login overlay - showing authenticated UI');
             document.getElementById('loginOverlay').style.display = 'none';
             document.querySelector('.auth-required').style.display = 'flex';
+            updateScrollLock();
         }
 
         // Tab switching in login modal
@@ -1913,6 +1950,7 @@
                 return;
             }
             document.getElementById('userCreationOverlay').style.display = 'flex';
+            updateScrollLock();
             // Reset form
             document.getElementById('userCreationForm').reset();
             document.getElementById('newUserActive').checked = true;
@@ -1953,6 +1991,7 @@
 
         function closeUserCreationModal() {
             document.getElementById('userCreationOverlay').style.display = 'none';
+            updateScrollLock();
         }
 
         // Handle user creation form submission (guard if form is missing)
@@ -3435,7 +3474,7 @@
 
             // Build modal content
             document.getElementById('ticketModal').innerHTML = `
-                <div class="modal-content" style="max-width: 90vw; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-content">
                     <div class="modal-header">
                         <div style="display: flex; flex-direction: column; gap: 2px;">
                             <h2 class="modal-title">${currentTicket.subject || '(No Subject)'}</h2>
@@ -3585,7 +3624,7 @@
 
             // Show modal
             document.getElementById('ticketModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
+            updateScrollLock();
 
             // Load conversation history
             loadConversationHistory(normalizedTicketId);
@@ -3606,7 +3645,7 @@
 
         function closeTicketModal() {
             document.getElementById('ticketModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
+            updateScrollLock();
             currentTicket = null;
             document.getElementById('responseText').value = '';
         }
@@ -3803,7 +3842,7 @@
         // New Ticket Modal Functions
         function openNewTicketModal() {
             document.getElementById('newTicketModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
+            updateScrollLock();
             
             // Clear form
             document.getElementById('newTicketForm').reset();
@@ -3859,7 +3898,7 @@
 
         function closeNewTicketModal() {
             document.getElementById('newTicketModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
+            updateScrollLock();
         }
 
         async function submitNewTicket(event) {

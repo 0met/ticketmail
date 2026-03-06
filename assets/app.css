@@ -534,6 +534,15 @@
             animation: fadeIn 0.3s ease-in-out;
         }
 
+        html.scroll-locked,
+        body.scroll-locked {
+            overflow: hidden;
+        }
+
+        body.scroll-locked .main-content {
+            overflow: hidden !important;
+        }
+
         .modal-content {
             background: white;
             border-radius: 12px;
