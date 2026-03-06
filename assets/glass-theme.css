@@ -591,9 +591,15 @@ html.theme-dark .main-content {
     background: rgba(17, 24, 39, 0.12) !important;
 }
 
-html.theme-dark .page-header {
+html.theme-dark .page {
     background: rgba(17, 24, 39, 0.58) !important;
-    border-color: rgba(255, 255, 255, 0.10) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
+    color: rgba(229, 231, 235, 0.92) !important;
+}
+
+html.theme-dark .page-header {
+    background: transparent !important;
+    border-bottom-color: rgba(255, 255, 255, 0.10) !important;
 }
 
 html.theme-dark .page-title {
@@ -605,6 +611,7 @@ html.theme-dark .page-subtitle {
 }
 
 html.theme-dark .chart-container,
+html.theme-dark .tickets-list-panel,
 html.theme-dark .ticket-card,
 html.theme-dark .ticket-detail-panel,
 html.theme-dark .filters-container,
@@ -615,6 +622,24 @@ html.theme-dark .modal-content,
 html.theme-dark .login-card {
     background: rgba(17, 24, 39, 0.62) !important;
     border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark .ticket-subject {
+    color: #f9fafb !important;
+}
+
+html.theme-dark .ticket-meta {
+    color: rgba(229, 231, 235, 0.72) !important;
+}
+
+html.theme-dark .tickets-list .ticket-card:hover {
+    background: rgba(31, 41, 55, 0.60) !important;
+    border-color: rgba(59, 130, 246, 0.55) !important;
+}
+
+html.theme-dark .tickets-list .ticket-card.selected {
+    background: rgba(59, 130, 246, 0.16) !important;
+    border-color: rgba(59, 130, 246, 0.65) !important;
 }
 
 html.theme-dark .modal-header,
