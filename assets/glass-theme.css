@@ -558,6 +558,50 @@
     background: rgba(255, 255, 255, 0.18) !important;
 }
 
+html.theme-dark #user-management .tab-navigation {
+    border-bottom-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark #user-management .tab-btn {
+    color: rgba(229, 231, 235, 0.78) !important;
+}
+
+html.theme-dark #user-management .tab-btn:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.theme-dark #user-management .tab-btn.active {
+    color: rgba(199, 210, 254, 0.95) !important;
+    border-bottom-color: rgba(99, 102, 241, 0.80) !important;
+}
+
+html.theme-dark #user-management .filters-container,
+html.theme-dark #user-management .data-table,
+html.theme-dark #user-management .company-card {
+    background: rgba(17, 24, 39, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark #user-management .data-table table {
+    color: rgba(229, 231, 235, 0.92) !important;
+}
+
+html.theme-dark #user-management .data-table thead th {
+    background: rgba(17, 24, 39, 0.72) !important;
+    color: rgba(229, 231, 235, 0.92) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark #user-management .data-table tbody td {
+    color: rgba(229, 231, 235, 0.88) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.theme-dark #user-management .data-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
 /* Dark Mode (site-wide) */
 html.theme-dark {
     color-scheme: dark;
@@ -721,8 +765,15 @@ html.theme-dark .setting-hint {
     color: rgba(229, 231, 235, 0.78) !important;
 }
 
-#user-management input[style*="border: 1px solid #d1d5db"],
-#user-management select[style*="border: 1px solid #d1d5db"] {
+html:not(.theme-dark) #user-management input[style*="border: 1px solid #d1d5db"],
+html:not(.theme-dark) #user-management select[style*="border: 1px solid #d1d5db"] {
     background: rgba(255, 255, 255, 0.72) !important;
     border-color: rgba(148, 163, 184, 0.70) !important;
+}
+
+html.theme-dark #user-management input[style*="border: 1px solid #d1d5db"],
+html.theme-dark #user-management select[style*="border: 1px solid #d1d5db"] {
+    background: rgba(17, 24, 39, 0.72) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f9fafb !important;
 }
