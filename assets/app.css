@@ -751,6 +751,76 @@
             }
         }
 
+        /* Mobile + small tablets */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                min-width: 0;
+                max-width: none;
+            }
+
+            .main-content {
+                width: 100%;
+                padding: 1rem;
+            }
+
+            /* Split view becomes a normal stacked flow */
+            .tickets-split-view {
+                grid-template-columns: 1fr !important;
+                height: auto;
+                min-height: 0;
+            }
+
+            .tickets-list-panel {
+                max-height: none;
+            }
+
+            .ticket-detail-panel {
+                position: relative;
+                top: auto;
+                max-height: none;
+                overflow-y: visible;
+                padding: 1.25rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .modal-header {
+                padding: 1rem 1rem;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            .modal-title {
+                font-size: 1.05rem;
+                line-height: 1.2;
+            }
+
+            .modal-body {
+                padding: 1rem;
+                margin-right: 0;
+            }
+
+            .modal-content {
+                width: calc(100% - 1rem);
+                margin: 0.5rem;
+                max-height: calc(100vh - 1rem);
+            }
+
+            .ticket-content,
+            .ticket-sidebar {
+                padding: 1rem;
+            }
+
+            .response-textarea {
+                min-height: 100px;
+            }
+        }
+
         .form-group {
             margin-bottom: 1.5rem;
         }
