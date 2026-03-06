@@ -378,9 +378,12 @@
 
         .ticket-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: start;
             margin-bottom: 1rem;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            min-width: 0;
         }
 
         .ticket-subject {
@@ -394,6 +397,14 @@
             gap: 1rem;
             font-size: 0.875rem;
             color: #64748b;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .ticket-meta span {
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .ticket-status {
@@ -776,6 +787,11 @@
             .main-content {
                 width: 100%;
                 padding: 1rem;
+                overflow-x: hidden;
+            }
+
+            body {
+                overflow-x: hidden;
             }
 
             /* Split view becomes a normal stacked flow */
@@ -800,6 +816,27 @@
             .dashboard-charts-grid {
                 grid-template-columns: 1fr;
                 gap: 1rem;
+            }
+
+            .tickets-toolbar {
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                align-items: stretch;
+            }
+
+            .tickets-toolbar-left {
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                width: 100%;
+            }
+
+            .tickets-toolbar .btn {
+                width: 100%;
+            }
+
+            .tickets-toolbar select.form-input {
+                width: 100% !important;
+                min-width: 0 !important;
             }
         }
 
