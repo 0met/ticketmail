@@ -809,9 +809,9 @@
                 <div class="page-header">
                     <h1 class="page-title">Analytics & Reporting</h1>
                     <p class="page-subtitle">Insights into your ticket performance and trends</p>
-                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <div class="analytics-controls">
                         <button class="btn btn-primary" onclick="refreshAnalytics()">🔄 Refresh Data</button>
-                        <select id="analyticsTimeframe" onchange="refreshAnalytics()" class="form-input" style="width: auto;">
+                        <select id="analyticsTimeframe" onchange="refreshAnalytics()" class="form-input">
                             <option value="7">Last 7 days</option>
                             <option value="30" selected>Last 30 days</option>
                             <option value="90">Last 90 days</option>
@@ -842,7 +842,7 @@
                 </div>
 
                 <!-- Category Breakdown -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                <div class="analytics-breakdowns-grid">
                     <div class="chart-container">
                         <h3 style="margin-bottom: 1rem; color: #1f2937;">Tickets by Category</h3>
                         <div id="categoryBreakdown" class="breakdown-container"></div>
