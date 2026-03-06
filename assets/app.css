@@ -254,6 +254,15 @@
             border: 1px solid #e5e7eb;
             border-radius: 12px;
             padding: 1.5rem;
+            min-width: 0;
+        }
+
+        .dashboard-charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+            min-width: 0;
         }
 
         .stats-grid {
@@ -786,6 +795,11 @@
                 max-height: none;
                 overflow-y: visible;
                 padding: 1.25rem;
+            }
+
+            .dashboard-charts-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
             }
         }
 
