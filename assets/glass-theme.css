@@ -393,8 +393,9 @@ html.theme-dark #ticketModal textarea::placeholder {
     color: rgba(203, 213, 225, 0.55) !important;
 }
 
-/* New ticket modal glass (scoped to new ticket modal only) */
-#newTicketModal.modal {
+/* New ticket modal glass (scoped to new ticket modals only) */
+#newTicketModal.modal,
+#customerNewTicketModal.modal {
     background:
         radial-gradient(900px 520px at 18% 16%, rgba(99, 102, 241, 0.45) 0%, rgba(99, 102, 241, 0) 62%),
         radial-gradient(780px 520px at 82% 32%, rgba(168, 85, 247, 0.34) 0%, rgba(168, 85, 247, 0) 62%),
@@ -403,7 +404,8 @@ html.theme-dark #ticketModal textarea::placeholder {
     backdrop-filter: blur(10px) saturate(130%);
 }
 
-#newTicketModal .modal-content {
+#newTicketModal .modal-content,
+#customerNewTicketModal .modal-content {
     background: rgba(255, 255, 255, 0.78);
     border: 1px solid rgba(255, 255, 255, 0.30);
     backdrop-filter: blur(18px) saturate(140%);
@@ -415,7 +417,8 @@ html.theme-dark #ticketModal textarea::placeholder {
     overflow: hidden;
 }
 
-#newTicketModal .modal-content::before {
+#newTicketModal .modal-content::before,
+#customerNewTicketModal .modal-content::before {
     content: '';
     position: absolute;
     inset: -120px;
@@ -429,52 +432,63 @@ html.theme-dark #ticketModal textarea::placeholder {
 }
 
 #newTicketModal .modal-header,
-#newTicketModal .modal-body {
+#newTicketModal .modal-body,
+#customerNewTicketModal .modal-header,
+#customerNewTicketModal .modal-body {
     position: relative;
     z-index: 1;
 }
 
-#newTicketModal .modal-header {
+#newTicketModal .modal-header,
+#customerNewTicketModal .modal-header {
     border-bottom-color: rgba(15, 23, 42, 0.10);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.12) 100%);
 }
 
-#newTicketModal .modal-title {
+#newTicketModal .modal-title,
+#customerNewTicketModal .modal-title {
     color: rgba(15, 23, 42, 0.92);
 }
 
-#newTicketModal .close-modal {
+#newTicketModal .close-modal,
+#customerNewTicketModal .close-modal {
     color: rgba(15, 23, 42, 0.62);
     border: 1px solid transparent;
 }
 
-#newTicketModal .close-modal:hover {
+#newTicketModal .close-modal:hover,
+#customerNewTicketModal .close-modal:hover {
     background: rgba(255, 255, 255, 0.55);
     border-color: rgba(255, 255, 255, 0.40);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
     color: rgba(15, 23, 42, 0.92);
 }
 
-#newTicketModal .form-label {
+#newTicketModal .form-label,
+#customerNewTicketModal .form-label {
     color: rgba(15, 23, 42, 0.82);
 }
 
-#newTicketModal .form-input {
+#newTicketModal .form-input,
+#customerNewTicketModal .form-input {
     background: rgba(255, 255, 255, 0.72);
     border-color: rgba(148, 163, 184, 0.70);
 }
 
-#newTicketModal .form-input:focus {
+#newTicketModal .form-input:focus,
+#customerNewTicketModal .form-input:focus {
     border-color: rgba(99, 102, 241, 0.55);
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.22);
 }
 
-#newTicketModal small {
+#newTicketModal small,
+#customerNewTicketModal small {
     color: rgba(15, 23, 42, 0.62) !important;
 }
 
-/* New ticket modal (Dark Mode) */
-html.theme-dark #newTicketModal.modal {
+/* New ticket modals (Dark Mode) */
+html.theme-dark #newTicketModal.modal,
+html.theme-dark #customerNewTicketModal.modal {
     background:
         radial-gradient(900px 520px at 18% 16%, rgba(99, 102, 241, 0.22) 0%, rgba(99, 102, 241, 0) 62%),
         radial-gradient(780px 520px at 82% 32%, rgba(168, 85, 247, 0.18) 0%, rgba(168, 85, 247, 0) 62%),
@@ -483,55 +497,67 @@ html.theme-dark #newTicketModal.modal {
     backdrop-filter: blur(10px) saturate(130%);
 }
 
-html.theme-dark #newTicketModal .modal-content {
+html.theme-dark #newTicketModal .modal-content,
+html.theme-dark #customerNewTicketModal .modal-content {
     background: rgba(17, 24, 39, 0.72) !important;
     border-color: rgba(255, 255, 255, 0.10) !important;
 }
 
-html.theme-dark #newTicketModal .modal-content::before {
+html.theme-dark #newTicketModal .modal-content::before,
+html.theme-dark #customerNewTicketModal .modal-content::before {
     opacity: 0.30;
 }
 
-html.theme-dark #newTicketModal .modal-header {
+html.theme-dark #newTicketModal .modal-header,
+html.theme-dark #customerNewTicketModal .modal-header {
     background: linear-gradient(180deg, rgba(17, 24, 39, 0.55) 0%, rgba(17, 24, 39, 0.18) 100%) !important;
     border-bottom-color: rgba(255, 255, 255, 0.10) !important;
 }
 
-html.theme-dark #newTicketModal .modal-title {
+html.theme-dark #newTicketModal .modal-title,
+html.theme-dark #customerNewTicketModal .modal-title {
     color: rgba(226, 232, 240, 0.90) !important;
 }
 
-html.theme-dark #newTicketModal .close-modal {
+html.theme-dark #newTicketModal .close-modal,
+html.theme-dark #customerNewTicketModal .close-modal {
     color: rgba(226, 232, 240, 0.78) !important;
 }
 
-html.theme-dark #newTicketModal .close-modal:hover {
+html.theme-dark #newTicketModal .close-modal:hover,
+html.theme-dark #customerNewTicketModal .close-modal:hover {
     background: rgba(255, 255, 255, 0.10) !important;
     border-color: rgba(255, 255, 255, 0.14) !important;
     color: rgba(226, 232, 240, 0.92) !important;
 }
 
-html.theme-dark #newTicketModal .form-label {
+html.theme-dark #newTicketModal .form-label,
+html.theme-dark #customerNewTicketModal .form-label {
     color: rgba(226, 232, 240, 0.82) !important;
 }
 
-html.theme-dark #newTicketModal small {
+html.theme-dark #newTicketModal small,
+html.theme-dark #customerNewTicketModal small {
     color: rgba(203, 213, 225, 0.70) !important;
 }
 
-html.theme-dark #newTicketModal .form-input {
+html.theme-dark #newTicketModal .form-input,
+html.theme-dark #customerNewTicketModal .form-input {
     background: rgba(15, 23, 42, 0.55) !important;
     border-color: rgba(255, 255, 255, 0.14) !important;
     color: rgba(226, 232, 240, 0.88) !important;
 }
 
-html.theme-dark #newTicketModal .form-input:focus {
+html.theme-dark #newTicketModal .form-input:focus,
+html.theme-dark #customerNewTicketModal .form-input:focus {
     border-color: rgba(99, 102, 241, 0.55) !important;
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.22) !important;
 }
 
 html.theme-dark #newTicketModal input::placeholder,
-html.theme-dark #newTicketModal textarea::placeholder {
+html.theme-dark #newTicketModal textarea::placeholder,
+html.theme-dark #customerNewTicketModal input::placeholder,
+html.theme-dark #customerNewTicketModal textarea::placeholder {
     color: rgba(203, 213, 225, 0.55) !important;
 }
 

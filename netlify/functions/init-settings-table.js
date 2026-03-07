@@ -95,7 +95,11 @@ exports.handler = async (event, context) => {
         await sql`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS last_sync_created INTEGER;`;
         await sql`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS last_sync_duplicates INTEGER;`;
 
+        // Optional: customer-facing announcement message (displayed on customer dashboard)
+        await sql`ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS customer_announcement TEXT;`;
+
         actions.push('Ensured last_sync_* columns exist');
+        actions.push('Ensured customer_announcement column exists');
 
         // Check current settings count
         const settingsCount = await sql`

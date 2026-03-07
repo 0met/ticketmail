@@ -36,7 +36,8 @@ exports.handler = async (event, context) => {
                         gmailAddress: settings.gmailAddress,
                         refreshInterval: settings.refreshInterval,
                         defaultStatus: settings.defaultStatus,
-                        hasAppPassword: !!settings.appPassword
+                        hasAppPassword: !!settings.appPassword,
+                        customerAnnouncement: settings.customerAnnouncement || null
                     },
                     source: 'database'
                 })

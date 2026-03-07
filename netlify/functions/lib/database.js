@@ -241,7 +241,7 @@ async function getUserSettings() {
 
         const { data, error } = await supabase
             .from('user_settings')
-            .select('gmail_address, app_password, refresh_interval, default_status')
+            .select('*')
             .order('created_at', { ascending: false })
             .limit(1);
 
@@ -256,7 +256,8 @@ async function getUserSettings() {
                 gmailAddress: settings.gmail_address,
                 appPassword: decryptData(settings.app_password),
                 refreshInterval: settings.refresh_interval,
-                defaultStatus: settings.default_status
+                defaultStatus: settings.default_status,
+                customerAnnouncement: settings.customer_announcement || null
             };
         }
 

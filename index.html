@@ -287,6 +287,49 @@
         <main class="main-content">
             <!-- Dashboard Page -->
             <div id="dashboard" class="page active" data-roles="admin,super_user,agent,customer">
+                <!-- Customer Dashboard (Customer View Only) -->
+                <div id="customerDashboard" data-roles="customer">
+                    <div class="page-header" style="margin-bottom: 2rem;">
+                        <h1 class="page-title" style="font-size: 2rem; font-weight: 500; margin-bottom: 0.25rem;">Welcome back, <span id="customerDashboardName">Customer</span></h1>
+                        <p class="page-subtitle">Create a ticket or check recent updates.</p>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem;">
+                        <button class="btn btn-primary customer-only" onclick="createNewTicket()">➕ Create New Ticket</button>
+                        <button class="btn btn-secondary" onclick="showPage('my-tickets')">🎫 View All Tickets</button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 1.5rem; align-items: start;">
+                        <div style="display: flex; flex-direction: column; gap: 1.5rem; min-width: 0;">
+                            <div class="chart-container" style="padding: 1.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 1rem;">
+                                    <h3 style="margin: 0;">My Tickets</h3>
+                                    <a href="#" onclick="showPage('my-tickets'); return false;" style="font-size: 0.875rem; color: #2563eb; text-decoration: underline;">View all</a>
+                                </div>
+                                <div id="customerDashboardTicketsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <div style="text-align: center; padding: 1.5rem; color: #64748b;">Loading your tickets…</div>
+                                </div>
+                            </div>
+
+                            <div class="chart-container" style="padding: 1.5rem;">
+                                <h3 style="margin-top: 0; margin-bottom: 1rem;">Recent Updates</h3>
+                                <div id="customerDashboardUpdatesList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <div style="text-align: center; padding: 1.5rem; color: #64748b;">Loading updates…</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 1.5rem; min-width: 0;">
+                            <div class="chart-container" style="padding: 1.5rem;">
+                                <h3 style="margin-top: 0; margin-bottom: 1rem;">Announcements</h3>
+                                <div id="customerDashboardAnnouncement" style="color: #64748b; line-height: 1.6;">No announcements right now.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin/Agent Dashboard (Not shown to customers) -->
+                <div id="adminDashboard" data-roles="admin,super_user,agent">
                 <div class="page-header" style="margin-bottom: 2rem;">
                     <h1 class="page-title" style="font-size: 1.875rem; font-weight: 400; color: #1f2937; margin-bottom: 0;">SaaS Dashboard</h1>
                 </div>
@@ -429,6 +472,7 @@
                             </svg>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
 
@@ -798,6 +842,37 @@
                             <div style="display: flex; justify-content: flex-end; gap: 1rem;">
                                 <button type="button" class="btn btn-secondary" onclick="closeNewTicketModal()">Cancel</button>
                                 <button type="submit" class="btn btn-primary">✅ Create Ticket</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer New Ticket Modal (Customer View Only) -->
+            <div id="customerNewTicketModal" class="modal" data-roles="customer">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <h2 class="modal-title">Create New Ticket</h2>
+                            <div style="font-size: 0.75rem; color: #6b7280;">We’ll notify you when there’s an update.</div>
+                        </div>
+                        <button class="close-modal" onclick="closeCustomerNewTicketModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="customerNewTicketForm" onsubmit="submitCustomerNewTicket(event)">
+                            <div class="form-group">
+                                <label for="customerTicketSubject" class="form-label">Subject *</label>
+                                <input type="text" id="customerTicketSubject" class="form-input" required placeholder="What can we help with?">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="customerTicketMessage" class="form-label">Message *</label>
+                                <textarea id="customerTicketMessage" class="form-input" required placeholder="Describe the issue or request…" style="min-height: 140px; resize: vertical;"></textarea>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                                <button type="button" class="btn btn-secondary" onclick="closeCustomerNewTicketModal()">Cancel</button>
+                                <button type="submit" class="btn btn-primary">✅ Submit Ticket</button>
                             </div>
                         </form>
                     </div>
@@ -1445,6 +1520,7 @@
             const shouldLock =
                 isActiveModal('ticketModal') ||
                 isActiveModal('newTicketModal') ||
+                isActiveModal('customerNewTicketModal') ||
                 isActiveModal('userModal') ||
                 isVisibleOverlay('loginOverlay') ||
                 isVisibleOverlay('userCreationOverlay');
@@ -1958,7 +2034,237 @@
                 showPermissionError('create tickets as a customer');
                 return;
             }
-            alert('🚧 Customer ticket creation coming soon!');
+            openCustomerNewTicketModal();
+        }
+
+        function openCustomerNewTicketModal() {
+            const modal = document.getElementById('customerNewTicketModal');
+            if (!modal) return;
+            modal.classList.add('active');
+            updateScrollLock();
+
+            const form = document.getElementById('customerNewTicketForm');
+            if (form) form.reset();
+
+            // Focus subject for convenience
+            setTimeout(() => {
+                const subject = document.getElementById('customerTicketSubject');
+                if (subject) subject.focus();
+            }, 0);
+        }
+
+        function closeCustomerNewTicketModal() {
+            const modal = document.getElementById('customerNewTicketModal');
+            if (!modal) return;
+            modal.classList.remove('active');
+            updateScrollLock();
+        }
+
+        async function submitCustomerNewTicket(event) {
+            event.preventDefault();
+
+            if (normalizeRole(authState?.user?.role) !== 'customer') {
+                showPermissionError('create tickets');
+                return;
+            }
+
+            const subject = document.getElementById('customerTicketSubject')?.value?.trim();
+            const message = document.getElementById('customerTicketMessage')?.value?.trim();
+
+            if (!subject || !message) {
+                showDiscreteNotification('Please fill in subject and message.', 'error');
+                return;
+            }
+
+            const fromEmail = authState?.user?.email;
+            if (!fromEmail) {
+                showDiscreteNotification('Missing customer email. Please sign in again.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/.netlify/functions/create-manual-ticket', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
+                    },
+                    body: JSON.stringify({
+                        subject,
+                        from: fromEmail,
+                        content: message,
+                        isManual: true,
+                        customerEmail: fromEmail,
+                        customerName: authState?.user?.fullName || null
+                    })
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result || !result.success) {
+                    throw new Error((result && result.error) ? result.error : `Failed to submit ticket (HTTP ${response.status})`);
+                }
+
+                closeCustomerNewTicketModal();
+                showDiscreteNotification('Ticket submitted successfully.', 'success');
+
+                // Refresh customer views
+                if (document.getElementById('my-tickets')?.classList.contains('active')) {
+                    if (typeof loadCustomerTickets === 'function') loadCustomerTickets();
+                }
+                if (document.getElementById('dashboard')?.classList.contains('active')) {
+                    if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
+                }
+            } catch (error) {
+                console.error('Error submitting customer ticket:', error);
+                showDiscreteNotification(`Failed to submit ticket: ${error.message}`, 'error');
+            }
+        }
+
+        async function getCustomerTickets() {
+            const cacheParam = Date.now();
+            const response = await fetch(`/.netlify/functions/tickets-load?cache=${cacheParam}`, {
+                method: 'GET',
+                headers: {
+                    ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            if (!result || !result.success) {
+                throw new Error(result && result.error ? result.error : 'Failed to load tickets');
+            }
+
+            const allTickets = Array.isArray(result.tickets) ? result.tickets : [];
+            const customerEmail = authState?.user?.email;
+            const visibleTickets = customerEmail
+                ? allTickets.filter(t => ticketBelongsToCustomer(t, customerEmail))
+                : [];
+
+            // Keep modal behavior consistent: openTicketModal looks in appState.tickets.
+            appState.tickets = visibleTickets;
+            return visibleTickets;
+        }
+
+        async function loadCustomerDashboard() {
+            if (normalizeRole(authState?.user?.role) !== 'customer') return;
+
+            const nameEl = document.getElementById('customerDashboardName');
+            if (nameEl) {
+                nameEl.textContent = authState?.user?.fullName || authState?.user?.email || 'Customer';
+            }
+
+            const ticketsEl = document.getElementById('customerDashboardTicketsList');
+            const updatesEl = document.getElementById('customerDashboardUpdatesList');
+            const announcementEl = document.getElementById('customerDashboardAnnouncement');
+
+            if (ticketsEl) {
+                ticketsEl.innerHTML = '<div style="text-align: center; padding: 1.5rem; color: #64748b;">Loading your tickets…</div>';
+            }
+            if (updatesEl) {
+                updatesEl.innerHTML = '<div style="text-align: center; padding: 1.5rem; color: #64748b;">Loading updates…</div>';
+            }
+
+            // Optional announcements (future-proof: only show if present)
+            if (announcementEl) {
+                try {
+                    const res = await fetch('/.netlify/functions/get-settings');
+                    const json = await res.json();
+                    const msg = json && json.success && json.settings ? (json.settings.customerAnnouncement || json.settings.customer_announcement) : null;
+                    if (msg && String(msg).trim()) {
+                        announcementEl.textContent = String(msg).trim();
+                    } else {
+                        announcementEl.textContent = 'No announcements right now.';
+                    }
+                } catch (_) {
+                    announcementEl.textContent = 'No announcements right now.';
+                }
+            }
+
+            try {
+                const tickets = await getCustomerTickets();
+
+                const sorted = [...tickets].sort((a, b) => {
+                    const aDate = new Date(a.updated_at || a.updatedAt || a.date || 0).getTime();
+                    const bDate = new Date(b.updated_at || b.updatedAt || b.date || 0).getTime();
+                    return bDate - aDate;
+                });
+
+                const preview = sorted.slice(0, 5);
+                if (ticketsEl) {
+                    if (preview.length === 0) {
+                        ticketsEl.innerHTML = '<div style="text-align: center; padding: 1.5rem; color: #64748b;">No tickets yet. Create one to get started.</div>';
+                    } else {
+                        ticketsEl.innerHTML = preview.map((t) => {
+                            const ticketNum = t.ticketNumber || t.ticket_number || 'TK-XXXX';
+                            const status = (t.status || 'new');
+                            const safeTicketId = String(t.id || '').replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+                            return `
+                                <div class="ticket-card" data-ticket-id="${safeTicketId}" style="padding: 1rem; cursor: pointer;">
+                                    <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start;">
+                                        <div style="min-width: 0;">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; flex-wrap: wrap;">
+                                                <span class="ticket-number" style="background: #3b82f6; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${ticketNum}</span>
+                                                <span class="ticket-status status-${status}">${status.toUpperCase()}</span>
+                                            </div>
+                                            <div class="ticket-subject">${t.subject || '(No Subject)'}</div>
+                                            <div class="ticket-meta">Updated: ${formatDate(t.updated_at || t.updatedAt || t.date)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+
+                        setTimeout(() => {
+                            ticketsEl.querySelectorAll('.ticket-card[data-ticket-id]').forEach((card) => {
+                                const ticketId = card.getAttribute('data-ticket-id');
+                                card.addEventListener('click', () => openTicketModal(ticketId));
+                            });
+                        }, 0);
+                    }
+                }
+
+                const updates = sorted.slice(0, 3);
+                if (updatesEl) {
+                    if (updates.length === 0) {
+                        updatesEl.innerHTML = '<div style="text-align: center; padding: 1.5rem; color: #64748b;">No updates yet.</div>';
+                    } else {
+                        updatesEl.innerHTML = updates.map((t) => {
+                            const status = (t.status || 'new');
+                            const safeTicketId = String(t.id || '').replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+                            return `
+                                <div class="ticket-card" data-ticket-id="${safeTicketId}" style="padding: 1rem; cursor: pointer;">
+                                    <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: baseline;">
+                                        <div style="min-width: 0;">
+                                            <div class="ticket-subject" style="margin-bottom: 0.25rem;">${t.subject || '(No Subject)'}</div>
+                                            <div class="ticket-meta">${status.toUpperCase()} • ${formatDate(t.updated_at || t.updatedAt || t.date)}</div>
+                                        </div>
+                                        <span class="ticket-status status-${status}">${status.toUpperCase()}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+
+                        setTimeout(() => {
+                            updatesEl.querySelectorAll('.ticket-card[data-ticket-id]').forEach((card) => {
+                                const ticketId = card.getAttribute('data-ticket-id');
+                                card.addEventListener('click', () => openTicketModal(ticketId));
+                            });
+                        }, 0);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading customer dashboard:', error);
+                if (ticketsEl) {
+                    ticketsEl.innerHTML = '<div style="text-align: center; padding: 1.5rem; color: #64748b;">Failed to load tickets.</div>';
+                }
+                if (updatesEl) {
+                    updatesEl.innerHTML = '<div style="text-align: center; padding: 1.5rem; color: #64748b;">Failed to load updates.</div>';
+                }
+            }
         }
 
         // Admin functions for user management
@@ -2996,26 +3302,8 @@
             container.innerHTML = '<div class="ticket-card"><p style="text-align: center; color: #64748b;">Loading your tickets…</p></div>';
 
             try {
-                const cacheParam = Date.now();
-                const response = await fetch(`/.netlify/functions/tickets-load?cache=${cacheParam}`, {
-                    method: 'GET',
-                    headers: {
-                        ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                if (!result || !result.success) {
-                    throw new Error(result && result.error ? result.error : 'Failed to load tickets');
-                }
-
-                const allTickets = Array.isArray(result.tickets) ? result.tickets : [];
-                // Keep modal behavior consistent: openTicketModal looks in appState.tickets.
-                appState.tickets = allTickets;
-                renderCustomerTickets(allTickets);
+                const tickets = await getCustomerTickets();
+                renderCustomerTickets(tickets);
             } catch (error) {
                 console.error('Error loading customer tickets:', error);
                 container.innerHTML = '<div class="ticket-card"><p style="text-align: center; color: #64748b;">Failed to load your tickets.</p></div>';
@@ -3279,6 +3567,8 @@
                     refreshAnalytics();
                 } else if (targetPage === 'tickets' && typeof loadTickets === 'function') {
                     loadTickets();
+                } else if (targetPage === 'dashboard' && normalizeRole(authState?.user?.role) === 'customer' && typeof loadCustomerDashboard === 'function') {
+                    loadCustomerDashboard();
                 } else if (targetPage === 'my-tickets' && typeof loadCustomerTickets === 'function') {
                     loadCustomerTickets();
                 } else if (targetPage === 'settings') {
@@ -4703,6 +4993,8 @@
                 closeTicketModal();
             } else if (e.target.id === 'newTicketModal') {
                 closeNewTicketModal();
+            } else if (e.target.id === 'customerNewTicketModal') {
+                closeCustomerNewTicketModal();
             }
         });
 
@@ -4713,6 +5005,8 @@
                     closeTicketModal();
                 } else if (document.getElementById('newTicketModal').classList.contains('active')) {
                     closeNewTicketModal();
+                } else if (document.getElementById('customerNewTicketModal').classList.contains('active')) {
+                    closeCustomerNewTicketModal();
                 }
             }
         });
