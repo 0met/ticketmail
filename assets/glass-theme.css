@@ -903,7 +903,17 @@ html.theme-dark .tickets-list .ticket-card:hover {
     border-color: rgba(59, 130, 246, 0.55) !important;
 }
 
+html.theme-dark #tickets .tickets-grid .ticket-card:hover {
+    background: rgba(31, 41, 55, 0.60) !important;
+    border-color: rgba(59, 130, 246, 0.55) !important;
+}
+
 html.theme-dark .tickets-list .ticket-card.selected {
+    background: rgba(59, 130, 246, 0.16) !important;
+    border-color: rgba(59, 130, 246, 0.65) !important;
+}
+
+html.theme-dark #tickets .tickets-grid .ticket-card.selected {
     background: rgba(59, 130, 246, 0.16) !important;
     border-color: rgba(59, 130, 246, 0.65) !important;
 }
