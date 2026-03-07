@@ -292,6 +292,107 @@
     background: rgba(240, 249, 255, 0.65);
 }
 
+/* Ticket modal (Dark Mode) */
+html.theme-dark #ticketModal .modal-content {
+    background: rgba(17, 24, 39, 0.72) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark #ticketModal .modal-content::before {
+    opacity: 0.30;
+}
+
+html.theme-dark #ticketModal .modal-header {
+    background: linear-gradient(180deg, rgba(17, 24, 39, 0.55) 0%, rgba(17, 24, 39, 0.20) 100%) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark #ticketModal .modal-title {
+    color: rgba(226, 232, 240, 0.90) !important;
+}
+
+html.theme-dark #ticketModal .close-modal {
+    color: rgba(226, 232, 240, 0.78) !important;
+}
+
+html.theme-dark #ticketModal .close-modal:hover {
+    background: rgba(255, 255, 255, 0.10) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: rgba(226, 232, 240, 0.92) !important;
+}
+
+html.theme-dark #ticketModal .ticket-content,
+html.theme-dark #ticketModal .ticket-sidebar {
+    background: rgba(17, 24, 39, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark #ticketModal .conversation-item {
+    background: rgba(17, 24, 39, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.32) !important;
+}
+
+html.theme-dark #ticketModal .conversation-item.outbound {
+    background: rgba(59, 130, 246, 0.10) !important;
+}
+
+html.theme-dark #ticketModal .response-textarea {
+    background: rgba(17, 24, 39, 0.72) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: rgba(226, 232, 240, 0.90) !important;
+}
+
+/* Override inline light surfaces inside the ticket modal */
+html.theme-dark #ticketModal div[style*="background: #f9fafb"],
+html.theme-dark #ticketModal div[style*="background: white"] {
+    background: rgba(17, 24, 39, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+/* Override inline light gray chips inside the ticket modal */
+html.theme-dark #ticketModal span[style*="background: #f3f4f6"] {
+    background: rgba(255, 255, 255, 0.10) !important;
+    color: rgba(226, 232, 240, 0.82) !important;
+}
+
+/* Override inline light-mode text colors used in ticket modal */
+html.theme-dark #ticketModal h3[style*="color: #374151"],
+html.theme-dark #ticketModal h3[style*="color: #1f2937"] {
+    color: rgba(226, 232, 240, 0.88) !important;
+}
+
+html.theme-dark #ticketModal [style*="color: #111827"] {
+    color: rgba(226, 232, 240, 0.86) !important;
+}
+
+html.theme-dark #ticketModal [style*="color: #374151"] {
+    color: rgba(226, 232, 240, 0.82) !important;
+}
+
+html.theme-dark #ticketModal [style*="color: #6b7280"],
+html.theme-dark #ticketModal p[style*="color: #64748b"] {
+    color: rgba(203, 213, 225, 0.72) !important;
+}
+
+/* Ensure sidebar inputs/selects aren't bright in dark mode */
+html.theme-dark #ticketModal input[type="text"],
+html.theme-dark #ticketModal input[type="email"],
+html.theme-dark #ticketModal input[type="tel"],
+html.theme-dark #ticketModal input[type="search"],
+html.theme-dark #ticketModal input.form-input,
+html.theme-dark #ticketModal select,
+html.theme-dark #ticketModal textarea {
+    background: rgba(15, 23, 42, 0.55) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: rgba(226, 232, 240, 0.88) !important;
+}
+
+html.theme-dark #ticketModal input::placeholder,
+html.theme-dark #ticketModal textarea::placeholder {
+    color: rgba(203, 213, 225, 0.55) !important;
+}
+
 /* New ticket modal glass (scoped to new ticket modal only) */
 #newTicketModal.modal {
     background:
