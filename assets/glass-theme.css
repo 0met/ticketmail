@@ -412,8 +412,7 @@ html.theme-dark #ticketModal textarea::placeholder {
         0 0 0 1px rgba(255, 255, 255, 0.14) inset,
         0 0 120px rgba(99, 102, 241, 0.20);
     position: relative;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 #newTicketModal .modal-content::before {
@@ -472,6 +471,79 @@ html.theme-dark #ticketModal textarea::placeholder {
 
 #newTicketModal small {
     color: rgba(15, 23, 42, 0.62) !important;
+}
+
+/* New ticket modal (Dark Mode) */
+html.theme-dark #newTicketModal.modal {
+    background:
+        radial-gradient(900px 520px at 18% 16%, rgba(99, 102, 241, 0.22) 0%, rgba(99, 102, 241, 0) 62%),
+        radial-gradient(780px 520px at 82% 32%, rgba(168, 85, 247, 0.18) 0%, rgba(168, 85, 247, 0) 62%),
+        radial-gradient(720px 540px at 42% 88%, rgba(14, 165, 233, 0.12) 0%, rgba(14, 165, 233, 0) 62%),
+        rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(10px) saturate(130%);
+}
+
+html.theme-dark #newTicketModal .modal-content {
+    background: rgba(17, 24, 39, 0.72) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark #newTicketModal .modal-content::before {
+    opacity: 0.30;
+}
+
+html.theme-dark #newTicketModal .modal-header {
+    background: linear-gradient(180deg, rgba(17, 24, 39, 0.55) 0%, rgba(17, 24, 39, 0.18) 100%) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark #newTicketModal .modal-title {
+    color: rgba(226, 232, 240, 0.90) !important;
+}
+
+html.theme-dark #newTicketModal .close-modal {
+    color: rgba(226, 232, 240, 0.78) !important;
+}
+
+html.theme-dark #newTicketModal .close-modal:hover {
+    background: rgba(255, 255, 255, 0.10) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: rgba(226, 232, 240, 0.92) !important;
+}
+
+html.theme-dark #newTicketModal .form-label {
+    color: rgba(226, 232, 240, 0.82) !important;
+}
+
+html.theme-dark #newTicketModal small {
+    color: rgba(203, 213, 225, 0.70) !important;
+}
+
+html.theme-dark #newTicketModal .form-input {
+    background: rgba(15, 23, 42, 0.55) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: rgba(226, 232, 240, 0.88) !important;
+}
+
+html.theme-dark #newTicketModal .form-input:focus {
+    border-color: rgba(99, 102, 241, 0.55) !important;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.22) !important;
+}
+
+html.theme-dark #newTicketModal input::placeholder,
+html.theme-dark #newTicketModal textarea::placeholder {
+    color: rgba(203, 213, 225, 0.55) !important;
+}
+
+/* Override inline warning box in dark mode */
+html.theme-dark #newTicketModal div[style*="background: #fef3c7"],
+html.theme-dark #newTicketModal div[style*="border: 1px solid #f59e0b"] {
+    background: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.45) !important;
+}
+
+html.theme-dark #newTicketModal [style*="color: #92400e"] {
+    color: rgba(251, 191, 36, 0.92) !important;
 }
 
 /* Tickets page list cards (scoped to Tickets page only) */
