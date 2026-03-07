@@ -417,3 +417,52 @@
     font-size: 3rem;
     margin-bottom: 1rem;
 }
+
+/* User table content helpers (used by JS-rendered rows) */
+.um-user-cell,
+.um-company-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.um-user-name,
+.um-company-name {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.um-user-email,
+.um-company-domain,
+.um-secondary {
+    color: #64748b;
+}
+
+.um-user-title,
+.um-muted {
+    color: #94a3b8;
+}
+
+.um-count-badge {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.um-cell-center {
+    text-align: center;
+}
+
+.data-table th.um-cell-center,
+.data-table td.um-cell-center {
+    text-align: center;
+}
+
+/* Role badge: Super User */
+.badge-super-user {
+    background: #0ea5e9;
+    color: white;
+}

@@ -155,25 +155,25 @@ function renderUsersTable() {
     
     if (filteredUsers.length === 0) {
         tableBody.innerHTML = `
-            <div style="text-align: center; padding: 3rem; color: #64748b;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
+            <div class="empty-state">
+                <div class="empty-state-icon">👥</div>
                 <p>No users found</p>
             </div>
         `;
         return;
     }
     
-    let html = '<table style="width: 100%; border-collapse: collapse;">';
+    let html = '<table class="um-users-table">';
     html += `
-        <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+        <thead>
             <tr>
-                <th style="padding: 1rem; text-align: left; font-weight: 600;">User</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 600;">Role</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 600;">Company</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 600;">Department</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 600;">Status</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 600;">Open Tickets</th>
-                <th style="padding: 1rem; text-align: center; font-weight: 600;">Actions</th>
+                <th>User</th>
+                <th>Role</th>
+                <th>Company</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Open Tickets</th>
+                <th class="um-cell-center">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -182,51 +182,47 @@ function renderUsersTable() {
     filteredUsers.forEach(user => {
         const safeUserIdAttr = escapeHtmlAttribute(user.id);
         const safeUserEmailAttr = escapeHtmlAttribute(user.email || '');
-        const roleColors = {
-            admin: 'background: #ef4444; color: white;',
-            super_user: 'background: #0ea5e9; color: white;',
-            agent: 'background: #f59e0b; color: white;',
-            customer: 'background: #8b5cf6; color: white;'
+
+        const roleClassMap = {
+            admin: 'badge-admin',
+            super_user: 'badge-super-user',
+            agent: 'badge-agent',
+            customer: 'badge-customer'
         };
-        
-        const statusBadge = user.isActive 
-            ? '<span style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem;">Active</span>'
-            : '<span style="background: #6b7280; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem;">Inactive</span>';
+        const roleBadgeClass = roleClassMap[user.role] || 'badge-customer';
+        const statusBadgeClass = user.isActive ? 'badge-active' : 'badge-inactive';
+        const statusLabel = user.isActive ? 'Active' : 'Inactive';
         
         html += `
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding: 1rem;">
-                    <div style="display: flex; flex-direction: column;">
-                        <strong style="color: #1f2937;">${user.fullName || user.email}</strong>
-                        <small style="color: #64748b;">${user.email}</small>
-                        ${user.jobTitle ? `<small style="color: #94a3b8;">${user.jobTitle}</small>` : ''}
+            <tr>
+                <td>
+                    <div class="um-user-cell">
+                        <strong class="um-user-name">${user.fullName || user.email}</strong>
+                        <small class="um-user-email">${user.email}</small>
+                        ${user.jobTitle ? `<small class="um-user-title">${user.jobTitle}</small>` : ''}
                     </div>
                 </td>
-                <td style="padding: 1rem;">
-                    <span style="${roleColors[user.role]} padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; text-transform: uppercase;">
-                        ${user.role}
-                    </span>
+                <td>
+                    <span class="badge ${roleBadgeClass}">${user.role}</span>
                 </td>
-                <td style="padding: 1rem;">
+                <td>
                     ${user.companyName ? `
-                        <div style="display: flex; flex-direction: column;">
-                            <strong style="color: #1f2937;">${user.companyName}</strong>
-                            ${user.companyDomain ? `<small style="color: #64748b;">${user.companyDomain}</small>` : ''}
+                        <div class="um-company-cell">
+                            <strong class="um-company-name">${user.companyName}</strong>
+                            ${user.companyDomain ? `<small class="um-company-domain">${user.companyDomain}</small>` : ''}
                         </div>
-                    ` : '<span style="color: #94a3b8;">No Company</span>'}
+                    ` : '<span class="um-muted">No Company</span>'}
                 </td>
-                <td style="padding: 1rem;">
-                    <span style="color: #64748b;">${user.department || '-'}</span>
+                <td>
+                    <span class="um-secondary">${user.department || '-'}</span>
                 </td>
-                <td style="padding: 1rem;">
-                    ${statusBadge}
+                <td>
+                    <span class="badge ${statusBadgeClass}">${statusLabel}</span>
                 </td>
-                <td style="padding: 1rem; text-align: center;">
-                    <span style="background: #dbeafe; color: #1e40af; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.875rem; font-weight: 600;">
-                        ${user.openTicketCount || 0}
-                    </span>
+                <td class="um-cell-center">
+                    <span class="um-count-badge">${user.openTicketCount || 0}</span>
                 </td>
-                <td style="padding: 1rem; text-align: center;">
+                <td class="um-cell-center">
                     <button type="button" class="btn btn-sm" style="margin-right: 0.5rem;" data-action="edit-user" data-user-id="${safeUserIdAttr}" onclick="editUser(this.dataset.userId)">✏️ Edit</button>
                     <button type="button" class="btn btn-sm btn-danger" data-action="delete-user" data-user-id="${safeUserIdAttr}" data-user-email="${safeUserEmailAttr}" onclick="deleteUser(this.dataset.userId, this.dataset.userEmail)">🗑️ Delete</button>
                 </td>

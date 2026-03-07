@@ -449,6 +449,69 @@
         0 0 90px rgba(168, 85, 247, 0.12);
 }
 
+/* Dashboard (Dark Mode) */
+html.theme-dark #dashboard {
+    color: rgba(203, 213, 225, 0.78);
+}
+
+html.theme-dark #dashboard .dashboard-filter {
+    background: rgba(17, 24, 39, 0.72) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: rgba(226, 232, 240, 0.86) !important;
+}
+
+html.theme-dark #dashboard .dashboard-filter:focus {
+    border-color: rgba(59, 130, 246, 0.55) !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.22) !important;
+}
+
+html.theme-dark #dashboard .metric-card,
+html.theme-dark #dashboard .chart-card {
+    background: rgba(17, 24, 39, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.theme-dark #dashboard .metric-card:hover {
+    border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+html.theme-dark #dashboard .metric-label {
+    color: rgba(203, 213, 225, 0.72) !important;
+}
+
+html.theme-dark #dashboard .metric-value {
+    color: rgba(226, 232, 240, 0.88) !important;
+}
+
+html.theme-dark #dashboard .metric-period {
+    color: rgba(203, 213, 225, 0.56) !important;
+}
+
+html.theme-dark #dashboard .metric-trend {
+    color: rgba(203, 213, 225, 0.68);
+}
+
+html.theme-dark #dashboard .metric-trend.trend-up {
+    color: rgba(16, 185, 129, 0.90) !important;
+}
+
+html.theme-dark #dashboard .metric-trend.trend-down {
+    color: rgba(239, 68, 68, 0.90) !important;
+}
+
+/* Override inline title color in dashboard header */
+html.theme-dark #dashboard .page-title,
+html.theme-dark #dashboard h1[style*="color: #1f2937"] {
+    color: rgba(226, 232, 240, 0.88) !important;
+}
+
+/* Override inline light gray text used in dashboard markup */
+html.theme-dark #dashboard label[style*="color: #64748b"],
+html.theme-dark #dashboard h3[style*="color: #64748b"],
+html.theme-dark #dashboard span[style*="color: #64748b"] {
+    color: rgba(203, 213, 225, 0.60) !important;
+}
+
 /* Analytics */
 #analytics .chart-container {
     background: rgba(255, 255, 255, 0.58);
@@ -600,6 +663,31 @@ html.theme-dark #user-management .data-table tbody td {
 
 html.theme-dark #user-management .data-table tbody tr:hover {
     background: rgba(255, 255, 255, 0.06) !important;
+}
+
+html.theme-dark #user-management .empty-state {
+    color: rgba(229, 231, 235, 0.78) !important;
+}
+
+html.theme-dark #user-management .um-user-name,
+html.theme-dark #user-management .um-company-name {
+    color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.theme-dark #user-management .um-user-email,
+html.theme-dark #user-management .um-company-domain,
+html.theme-dark #user-management .um-secondary {
+    color: rgba(229, 231, 235, 0.72) !important;
+}
+
+html.theme-dark #user-management .um-user-title,
+html.theme-dark #user-management .um-muted {
+    color: rgba(229, 231, 235, 0.56) !important;
+}
+
+html.theme-dark #user-management .um-count-badge {
+    background: rgba(59, 130, 246, 0.18) !important;
+    color: rgba(191, 219, 254, 0.98) !important;
 }
 
 /* Dark Mode (site-wide) */
