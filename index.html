@@ -3771,6 +3771,7 @@
             const assignedTo = currentTicket.assigned_to || currentTicket.assignedTo || '';
             const userRole = normalizeRole(authState?.user?.role);
             const canMergeTickets = userRole === 'admin' || userRole === 'agent';
+            const isClosed = String(currentTicket.status || '').toLowerCase() === 'closed';
 
             const escapeAttr = (val) => {
                 return String(val ?? '')
@@ -3922,6 +3923,13 @@
                                 </div>
 
                                 <button id="saveTicketBtn" class="btn btn-primary" style="width: 100%; margin-bottom: 0.75rem;" onclick="saveTicketChanges()">💾 Save Changes</button>
+
+                                <div style="margin-bottom: 0.75rem;">
+                                    <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Close comment (required)</label>
+                                    <textarea id="closeTicketComment" class="response-textarea" placeholder="Enter a closing comment..." style="width: 100%; min-height: 70px; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; font-size: 0.875rem;" ${isClosed ? 'disabled' : ''}></textarea>
+                                </div>
+                                <button id="closeTicketBtn" class="btn btn-warning" style="width: 100%; margin-bottom: 0.75rem; ${isClosed ? 'opacity: 0.6; cursor: not-allowed;' : ''}" onclick="closeTicketWithComment()" ${isClosed ? 'disabled' : ''}>✅ Close Ticket</button>
+
                                 <button class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;" onclick="markAsSpam()">🚫 Mark as Spam</button>
                                 <button class="btn btn-secondary" style="width: 100%;" onclick="deleteTicket()">🗑️ Delete Ticket</button>
                             </div>
@@ -3955,7 +3963,10 @@
             document.getElementById('ticketModal').classList.remove('active');
             updateScrollLock();
             currentTicket = null;
-            document.getElementById('responseText').value = '';
+            const responseEl = document.getElementById('responseText');
+            if (responseEl) responseEl.value = '';
+            const closeCommentEl = document.getElementById('closeTicketComment');
+            if (closeCommentEl) closeCommentEl.value = '';
         }
 
         // Extract name from email string like "John Doe <john@example.com>"
@@ -4016,6 +4027,22 @@
                     customerEmail: customerEmailEl?.value || '',
                     customerCompany: customerCompanyEl?.value || ''
                 };
+
+                const wasClosed = String(currentTicket.status || '').toLowerCase() === 'closed';
+                const isClosingNow = updates.status === 'closed' && !wasClosed;
+                let closingComment = null;
+
+                if (isClosingNow) {
+                    const closeCommentEl = document.getElementById('closeTicketComment');
+                    closingComment = (closeCommentEl ? closeCommentEl.value : '').trim();
+                    if (!closingComment) {
+                        alert('❌ Please enter a close comment before closing the ticket');
+                        if (closeCommentEl) closeCommentEl.focus();
+                        saveBtn.textContent = originalText;
+                        saveBtn.disabled = false;
+                        return;
+                    }
+                }
 
                 // Validate values against database constraints
                 const validStatuses = ['new', 'open', 'pending', 'approved', 'closed'];
@@ -4107,6 +4134,37 @@
                     
                     // Show success message
                     showDiscreteNotification('✅ Ticket updated successfully', 'success');
+
+                    // If we just closed the ticket, save the required close comment as an internal note
+                    if (isClosingNow && closingComment) {
+                        try {
+                            const commentResponse = await fetch('/.netlify/functions/add-comment', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    ...(authState && authState.sessionToken ? { 'Authorization': `Bearer ${authState.sessionToken}` } : {})
+                                },
+                                body: JSON.stringify({
+                                    ticketId: currentTicket.id,
+                                    message: closingComment,
+                                    type: 'internal',
+                                    from: authState?.user?.email || null
+                                })
+                            });
+
+                            const commentResult = await commentResponse.json();
+                            if (commentResult && commentResult.success) {
+                                addToConversationHistory(currentTicket.id, 'internal', `Ticket closed: ${closingComment}`, new Date());
+                                const closeCommentEl = document.getElementById('closeTicketComment');
+                                if (closeCommentEl) closeCommentEl.value = '';
+                            } else {
+                                showDiscreteNotification('Ticket closed, but comment could not be saved', 'info');
+                            }
+                        } catch (e) {
+                            console.error('Error saving close comment:', e);
+                            showDiscreteNotification('Ticket closed, but comment could not be saved', 'info');
+                        }
+                    }
                     
                     // Add to conversation history
                     addToConversationHistory(currentTicket.id, 'system', 
@@ -4143,6 +4201,52 @@
                 if (saveBtn) {
                     saveBtn.textContent = originalText;
                     saveBtn.disabled = false;
+                }
+            }
+        }
+
+        async function closeTicketWithComment() {
+            if (!currentTicket) {
+                alert('❌ No ticket selected');
+                return;
+            }
+
+            const alreadyClosed = String(currentTicket.status || '').toLowerCase() === 'closed';
+            if (alreadyClosed) {
+                showDiscreteNotification('Ticket is already closed', 'info');
+                return;
+            }
+
+            const commentEl = document.getElementById('closeTicketComment');
+            const comment = (commentEl ? commentEl.value : '').trim();
+            if (!comment) {
+                alert('❌ Please enter a close comment');
+                if (commentEl) commentEl.focus();
+                return;
+            }
+
+            if (!confirm('Close this ticket?')) {
+                return;
+            }
+
+            const statusEl = document.getElementById('ticketStatusDropdown');
+            if (statusEl) {
+                statusEl.value = 'closed';
+            }
+
+            const closeBtn = document.getElementById('closeTicketBtn');
+            const originalCloseText = closeBtn ? closeBtn.textContent : null;
+            if (closeBtn) {
+                closeBtn.disabled = true;
+                closeBtn.textContent = 'Closing...';
+            }
+
+            try {
+                await saveTicketChanges();
+            } finally {
+                if (closeBtn) {
+                    closeBtn.disabled = false;
+                    closeBtn.textContent = originalCloseText || '✅ Close Ticket';
                 }
             }
         }
