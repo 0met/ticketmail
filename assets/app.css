@@ -30,7 +30,11 @@
         }
 
         .app-logo {
-            display: none; /* Hide broken image */
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            animation: float 3s ease-in-out infinite;
         }
 
         .app-name {
@@ -44,11 +48,9 @@
 
         /* Add icon using CSS before element */
         .app-name::before {
-            content: "🎫";
-            margin-right: 0.5rem;
-            font-size: 2rem;
-            display: inline-block;
-            animation: float 3s ease-in-out infinite;
+            content: "";
+            margin-right: 0;
+            display: none;
         }
 
         @keyframes float {
