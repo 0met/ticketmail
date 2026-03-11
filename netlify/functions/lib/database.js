@@ -976,8 +976,14 @@ async function updateTicket(ticketId, updates) {
             }
         }
 
-        console.log('Ticket updated successfully:', data);
-        return { success: true, updatedTicket: data };
+        const mappedTicket = mapTicketRecord(data);
+
+        console.log('Ticket updated successfully:', mappedTicket);
+        return {
+            success: true,
+            ticket: mappedTicket,
+            updatedTicket: data
+        };
     } catch (error) {
         console.error('Error updating ticket:', error);
         return { success: false, error: error.message };
