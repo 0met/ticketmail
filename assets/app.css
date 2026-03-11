@@ -447,6 +447,50 @@
             text-transform: uppercase;
         }
 
+        .ticket-analytics {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-end;
+            min-width: 140px;
+        }
+
+        .ticket-analytics-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #374151;
+            white-space: nowrap;
+        }
+
+        .ticket-analytics-icon {
+            width: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+
+        .ticket-analytics-text {
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .priority-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            background: #d1d5db;
+        }
+
+        .priority-dot.priority-critical { background: #dc2626; }
+        .priority-dot.priority-high { background: #ea580c; }
+        .priority-dot.priority-medium { background: #d97706; }
+        .priority-dot.priority-low { background: #0369a1; }
+
         .status-new {
             background: #dbeafe;
             color: #1e40af;

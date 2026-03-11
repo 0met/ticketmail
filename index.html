@@ -3303,6 +3303,17 @@
                 const customerLine = ticket.customer_name || ticket.customerName || ticket.customer_email || ticket.customerEmail || ticket.from || 'Unknown';
                 const companyLine = ticket.customer_company || ticket.customerCompany || '';
                 const fromLine = companyLine ? `${customerLine} • ${companyLine}` : customerLine;
+
+                const priorityVal = String(ticket.priority || 'medium').toLowerCase();
+                const statusVal = String(ticket.status || 'new').toLowerCase();
+                const dueRaw = ticket.due_date || ticket.dueDate || ticket.due_at || ticket.dueAt || ticket.due;
+                let dueText = '—';
+                if (dueRaw) {
+                    const dueDate = new Date(dueRaw);
+                    if (!isNaN(dueDate.getTime())) {
+                        dueText = dueDate.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
+                    }
+                }
                 
                 // Escape the ticket ID for safe use in HTML attribute
                 const safeTicketId = String(ticket.id || '').replace(/'/g, '&apos;').replace(/"/g, '&quot;');
@@ -3310,10 +3321,9 @@
                 return `
                 <div class="ticket-card" data-ticket-id="${safeTicketId}" style="cursor: pointer;">
                     <div class="ticket-header">
-                        <div>
+                        <div style="min-width: 0; flex: 1 1 auto;">
                             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
                                 <span class="ticket-number" style="background: #3b82f6; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${ticketNum}</span>
-                                <span class="priority-badge priority-${ticket.priority || 'medium'}" style="padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">${(ticket.priority || 'medium').toUpperCase()}</span>
                                 <span class="category-badge" style="background: #f3f4f6; color: #374151; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">${ticket.category || 'general'}</span>
                                 ${ticket.isManual ? '<span class="manual-badge" style="background: #fbbf24; color: #92400e; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">✏️ MANUAL</span>' : ''}
                             </div>
@@ -3323,7 +3333,21 @@
                                 <span title="${absDate}">${formatDate(ticket.date)}</span>
                             </div>
                         </div>
-                        <span class="ticket-status status-${ticket.status}">${ticket.status ? ticket.status.toUpperCase() : 'NEW'}</span>
+
+                        <div class="ticket-analytics" aria-label="Ticket analytics">
+                            <div class="ticket-analytics-row">
+                                <span class="priority-dot priority-${priorityVal}" aria-hidden="true"></span>
+                                <span class="ticket-analytics-text">${priorityVal.charAt(0).toUpperCase() + priorityVal.slice(1)}</span>
+                            </div>
+                            <div class="ticket-analytics-row">
+                                <span class="ticket-analytics-icon" aria-hidden="true">📅</span>
+                                <span class="ticket-analytics-text">${dueText}</span>
+                            </div>
+                            <div class="ticket-analytics-row">
+                                <span class="ticket-analytics-icon" aria-hidden="true">⚡</span>
+                                <span class="ticket-status status-${statusVal}">${statusVal.toUpperCase()}</span>
+                            </div>
+                        </div>
                     </div>
                     <p style="color: #64748b; margin-top: 1rem;">${truncateText(ticket.body || '', 100)}</p>
                 </div>
