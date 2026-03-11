@@ -148,11 +148,30 @@ async function recordLastSyncResult({
 let supabase = null;
 let sqlDb = null;
 
+function validatePostgresConnectionString(dbUrl) {
+    if (!dbUrl) {
+        const error = new Error('SUPABASE_DB_URL (or DATABASE_URL) environment variable is not set');
+        error.code = 'MISSING_DB_URL';
+        throw error;
+    }
+
+    const lower = String(dbUrl).toLowerCase();
+    const isPostgres = lower.startsWith('postgres://') || lower.startsWith('postgresql://');
+
+    if (!isPostgres) {
+        const error = new Error(
+            'SUPABASE_DB_URL/DATABASE_URL must be a Postgres connection string (postgres:// or postgresql://), not a Supabase https URL. '
+            + 'Get it from Supabase Dashboard → Settings → Database → Connection string.'
+        );
+        error.code = 'INVALID_DB_URL';
+        throw error;
+    }
+}
+
 function getSqlDatabase() {
     const dbUrl = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
-    if (!dbUrl) {
-        throw new Error('SUPABASE_DB_URL (or DATABASE_URL) environment variable is not set');
-    }
+
+    validatePostgresConnectionString(dbUrl);
 
     if (sqlDb) {
         return sqlDb;

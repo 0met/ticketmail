@@ -6,6 +6,14 @@ function getDirectSql() {
     if (!dbUrl) {
         return { ok: false, error: 'SUPABASE_DB_URL (or DATABASE_URL) is not set' };
     }
+    const lower = String(dbUrl).toLowerCase();
+    const isPostgres = lower.startsWith('postgres://') || lower.startsWith('postgresql://');
+    if (!isPostgres) {
+        return {
+            ok: false,
+            error: 'SUPABASE_DB_URL/DATABASE_URL must be a Postgres connection string (postgres:// or postgresql://), not a Supabase https URL.'
+        };
+    }
     return { ok: true, sql: neon(dbUrl) };
 }
 

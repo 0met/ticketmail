@@ -33,6 +33,16 @@ function getSqlDatabase() {
         error.code = 'MISSING_DB_URL';
         throw error;
     }
+
+    const lower = String(dbUrl).toLowerCase();
+    const isPostgres = lower.startsWith('postgres://') || lower.startsWith('postgresql://');
+    if (!isPostgres) {
+        const error = new Error(
+            'SUPABASE_DB_URL/DATABASE_URL must be a Postgres connection string (postgres:// or postgresql://), not a Supabase https URL.'
+        );
+        error.code = 'INVALID_DB_URL';
+        throw error;
+    }
     return neon(dbUrl);
 }
 
