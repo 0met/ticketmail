@@ -4527,8 +4527,14 @@
 
                     console.log('Ticket save completed successfully');
                 } else {
-                    console.error('Ticket save failed:', result.error);
-                    alert('❌ Failed to save ticket changes: ' + result.error);
+                    console.error('Ticket save failed:', result);
+
+                    const details = [];
+                    if (result && result.error) details.push(String(result.error));
+                    if (result && result.fallbackError) details.push(`Fallback error: ${String(result.fallbackError)}`);
+                    if (result && result.hint) details.push(`Hint: ${String(result.hint)}`);
+
+                    alert('❌ Failed to save ticket changes: ' + (details.length ? details.join('\n') : 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error saving ticket:', error);
