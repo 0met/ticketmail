@@ -39,16 +39,23 @@
 
         .app-name {
             font-size: 1.75rem;
-            font-weight: 700;
+            font-weight: 600;
             color: white;
             letter-spacing: -0.02em;
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             position: relative;
+            white-space: nowrap;
+            line-height: 1.05;
+        }
+
+        .app-name-main {
+            font-weight: 600;
         }
 
         .app-name-sub {
-            font-size: 1.1rem;
-            font-weight: 600;
+            font-size: 1.05rem;
+            font-weight: 400;
+            margin-left: 0.25rem;
         }
 
         /* Add icon using CSS before element */
@@ -1331,6 +1338,35 @@
         .login-header {
             text-align: center;
             margin-bottom: 2rem;
+        }
+
+        .login-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .login-brand-logo {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+        }
+
+        .login-brand-name {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a202c;
+            letter-spacing: -0.02em;
+            line-height: 1.05;
+            white-space: nowrap;
+        }
+
+        .login-brand-sub {
+            font-size: 1.05rem;
+            font-weight: 400;
+            margin-left: 0.25rem;
         }
 
         .login-title {
