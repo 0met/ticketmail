@@ -4389,20 +4389,6 @@
                     return;
                 }
 
-                console.log('Saving ticket changes:', updates);
-                console.log('Current ticket before save:', JSON.stringify({
-                    id: currentTicket.id,
-                    status: currentTicket.status,
-                    priority: currentTicket.priority,
-                    category: currentTicket.category
-                }, null, 2));
-                console.log('🔄 Customer field values being saved:', {
-                    customerName: updates.customerName,
-                    customerId: updates.customerId,
-                    customerPhone: updates.customerPhone,
-                    customerEmail: updates.customerEmail
-                });
-
                 // Use the existing updateTicket function
                 const response = await fetch('/.netlify/functions/update-ticket', {
                     method: 'POST',
@@ -4415,51 +4401,14 @@
                         updates: updates
                     })
                 });
-
-                console.log('Update response status:', response.status);
                 const result = await response.json();
-                console.log('Update result:', JSON.stringify(result, null, 2));
-                if (!result.ticket) {
-                    console.warn('⚠️  Database response missing updated ticket');
-                } else {
-                    const expectedCustomerKeys = ['customer_name', 'customer_id', 'customer_phone', 'customer_email'];
-                    const missingCustomerKeys = expectedCustomerKeys.filter((key) => !(key in result.ticket));
-
-                    if (missingCustomerKeys.length > 0) {
-                        console.warn('⚠️  Database response missing customer field keys:', missingCustomerKeys);
-                    } else if (result.ticket.customer_name || result.ticket.customer_id || result.ticket.customer_phone || result.ticket.customer_email) {
-                        console.log('✅ Database confirmed customer fields saved:', {
-                            customer_name: result.ticket.customer_name,
-                            customer_id: result.ticket.customer_id,
-                            customer_phone: result.ticket.customer_phone,
-                            customer_email: result.ticket.customer_email
-                        });
-                    } else {
-                        console.log('ℹ️  Customer fields are blank (ok for this ticket)');
-                    }
-                }
                 
                 if (result.success) {
-                    console.log('✅ Backend confirmed ticket update successful');
-                    
                     // Update local state
                     const ticket = appState.tickets.find(t => t.id === currentTicket.id);
                     if (ticket) {
-                        console.log('Found ticket in appState, updating local copy...');
-                        console.log('Before local update:', JSON.stringify({
-                            status: ticket.status,
-                            priority: ticket.priority,
-                            category: ticket.category
-                        }, null, 2));
-                        
                         Object.assign(ticket, updates);
                         Object.assign(currentTicket, updates);
-                        
-                        console.log('After local update:', JSON.stringify({
-                            status: ticket.status,
-                            priority: ticket.priority,
-                            category: ticket.category
-                        }, null, 2));
                     } else {
                         console.warn('❌ Ticket not found in appState for local update');
                     }
@@ -4524,17 +4473,9 @@
                         if (customerEmailEl && updated.customer_email) customerEmailEl.value = updated.customer_email;
                         if (customerCompanyEl && updated.customer_company) customerCompanyEl.value = updated.customer_company;
                     }
-
-                    console.log('Ticket save completed successfully');
                 } else {
-                    console.error('Ticket save failed:', result);
-
-                    const details = [];
-                    if (result && result.error) details.push(String(result.error));
-                    if (result && result.fallbackError) details.push(`Fallback error: ${String(result.fallbackError)}`);
-                    if (result && result.hint) details.push(`Hint: ${String(result.hint)}`);
-
-                    alert('❌ Failed to save ticket changes: ' + (details.length ? details.join('\n') : 'Unknown error'));
+                    console.error('Ticket save failed:', result && result.error ? result.error : result);
+                    alert('❌ Failed to save ticket changes: ' + (result && result.error ? result.error : 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error saving ticket:', error);
