@@ -443,6 +443,30 @@
                         <div class="metric-value" id="unassignedCount">0</div>
                     </div>
                 </div>
+
+                <div style="margin-top: 2rem;">
+                    <div class="metric-card" id="todoCard">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                            <div style="min-width: 0;">
+                                <div class="metric-label">To do</div>
+                                <div class="metric-value" style="display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap;">
+                                    <span id="todoOpenCount">0</span>
+                                    <span style="font-size: 1rem; color: #64748b;">open</span>
+                                    <span style="font-size: 1rem; color: #64748b;">•</span>
+                                    <span id="todoCompletedCount">0</span>
+                                    <span style="font-size: 1rem; color: #64748b;">completed</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 1rem; display: flex; gap: 0.75rem; align-items: center;">
+                            <input id="newTodoText" class="form-input" type="text" placeholder="Add a task..." style="flex: 1 1 auto;" onkeydown="if (event.key === 'Enter') { event.preventDefault(); addTodoFromDashboard(); }" />
+                            <button class="btn btn-primary" onclick="addTodoFromDashboard()">Add</button>
+                        </div>
+
+                        <div id="todoList" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                    </div>
+                </div>
                 </div>
             </div>
 
@@ -1988,6 +2012,9 @@
                 authState.sessionToken = null;
                 authState.permissions = [];
                 authState.isValidating = false;
+
+                appState.todos = [];
+                updateTodoDashboard();
                 
                 localStorage.removeItem('ticketmail_session');
                 
@@ -2654,6 +2681,7 @@
         // Application State
         let appState = {
             tickets: [],
+            todos: [],
             settings: {
                 gmailAddress: '',
                 hasAppPassword: false
@@ -3737,6 +3765,147 @@
             if (openStatusEl) openStatusEl.textContent = open;
             if (onHoldEl) onHoldEl.textContent = onHold;
             if (unassignedEl) unassignedEl.textContent = unassigned;
+
+            updateTodoDashboard();
+        }
+
+        function updateTodoDashboard() {
+            const openCountEl = document.getElementById('todoOpenCount');
+            const completedCountEl = document.getElementById('todoCompletedCount');
+            if (!openCountEl || !completedCountEl) {
+                return;
+            }
+
+            const todos = Array.isArray(appState.todos) ? appState.todos : [];
+            const completed = todos.filter(t => t && (t.is_completed === true || t.isCompleted === true)).length;
+            const open = Math.max(0, todos.length - completed);
+
+            openCountEl.textContent = String(open);
+            completedCountEl.textContent = String(completed);
+
+            renderTodoList();
+        }
+
+        function renderTodoList() {
+            const listEl = document.getElementById('todoList');
+            if (!listEl) return;
+
+            const todos = Array.isArray(appState.todos) ? appState.todos : [];
+            if (todos.length === 0) {
+                listEl.innerHTML = '<div style="color: #64748b; font-size: 0.875rem;">No tasks yet.</div>';
+                return;
+            }
+
+            listEl.innerHTML = todos.map(todo => {
+                const id = todo && (todo.id ?? todo.todo_id ?? todo.todoId);
+                const text = (todo && (todo.text ?? todo.title ?? todo.name) ? String(todo.text ?? todo.title ?? todo.name) : '').trim();
+                const isCompleted = !!(todo && (todo.is_completed === true || todo.isCompleted === true));
+                const safeText = text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+
+                return `
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #1f2937;">
+                        <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTodoFromDashboard('${String(id).replace(/'/g, '&apos;')}', this.checked)" />
+                        <span style="flex: 1 1 auto; min-width: 0; ${isCompleted ? 'text-decoration: line-through; color: #64748b;' : ''}">${safeText}</span>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        async function loadTodos() {
+            if (!authState || !authState.sessionToken) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/.netlify/functions/todos', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authState.sessionToken}`
+                    }
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result || !result.success) {
+                    return;
+                }
+
+                appState.todos = Array.isArray(result.todos) ? result.todos : [];
+                updateTodoDashboard();
+            } catch (_) {
+                // ignore
+            }
+        }
+
+        async function addTodoFromDashboard() {
+            if (!authState || !authState.sessionToken) return;
+
+            const input = document.getElementById('newTodoText');
+            if (!input) return;
+
+            const text = String(input.value || '').trim();
+            if (!text) return;
+
+            try {
+                const response = await fetch('/.netlify/functions/todos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authState.sessionToken}`
+                    },
+                    body: JSON.stringify({ text })
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result || !result.success) {
+                    return;
+                }
+
+                if (result.todo) {
+                    appState.todos = [result.todo, ...(Array.isArray(appState.todos) ? appState.todos : [])];
+                }
+                input.value = '';
+                updateTodoDashboard();
+            } catch (_) {
+                // ignore
+            }
+        }
+
+        async function toggleTodoFromDashboard(todoId, isCompleted) {
+            if (!authState || !authState.sessionToken) return;
+
+            const id = String(todoId || '').trim();
+            if (!id) return;
+
+            try {
+                const response = await fetch('/.netlify/functions/todos', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authState.sessionToken}`
+                    },
+                    body: JSON.stringify({ id, isCompleted: !!isCompleted })
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result || !result.success) {
+                    return;
+                }
+
+                const updated = result.todo;
+                if (updated && Array.isArray(appState.todos)) {
+                    appState.todos = appState.todos.map(t => (String(t && t.id) === String(updated.id) ? updated : t));
+                }
+
+                updateTodoDashboard();
+            } catch (_) {
+                // ignore
+            }
         }
 
         // Format date for display
@@ -3882,6 +4051,8 @@
                     loadTickets();
                 } else if (targetPage === 'dashboard' && normalizeRole(authState?.user?.role) === 'customer' && typeof loadCustomerDashboard === 'function') {
                     loadCustomerDashboard();
+                } else if (targetPage === 'dashboard' && typeof loadTodos === 'function') {
+                    loadTodos();
                 } else if (targetPage === 'my-tickets' && typeof loadCustomerTickets === 'function') {
                     loadCustomerTickets();
                 } else if (targetPage === 'settings') {
@@ -3995,6 +4166,9 @@
             
             // Load tickets when the app initializes
             loadTickets();
+
+            // Load user todos for dashboard
+            loadTodos();
         }
 
         // Utility function to truncate text
