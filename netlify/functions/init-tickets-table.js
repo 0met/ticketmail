@@ -174,6 +174,15 @@ exports.handler = async (event, context) => {
             }
         }
 
+        // Refresh PostgREST schema cache so newly added columns are immediately available
+        // via Supabase client (otherwise updates may fail with "schema cache" errors).
+        try {
+            await sql`NOTIFY pgrst, 'reload schema';`;
+            actions.push('Requested PostgREST schema cache reload');
+        } catch (err) {
+            actions.push(`Could not request PostgREST schema reload: ${err.message}`);
+        }
+
         // Enforce uniqueness on message_id when possible.
         // If duplicates already exist, this will fail; in that case we leave it to the app-level duplicate check.
         try {

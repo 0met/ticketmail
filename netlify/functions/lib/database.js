@@ -942,17 +942,38 @@ async function updateTicket(ticketId, updates) {
             }
         }
 
+        const attemptUpdate = async () => {
+            return await supabase
+                .from('tickets')
+                .update(updateData)
+                .eq('id', ticketId)
+                .select()
+                .single();
+        };
+
         // Update the ticket
-        const { data, error: updateError } = await supabase
-            .from('tickets')
-            .update(updateData)
-            .eq('id', ticketId)
-            .select()
-            .single();
+        let { data, error: updateError } = await attemptUpdate();
 
         if (updateError) {
-            console.error('Error updating ticket:', updateError);
-            return { success: false, error: updateError.message };
+            const msg = String(updateError.message || '').toLowerCase();
+            const looksLikeSchemaCache = msg.includes('schema cache') || msg.includes('could not find') || msg.includes('column');
+
+            if (looksLikeSchemaCache) {
+                // Best-effort: request PostgREST schema reload and retry once.
+                try {
+                    const sql = getSqlDatabase();
+                    await sql`NOTIFY pgrst, 'reload schema';`;
+                    console.warn('Requested PostgREST schema reload after update error, retrying...');
+                    ({ data, error: updateError } = await attemptUpdate());
+                } catch (e) {
+                    console.warn('Could not request PostgREST schema reload:', e && e.message ? e.message : e);
+                }
+            }
+
+            if (updateError) {
+                console.error('Error updating ticket:', updateError);
+                return { success: false, error: updateError.message };
+            }
         }
 
         console.log('Ticket updated successfully:', data);
