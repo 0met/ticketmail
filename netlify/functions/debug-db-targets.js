@@ -1,20 +1,12 @@
-const { neon } = require('@neondatabase/serverless');
+const { getSqlDatabase } = require('./lib/database');
 const { createClient } = require('@supabase/supabase-js');
 
 function getDirectSql() {
-    const dbUrl = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
-    if (!dbUrl) {
-        return { ok: false, error: 'SUPABASE_DB_URL (or DATABASE_URL) is not set' };
+    try {
+        return { ok: true, sql: getSqlDatabase() };
+    } catch (e) {
+        return { ok: false, error: e && e.message ? e.message : String(e) };
     }
-    const lower = String(dbUrl).toLowerCase();
-    const isPostgres = lower.startsWith('postgres://') || lower.startsWith('postgresql://');
-    if (!isPostgres) {
-        return {
-            ok: false,
-            error: 'SUPABASE_DB_URL/DATABASE_URL must be a Postgres connection string (postgres:// or postgresql://), not a Supabase https URL.'
-        };
-    }
-    return { ok: true, sql: neon(dbUrl) };
 }
 
 function getSupabaseClient() {

@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const { neon } = require('@neondatabase/serverless');
+const { Pool } = require('pg');
 const crypto = require('crypto-js');
 function getLocalDB() {
     // IMPORTANT: database-local depends on native sqlite3.
@@ -147,6 +147,7 @@ async function recordLastSyncResult({
 // Database connection - initialized on demand
 let supabase = null;
 let sqlDb = null;
+let sqlPool = null;
 
 function validatePostgresConnectionString(dbUrl) {
     if (!dbUrl) {
@@ -177,7 +178,45 @@ function getSqlDatabase() {
         return sqlDb;
     }
 
-    sqlDb = neon(dbUrl);
+    const lower = String(dbUrl).toLowerCase();
+    const isLocal = lower.includes('localhost') || lower.includes('127.0.0.1');
+    const sslDisabled = lower.includes('sslmode=disable');
+
+    sqlPool = new Pool({
+        connectionString: dbUrl,
+        ssl: (!isLocal && !sslDisabled) ? { rejectUnauthorized: false } : false
+    });
+
+    sqlDb = async (strings, ...values) => {
+        // Support both tagged template usage (sql`SELECT ... ${x}`)
+        // and direct calls (sql('SELECT ... WHERE id=$1', [id])).
+        if (typeof strings === 'string') {
+            const text = strings;
+            const params = Array.isArray(values[0]) ? values[0] : values;
+            const result = await sqlPool.query(text, params);
+            return result.rows;
+        }
+
+        let text = strings[0];
+        const params = [];
+        for (let i = 0; i < values.length; i++) {
+            text += `$${i + 1}${strings[i + 1]}`;
+            params.push(values[i]);
+        }
+
+        const result = await sqlPool.query(text, params);
+        return result.rows;
+    };
+
+    sqlDb.close = async () => {
+        if (sqlPool) {
+            const pool = sqlPool;
+            sqlPool = null;
+            await pool.end();
+        }
+        sqlDb = null;
+    };
+
     return sqlDb;
 }
 

@@ -1,14 +1,4 @@
-const { neon } = require('@neondatabase/serverless');
-
-function getSql() {
-    const dbUrl = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
-    if (!dbUrl) {
-        const error = new Error('SUPABASE_DB_URL (or DATABASE_URL) environment variable is not set');
-        error.code = 'MISSING_DB_URL';
-        throw error;
-    }
-    return neon(dbUrl);
-}
+const { getSqlDatabase } = require('./lib/database');
 
 exports.handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
@@ -35,7 +25,7 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const sql = getSql();
+        const sql = getSqlDatabase();
 
         // Normalize roles in-place
         await sql`UPDATE public.users SET role = lower(role) WHERE role IS NOT NULL`;

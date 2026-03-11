@@ -1,12 +1,4 @@
-const { neon } = require('@neondatabase/serverless');
-
-function getDatabase() {
-    const dbUrl = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
-    if (!dbUrl) {
-        throw new Error('SUPABASE_DB_URL (or DATABASE_URL) environment variable is not set');
-    }
-    return neon(dbUrl);
-}
+const { getSqlDatabase } = require('./lib/database');
 
 function normalizeBool(value) {
     return value === true || value === 'true' || value === '1' || value === 1;
@@ -43,7 +35,7 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const sql = getDatabase();
+        const sql = getSqlDatabase();
         const query = event.queryStringParameters || {};
         const includeOptionalColumns = normalizeBool(query.includeOptionalColumns);
 
