@@ -3372,7 +3372,7 @@
             });
         }
 
-        function toDatetimeLocalValue(value) {
+        function toDateInputValue(value) {
             if (!value) return '';
             const d = new Date(value);
             if (isNaN(d.getTime())) return '';
@@ -3381,15 +3381,26 @@
             const yyyy = d.getFullYear();
             const mm = pad(d.getMonth() + 1);
             const dd = pad(d.getDate());
-            const hh = pad(d.getHours());
-            const mi = pad(d.getMinutes());
-            return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+            return `${yyyy}-${mm}-${dd}`;
         }
 
-        function fromDatetimeLocalValue(value) {
+        function fromDateInputValue(value, { endOfDay = true } = {}) {
             const raw = String(value ?? '').trim();
             if (!raw) return null;
-            const d = new Date(raw);
+
+            const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (!match) return null;
+            const year = Number(match[1]);
+            const monthIndex = Number(match[2]) - 1;
+            const day = Number(match[3]);
+            if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || !Number.isFinite(day)) return null;
+
+            // Interpret date-only entries as local time and store as an ISO timestamp.
+            // We use end-of-day so tickets aren't marked overdue at midnight.
+            const d = endOfDay
+                ? new Date(year, monthIndex, day, 23, 59, 59, 999)
+                : new Date(year, monthIndex, day, 0, 0, 0, 0);
+
             if (isNaN(d.getTime())) return null;
             return d.toISOString();
         }
@@ -4187,11 +4198,11 @@
                                         </div>
                                         <div>
                                             <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">First response due</label>
-                                            <input type="datetime-local" id="ticketFirstResponseDue" value="${escapeAttr(toDatetimeLocalValue(firstResponseDueAtRaw))}" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+                                            <input type="date" id="ticketFirstResponseDue" value="${escapeAttr(toDateInputValue(firstResponseDueAtRaw))}" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
                                         </div>
                                         <div>
                                             <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Resolution due</label>
-                                            <input type="datetime-local" id="ticketResolutionDue" value="${escapeAttr(toDatetimeLocalValue(resolutionDueAtRaw))}" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+                                            <input type="date" id="ticketResolutionDue" value="${escapeAttr(toDateInputValue(resolutionDueAtRaw))}" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
                                         </div>
                                     </div>
                                 </div>
@@ -4308,8 +4319,8 @@
                     priority: priorityEl.value,
                     assignedTo: assigneeEl?.value || '',
                     category: categoryEl.value,
-                    firstResponseDueAt: fromDatetimeLocalValue(firstResponseDueEl?.value),
-                    resolutionDueAt: fromDatetimeLocalValue(resolutionDueEl?.value),
+                    firstResponseDueAt: fromDateInputValue(firstResponseDueEl?.value, { endOfDay: true }),
+                    resolutionDueAt: fromDateInputValue(resolutionDueEl?.value, { endOfDay: true }),
                     customerName: customerNameEl?.value || '',
                     customerId: customerIdEl?.value || '',
                     customerPhone: customerPhoneEl?.value || '',
