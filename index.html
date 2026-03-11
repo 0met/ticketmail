@@ -3798,6 +3798,7 @@
 
             listEl.innerHTML = todos.map(todo => {
                 const id = todo && (todo.id ?? todo.todo_id ?? todo.todoId);
+                const numericId = (typeof id === 'number') ? id : Number(String(id));
                 const text = (todo && (todo.text ?? todo.title ?? todo.name) ? String(todo.text ?? todo.title ?? todo.name) : '').trim();
                 const isCompleted = !!(todo && (todo.is_completed === true || todo.isCompleted === true));
                 const safeText = text
@@ -3807,9 +3808,13 @@
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#39;');
 
+                if (!Number.isFinite(numericId) || !safeText) {
+                    return '';
+                }
+
                 return `
                     <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #1f2937;">
-                        <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTodoFromDashboard('${String(id).replace(/'/g, '&apos;')}', this.checked)" />
+                        <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTodoFromDashboard(${numericId}, this.checked)" />
                         <span style="flex: 1 1 auto; min-width: 0; ${isCompleted ? 'text-decoration: line-through; color: #64748b;' : ''}">${safeText}</span>
                     </label>
                 `;
@@ -3879,8 +3884,8 @@
         async function toggleTodoFromDashboard(todoId, isCompleted) {
             if (!authState || !authState.sessionToken) return;
 
-            const id = String(todoId || '').trim();
-            if (!id) return;
+            const id = (typeof todoId === 'number') ? todoId : Number(String(todoId || '').trim());
+            if (!Number.isFinite(id)) return;
 
             try {
                 const response = await fetch('/.netlify/functions/todos', {
