@@ -479,6 +479,42 @@
             font-weight: 500;
         }
 
+        .ticket-card-settings-panel {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 0.75rem;
+            min-width: 220px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+            z-index: 20;
+        }
+
+        .ticket-card-settings-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.5rem;
+        }
+
+        .ticket-card-settings-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.25rem;
+            font-size: 0.875rem;
+            color: #374151;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .ticket-card-settings-item input {
+            width: 16px;
+            height: 16px;
+        }
+
         .priority-dot {
             width: 10px;
             height: 10px;

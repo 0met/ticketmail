@@ -482,7 +482,29 @@
                             <option value="closed">Closed</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary" onclick="fetchEmails()">🔄 Refresh Emails</button>
+                    <div class="tickets-toolbar-right" style="display: flex; gap: 0.75rem; align-items: center; position: relative;">
+                        <button class="btn btn-primary" onclick="fetchEmails()">🔄 Refresh Emails</button>
+                        <button class="btn btn-secondary" id="ticketCardSettingsBtn" onclick="toggleTicketCardSettings(event)">⚙️ Card Settings</button>
+                        <div id="ticketCardSettingsPanel" class="ticket-card-settings-panel" style="display: none;">
+                            <div class="ticket-card-settings-title">Ticket card analytics</div>
+                            <label class="ticket-card-settings-item">
+                                <input type="checkbox" id="tca_priority" onchange="onTicketCardAnalyticsToggle('priority', this.checked)" />
+                                <span>Priority</span>
+                            </label>
+                            <label class="ticket-card-settings-item">
+                                <input type="checkbox" id="tca_due" onchange="onTicketCardAnalyticsToggle('due', this.checked)" />
+                                <span>Due date</span>
+                            </label>
+                            <label class="ticket-card-settings-item">
+                                <input type="checkbox" id="tca_status" onchange="onTicketCardAnalyticsToggle('status', this.checked)" />
+                                <span>Status</span>
+                            </label>
+                            <label class="ticket-card-settings-item">
+                                <input type="checkbox" id="tca_assignee" onchange="onTicketCardAnalyticsToggle('assignee', this.checked)" />
+                                <span>Assignee</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="ticketsContainer" class="tickets-grid">
@@ -3281,6 +3303,76 @@
         }
 
         // Render tickets in the tickets page
+        const TICKET_CARD_ANALYTICS_STORAGE_KEY = 'ticketmail_ticket_card_analytics';
+        const TICKET_CARD_ANALYTICS_DEFAULTS = Object.freeze({
+            priority: true,
+            due: true,
+            status: true,
+            assignee: true
+        });
+
+        function getTicketCardAnalyticsSettings() {
+            try {
+                const raw = localStorage.getItem(TICKET_CARD_ANALYTICS_STORAGE_KEY);
+                if (!raw) return { ...TICKET_CARD_ANALYTICS_DEFAULTS };
+                const parsed = JSON.parse(raw);
+                const safe = (parsed && typeof parsed === 'object') ? parsed : {};
+                return {
+                    ...TICKET_CARD_ANALYTICS_DEFAULTS,
+                    ...safe
+                };
+            } catch (_) {
+                return { ...TICKET_CARD_ANALYTICS_DEFAULTS };
+            }
+        }
+
+        function setTicketCardAnalyticsSettings(next) {
+            try {
+                localStorage.setItem(TICKET_CARD_ANALYTICS_STORAGE_KEY, JSON.stringify(next));
+            } catch (_) {
+                // ignore
+            }
+        }
+
+        function syncTicketCardSettingsUI() {
+            const settings = getTicketCardAnalyticsSettings();
+            const map = {
+                priority: 'tca_priority',
+                due: 'tca_due',
+                status: 'tca_status',
+                assignee: 'tca_assignee'
+            };
+            Object.keys(map).forEach((key) => {
+                const el = document.getElementById(map[key]);
+                if (el) el.checked = !!settings[key];
+            });
+        }
+
+        function toggleTicketCardSettings(e) {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            const panel = document.getElementById('ticketCardSettingsPanel');
+            if (!panel) return;
+            const isOpen = panel.style.display !== 'none';
+            if (isOpen) {
+                panel.style.display = 'none';
+                return;
+            }
+            syncTicketCardSettingsUI();
+            panel.style.display = 'block';
+        }
+
+        function onTicketCardAnalyticsToggle(key, enabled) {
+            const current = getTicketCardAnalyticsSettings();
+            const next = { ...current, [key]: !!enabled };
+            setTicketCardAnalyticsSettings(next);
+            // Preserve current filter selections while re-rendering.
+            if (typeof applyFilters === 'function') {
+                applyFilters();
+            } else {
+                renderTickets();
+            }
+        }
+
         function renderTickets(filteredTickets = null) {
             const container = document.getElementById('ticketsContainer');
             const ticketsToRender = filteredTickets || appState.tickets;
@@ -3298,6 +3390,7 @@
             }
 
             container.innerHTML = ticketsToRender.map(ticket => {
+                const analyticsSettings = getTicketCardAnalyticsSettings();
                 const ticketNum = ticket.ticketNumber || ticket.ticket_number || 'TK-XXXX';
                 const absDate = ticket.date ? (new Date(ticket.date)).toISOString() : '';
                 const customerLine = ticket.customer_name || ticket.customerName || ticket.customer_email || ticket.customerEmail || ticket.from || 'Unknown';
@@ -3313,6 +3406,59 @@
                     if (!isNaN(dueDate.getTime())) {
                         dueText = dueDate.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
                     }
+                }
+
+                const assignedRaw = (ticket.assigned_to ?? ticket.assignedTo ?? ticket.assignee_id ?? ticket.assigneeId ?? '').toString().trim();
+                let assigneeText = 'Unassigned';
+                if (assignedRaw) {
+                    const match = Array.isArray(assignableUsersCache)
+                        ? assignableUsersCache.find(u => String(u.id) === assignedRaw)
+                        : null;
+
+                    if (match && match.label) {
+                        assigneeText = match.label;
+                    } else if (assignedRaw.includes('@')) {
+                        assigneeText = assignedRaw.split('@')[0] || 'Assigned';
+                    } else if (assignedRaw.length <= 18) {
+                        assigneeText = assignedRaw;
+                    } else {
+                        assigneeText = 'Assigned';
+                    }
+                }
+                assigneeText = truncateText(assigneeText, 18);
+
+                const analyticsRows = [];
+                if (analyticsSettings.priority) {
+                    analyticsRows.push(`
+                        <div class="ticket-analytics-row">
+                            <span class="priority-dot priority-${priorityVal}" aria-hidden="true"></span>
+                            <span class="ticket-analytics-text">${priorityVal.charAt(0).toUpperCase() + priorityVal.slice(1)}</span>
+                        </div>
+                    `);
+                }
+                if (analyticsSettings.due) {
+                    analyticsRows.push(`
+                        <div class="ticket-analytics-row">
+                            <span class="ticket-analytics-icon" aria-hidden="true">📅</span>
+                            <span class="ticket-analytics-text">${dueText}</span>
+                        </div>
+                    `);
+                }
+                if (analyticsSettings.status) {
+                    analyticsRows.push(`
+                        <div class="ticket-analytics-row">
+                            <span class="ticket-analytics-icon" aria-hidden="true">⚡</span>
+                            <span class="ticket-status status-${statusVal}">${statusVal.toUpperCase()}</span>
+                        </div>
+                    `);
+                }
+                if (analyticsSettings.assignee) {
+                    analyticsRows.push(`
+                        <div class="ticket-analytics-row">
+                            <span class="ticket-analytics-icon" aria-hidden="true">👤</span>
+                            <span class="ticket-analytics-text">${assigneeText}</span>
+                        </div>
+                    `);
                 }
                 
                 // Escape the ticket ID for safe use in HTML attribute
@@ -3335,18 +3481,7 @@
                         </div>
 
                         <div class="ticket-analytics" aria-label="Ticket analytics">
-                            <div class="ticket-analytics-row">
-                                <span class="priority-dot priority-${priorityVal}" aria-hidden="true"></span>
-                                <span class="ticket-analytics-text">${priorityVal.charAt(0).toUpperCase() + priorityVal.slice(1)}</span>
-                            </div>
-                            <div class="ticket-analytics-row">
-                                <span class="ticket-analytics-icon" aria-hidden="true">📅</span>
-                                <span class="ticket-analytics-text">${dueText}</span>
-                            </div>
-                            <div class="ticket-analytics-row">
-                                <span class="ticket-analytics-icon" aria-hidden="true">⚡</span>
-                                <span class="ticket-status status-${statusVal}">${statusVal.toUpperCase()}</span>
-                            </div>
+                            ${analyticsRows.join('')}
                         </div>
                     </div>
                     <p style="color: #64748b; margin-top: 1rem;">${truncateText(ticket.body || '', 100)}</p>
@@ -5133,11 +5268,25 @@
             } else if (e.target.id === 'customerNewTicketModal') {
                 closeCustomerNewTicketModal();
             }
+
+            // Close Ticket card settings panel when clicking outside.
+            const panel = document.getElementById('ticketCardSettingsPanel');
+            if (panel && panel.style.display !== 'none') {
+                const btn = document.getElementById('ticketCardSettingsBtn');
+                if (!panel.contains(e.target) && !(btn && btn.contains(e.target))) {
+                    panel.style.display = 'none';
+                }
+            }
         });
 
         // Close modal with Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
+                const panel = document.getElementById('ticketCardSettingsPanel');
+                if (panel && panel.style.display !== 'none') {
+                    panel.style.display = 'none';
+                    return;
+                }
                 if (document.getElementById('ticketModal').classList.contains('active')) {
                     closeTicketModal();
                 } else if (document.getElementById('newTicketModal').classList.contains('active')) {
@@ -5207,6 +5356,9 @@
             
             // Initialize UI elements
             initializeUI();
+
+            // Sync Tickets card settings checkboxes.
+            syncTicketCardSettingsUI();
 
             // Quick sanity check for critical pages (helps diagnose blank User Management issues)
             verifyCriticalDom();
