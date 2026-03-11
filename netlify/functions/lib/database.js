@@ -778,6 +778,48 @@ function normalizeTimestampValue(value, fallback = null) {
     return parsed.toISOString();
 }
 
+async function fallbackUpdateTicketViaSql(ticketId, updateData) {
+    const sql = getSqlDatabase();
+
+    const allowedColumns = new Set([
+        'updated_at',
+        'priority',
+        'category',
+        'status',
+        'resolution_time',
+        'closed_at',
+        'customer_name',
+        'customer_id',
+        'customer_phone',
+        'customer_email',
+        'customer_company',
+        'assigned_to',
+        'first_response_due_at',
+        'resolution_due_at'
+    ]);
+
+    const entries = Object.entries(updateData)
+        .filter(([key]) => allowedColumns.has(key));
+
+    if (entries.length === 0) {
+        throw new Error('No supported columns to update');
+    }
+
+    const setClauses = entries.map(([column], index) => `"${column}" = $${index + 1}`);
+    const params = entries.map(([, value]) => value);
+    params.push(ticketId);
+
+    const query = `UPDATE tickets SET ${setClauses.join(', ')} WHERE id = $${params.length} RETURNING *;`;
+
+    const rows = await sql(query, params);
+    const updatedRow = Array.isArray(rows) ? rows[0] : null;
+    if (!updatedRow) {
+        throw new Error('SQL fallback update returned no rows');
+    }
+
+    return mapTicketRecord(updatedRow);
+}
+
 // Get all tickets
 async function getTickets(limit = 100) {
     try {
@@ -865,6 +907,10 @@ async function updateTicketStatus(ticketId, status) {
 async function updateTicket(ticketId, updates) {
     try {
         const supabase = getDatabase();
+
+        if (!supabase || typeof supabase.from !== 'function') {
+            return { success: false, error: 'Database client not initialized (missing Supabase configuration)' };
+        }
 
         console.log(`Updating ticket ${ticketId} with updates:`, updates);
 
@@ -967,6 +1013,22 @@ async function updateTicket(ticketId, updates) {
                     ({ data, error: updateError } = await attemptUpdate());
                 } catch (e) {
                     console.warn('Could not request PostgREST schema reload:', e && e.message ? e.message : e);
+                }
+            }
+
+            if (updateError && looksLikeSchemaCache) {
+                // Guaranteed fallback: bypass PostgREST and update via direct SQL.
+                try {
+                    const mappedTicket = await fallbackUpdateTicketViaSql(ticketId, updateData);
+                    console.warn('Applied SQL fallback update after schema cache error.');
+                    return {
+                        success: true,
+                        ticket: mappedTicket,
+                        updatedTicket: null,
+                        fallback: 'sql'
+                    };
+                } catch (e) {
+                    console.warn('SQL fallback update failed:', e && e.message ? e.message : e);
                 }
             }
 
