@@ -1003,6 +1003,7 @@ async function updateTicket(ticketId, updates) {
         if (updateError) {
             const msg = String(updateError.message || '').toLowerCase();
             const looksLikeSchemaCache = msg.includes('schema cache') || msg.includes('could not find') || msg.includes('column');
+            let fallbackFailure = null;
 
             if (looksLikeSchemaCache) {
                 // Best-effort: request PostgREST schema reload and retry once.
@@ -1028,12 +1029,22 @@ async function updateTicket(ticketId, updates) {
                         fallback: 'sql'
                     };
                 } catch (e) {
-                    console.warn('SQL fallback update failed:', e && e.message ? e.message : e);
+                    fallbackFailure = e && e.message ? e.message : String(e);
+                    console.warn('SQL fallback update failed:', fallbackFailure);
                 }
             }
 
             if (updateError) {
                 console.error('Error updating ticket:', updateError);
+                if (fallbackFailure) {
+                    return {
+                        success: false,
+                        error: updateError.message,
+                        fallbackError: fallbackFailure,
+                        hint: 'SQL fallback requires SUPABASE_DB_URL (or DATABASE_URL) to be set in Netlify env vars and point to the same database as SUPABASE_URL.'
+                    };
+                }
+
                 return { success: false, error: updateError.message };
             }
         }
