@@ -3384,6 +3384,20 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
+        function toDatetimeLocalValue(value) {
+            if (!value) return '';
+            const d = new Date(value);
+            if (isNaN(d.getTime())) return '';
+
+            const pad = (n) => String(n).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            const mm = pad(d.getMonth() + 1);
+            const dd = pad(d.getDate());
+            const hh = pad(d.getHours());
+            const mi = pad(d.getMinutes());
+            return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+        }
+
         function fromDateInputValue(value, { endOfDay = true } = {}) {
             const raw = String(value ?? '').trim();
             if (!raw) return null;
@@ -3401,6 +3415,14 @@
                 ? new Date(year, monthIndex, day, 23, 59, 59, 999)
                 : new Date(year, monthIndex, day, 0, 0, 0, 0);
 
+            if (isNaN(d.getTime())) return null;
+            return d.toISOString();
+        }
+
+        function fromDatetimeLocalValue(value) {
+            const raw = String(value ?? '').trim();
+            if (!raw) return null;
+            const d = new Date(raw);
             if (isNaN(d.getTime())) return null;
             return d.toISOString();
         }
@@ -3480,7 +3502,12 @@
                 if (firstResponseDueRaw) {
                     const frd = new Date(firstResponseDueRaw);
                     if (!isNaN(frd.getTime())) {
-                        firstResponseDueText = frd.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
+                        firstResponseDueText = frd.toLocaleString(undefined, {
+                            month: 'numeric',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
                     }
                 }
 
@@ -4198,7 +4225,7 @@
                                         </div>
                                         <div>
                                             <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">First response due</label>
-                                            <input type="date" id="ticketFirstResponseDue" value="${escapeAttr(toDateInputValue(firstResponseDueAtRaw))}" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+                                            <input type="datetime-local" id="ticketFirstResponseDue" value="${escapeAttr(toDatetimeLocalValue(firstResponseDueAtRaw))}" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
                                         </div>
                                         <div>
                                             <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Resolution due</label>
@@ -4319,7 +4346,7 @@
                     priority: priorityEl.value,
                     assignedTo: assigneeEl?.value || '',
                     category: categoryEl.value,
-                    firstResponseDueAt: fromDateInputValue(firstResponseDueEl?.value, { endOfDay: true }),
+                    firstResponseDueAt: fromDatetimeLocalValue(firstResponseDueEl?.value),
                     resolutionDueAt: fromDateInputValue(resolutionDueEl?.value, { endOfDay: true }),
                     customerName: customerNameEl?.value || '',
                     customerId: customerIdEl?.value || '',
