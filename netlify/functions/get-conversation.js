@@ -105,10 +105,7 @@ exports.handler = async (event, context) => {
                         conversation: [],
                         count: 0,
                         needsSetup: true,
-                        initUrl: '/.netlify/functions/init-conversations-table',
-                        setupHint: likelySchemaCache
-                            ? 'ticket_conversations exists but Supabase REST cannot see it (schema cache / mismatched project URL/key). Verify SUPABASE_URL and keys match the same project as SUPABASE_DB_URL.'
-                            : 'Run the initializer once (requires SUPABASE_DB_URL in Netlify), or create the ticket_conversations table in Supabase SQL editor.'
+                        initUrl: '/.netlify/functions/init-conversations-table'
                     })
                 };
             }
