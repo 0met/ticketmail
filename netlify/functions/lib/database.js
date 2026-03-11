@@ -839,6 +839,13 @@ function normalizeTimestampValue(value, fallback = null) {
 async function fallbackUpdateTicketViaSql(ticketId, updateData) {
     const sql = getSqlDatabase();
 
+    const ensureSlaColumns = async () => {
+        // Best-effort, idempotent.
+        try { await sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS first_response_due_at TIMESTAMPTZ;`; } catch (_) { /* ignore */ }
+        try { await sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_due_at TIMESTAMPTZ;`; } catch (_) { /* ignore */ }
+        try { await sql`NOTIFY pgrst, 'reload schema';`; } catch (_) { /* ignore */ }
+    };
+
     const allowedColumns = new Set([
         'updated_at',
         'priority',
@@ -869,7 +876,20 @@ async function fallbackUpdateTicketViaSql(ticketId, updateData) {
 
     const query = `UPDATE tickets SET ${setClauses.join(', ')} WHERE id = $${params.length} RETURNING *;`;
 
-    const rows = await sql(query, params);
+    let rows;
+    try {
+        rows = await sql(query, params);
+    } catch (e) {
+        const msg = String(e && e.message ? e.message : e).toLowerCase();
+        const undefinedColumn = msg.includes('does not exist') && msg.includes('column');
+        const mentionsSlaColumn = msg.includes('first_response_due_at') || msg.includes('resolution_due_at');
+        if (undefinedColumn && mentionsSlaColumn) {
+            await ensureSlaColumns();
+            rows = await sql(query, params);
+        } else {
+            throw e;
+        }
+    }
     const updatedRow = Array.isArray(rows) ? rows[0] : null;
     if (!updatedRow) {
         throw new Error('SQL fallback update returned no rows');
@@ -1063,6 +1083,18 @@ async function updateTicket(ticketId, updates) {
             const looksLikeSchemaCache = msg.includes('schema cache') || msg.includes('could not find') || msg.includes('column');
             let fallbackFailure = null;
 
+            const ensureSlaColumns = async () => {
+                try {
+                    const sql = getSqlDatabase();
+                    await sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS first_response_due_at TIMESTAMPTZ;`;
+                    await sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_due_at TIMESTAMPTZ;`;
+                    await sql`NOTIFY pgrst, 'reload schema';`;
+                    console.warn('Ensured SLA columns exist and requested PostgREST schema reload.');
+                } catch (e) {
+                    console.warn('Could not ensure SLA columns:', e && e.message ? e.message : e);
+                }
+            };
+
             if (looksLikeSchemaCache) {
                 // Best-effort: request PostgREST schema reload and retry once.
                 try {
@@ -1072,6 +1104,15 @@ async function updateTicket(ticketId, updates) {
                     ({ data, error: updateError } = await attemptUpdate());
                 } catch (e) {
                     console.warn('Could not request PostgREST schema reload:', e && e.message ? e.message : e);
+                }
+            }
+
+            // If the DB truly doesn't have the new columns yet, add them and retry.
+            if (updateError && looksLikeSchemaCache) {
+                const mentionsSlaColumn = msg.includes('first_response_due_at') || msg.includes('resolution_due_at');
+                if (mentionsSlaColumn) {
+                    await ensureSlaColumns();
+                    ({ data, error: updateError } = await attemptUpdate());
                 }
             }
 
