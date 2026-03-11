@@ -4419,15 +4419,24 @@
                 console.log('Update response status:', response.status);
                 const result = await response.json();
                 console.log('Update result:', JSON.stringify(result, null, 2));
-                if (result.ticket && result.ticket.customer_name) {
-                    console.log('✅ Database confirmed customer fields saved:', {
-                        customer_name: result.ticket.customer_name,
-                        customer_id: result.ticket.customer_id,
-                        customer_phone: result.ticket.customer_phone,
-                        customer_email: result.ticket.customer_email
-                    });
+                if (!result.ticket) {
+                    console.warn('⚠️  Database response missing updated ticket');
                 } else {
-                    console.warn('⚠️  Database response missing customer fields');
+                    const expectedCustomerKeys = ['customer_name', 'customer_id', 'customer_phone', 'customer_email'];
+                    const missingCustomerKeys = expectedCustomerKeys.filter((key) => !(key in result.ticket));
+
+                    if (missingCustomerKeys.length > 0) {
+                        console.warn('⚠️  Database response missing customer field keys:', missingCustomerKeys);
+                    } else if (result.ticket.customer_name || result.ticket.customer_id || result.ticket.customer_phone || result.ticket.customer_email) {
+                        console.log('✅ Database confirmed customer fields saved:', {
+                            customer_name: result.ticket.customer_name,
+                            customer_id: result.ticket.customer_id,
+                            customer_phone: result.ticket.customer_phone,
+                            customer_email: result.ticket.customer_email
+                        });
+                    } else {
+                        console.log('ℹ️  Customer fields are blank (ok for this ticket)');
+                    }
                 }
                 
                 if (result.success) {
