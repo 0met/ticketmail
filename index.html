@@ -412,68 +412,35 @@
                     </div>
                 </div>
 
-                <!-- Charts Section -->
-                <div class="dashboard-charts-grid">
-                    <!-- Ticket Distribution Chart -->
-                    <div class="chart-card">
-                        <h3 style="font-size: 0.875rem; font-weight: 500; color: #64748b; margin-bottom: 1.5rem;">Ticket Status Distribution</h3>
-                        <div style="height: 280px; display: flex; align-items: flex-end; justify-content: space-around; gap: 0.5rem; padding: 1rem 0;">
-                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 85%; border-radius: 8px 8px 0 0;"></div>
-                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Jan</span>
-                            </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 92%; border-radius: 8px 8px 0 0;"></div>
-                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Feb</span>
-                            </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 78%; border-radius: 8px 8px 0 0;"></div>
-                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Mar</span>
-                            </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 65%; border-radius: 8px 8px 0 0;"></div>
-                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Apr</span>
-                            </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 72%; border-radius: 8px 8px 0 0;"></div>
-                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">May</span>
-                            </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 88%; border-radius: 8px 8px 0 0;"></div>
-                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Jun</span>
-                            </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                                <div style="width: 100%; background: linear-gradient(180deg, #3b82f6, #2563eb); height: 68%; border-radius: 8px 8px 0 0;"></div>
-                                <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Jul</span>
-                            </div>
-                        </div>
+                <div class="dashboard-status-metrics">
+                    <div class="metric-card">
+                        <div class="metric-label">Unresolved</div>
+                        <div class="metric-value" id="unresolvedCount">0</div>
                     </div>
 
-                    <!-- Response Time Trend Chart -->
-                    <div class="chart-card">
-                        <h3 style="font-size: 0.875rem; font-weight: 500; color: #64748b; margin-bottom: 1.5rem;">Response Time Trend</h3>
-                        <div style="height: 280px; position: relative; padding: 1rem 0;">
-                            <svg width="100%" height="100%" viewBox="0 0 400 220" style="overflow: visible;">
-                                <path d="M 10,180 Q 60,120 80,140 T 150,100 Q 180,80 220,110 T 300,90 Q 330,70 390,100" 
-                                      fill="none" 
-                                      stroke="url(#lineGradient)" 
-                                      stroke-width="3" 
-                                      stroke-linecap="round"/>
-                                <defs>
-                                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-                                        <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
-                                    </linearGradient>
-                                </defs>
-                                <!-- Data points -->
-                                <circle cx="10" cy="180" r="4" fill="#3b82f6"/>
-                                <circle cx="80" cy="140" r="4" fill="#3b82f6"/>
-                                <circle cx="150" cy="100" r="4" fill="#3b82f6"/>
-                                <circle cx="220" cy="110" r="4" fill="#3b82f6"/>
-                                <circle cx="300" cy="90" r="4" fill="#8b5cf6"/>
-                                <circle cx="390" cy="100" r="4" fill="#8b5cf6"/>
-                            </svg>
-                        </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Overdue</div>
+                        <div class="metric-value" id="overdueCount">0</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Due today</div>
+                        <div class="metric-value" id="dueTodayCount">0</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Open</div>
+                        <div class="metric-value" id="openStatusCount">0</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">On hold</div>
+                        <div class="metric-value" id="onHoldCount">0</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Unassigned</div>
+                        <div class="metric-value" id="unassignedCount">0</div>
                     </div>
                 </div>
                 </div>
@@ -3420,13 +3387,52 @@
             const open = appState.tickets.filter(t => t.status === 'open').length;
             const closed = appState.tickets.filter(t => t.status === 'closed').length;
 
+            const unresolved = appState.tickets.filter(t => t.status !== 'closed').length;
+            const onHold = appState.tickets.filter(t => t.status === 'pending').length;
+            const unassigned = appState.tickets.filter(t => {
+                const assigned = t.assigned_to ?? t.assignedTo ?? t.assignee_id ?? t.assigneeId;
+                return !String(assigned ?? '').trim();
+            }).length;
+
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
+            const startOfTomorrow = new Date(startOfToday);
+            startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+
+            const dueInfo = appState.tickets
+                .filter(t => t.status !== 'closed')
+                .map(t => {
+                    const raw = t.due_date ?? t.dueDate ?? t.due_at ?? t.dueAt ?? t.due;
+                    const date = raw ? new Date(raw) : null;
+                    if (!date || isNaN(date.getTime())) return null;
+                    return date;
+                })
+                .filter(Boolean);
+
+            const overdue = dueInfo.filter(d => d < startOfToday).length;
+            const dueToday = dueInfo.filter(d => d >= startOfToday && d < startOfTomorrow).length;
+
             const totalEl = document.getElementById('totalTickets');
             const openEl = document.getElementById('openTickets');
             const closedEl = document.getElementById('closedTickets');
 
+            const unresolvedEl = document.getElementById('unresolvedCount');
+            const overdueEl = document.getElementById('overdueCount');
+            const dueTodayEl = document.getElementById('dueTodayCount');
+            const openStatusEl = document.getElementById('openStatusCount');
+            const onHoldEl = document.getElementById('onHoldCount');
+            const unassignedEl = document.getElementById('unassignedCount');
+
             if (totalEl) totalEl.textContent = total;
             if (openEl) openEl.textContent = open;
             if (closedEl) closedEl.textContent = closed;
+
+            if (unresolvedEl) unresolvedEl.textContent = unresolved;
+            if (overdueEl) overdueEl.textContent = overdue;
+            if (dueTodayEl) dueTodayEl.textContent = dueToday;
+            if (openStatusEl) openStatusEl.textContent = open;
+            if (onHoldEl) onHoldEl.textContent = onHold;
+            if (unassignedEl) unassignedEl.textContent = unassigned;
         }
 
         // Format date for display
