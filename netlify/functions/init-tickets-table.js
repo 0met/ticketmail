@@ -86,6 +86,8 @@ exports.handler = async (event, context) => {
                     company_id TEXT,
                     resolution_time INTEGER,
                     closed_at TIMESTAMPTZ,
+                    first_response_due_at TIMESTAMPTZ,
+                    resolution_due_at TIMESTAMPTZ,
                     created_by TEXT,
                     assigned_to TEXT,
                     customer_company TEXT,
@@ -139,6 +141,8 @@ exports.handler = async (event, context) => {
         await addRequired(sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS customer_phone TEXT;`);
         await addRequired(sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS customer_email TEXT;`);
         await addRequired(sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS company_id TEXT;`);
+        await addRequired(sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS first_response_due_at TIMESTAMPTZ;`);
+        await addRequired(sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_due_at TIMESTAMPTZ;`);
         await addRequired(sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;`);
         await addRequired(sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;`);
 

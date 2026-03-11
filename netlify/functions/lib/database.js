@@ -711,6 +711,9 @@ function mapTicketRecord(ticket) {
     const createdTimestamp = normalizeTimestampValue(ticket.created_at, normalizedDate);
     const updatedTimestamp = normalizeTimestampValue(ticket.updated_at, createdTimestamp);
 
+    const firstResponseDueAt = normalizeTimestampValue(ticket.first_response_due_at, null);
+    const resolutionDueAt = normalizeTimestampValue(ticket.resolution_due_at, null);
+
     return {
         id: ticket.id,
         companyId: ticket.company_id ?? null,
@@ -730,6 +733,10 @@ function mapTicketRecord(ticket) {
         created_at: createdTimestamp,
         updated_at: updatedTimestamp,
         resolutionTime: ticket.resolution_time,
+        firstResponseDueAt,
+        first_response_due_at: firstResponseDueAt,
+        resolutionDueAt,
+        resolution_due_at: resolutionDueAt,
         resolution_time: ticket.resolution_time,
         closedAt: ticket.closed_at,
         closed_at: ticket.closed_at,
@@ -914,6 +921,24 @@ async function updateTicket(ticketId, updates) {
             else {
                 const n = Number(raw);
                 updateData.assigned_to = Number.isFinite(n) ? n : raw;
+            }
+        }
+
+        if (updates.firstResponseDueAt !== undefined) {
+            const raw = String(updates.firstResponseDueAt ?? '').trim();
+            if (!raw) updateData.first_response_due_at = null;
+            else {
+                const parsed = new Date(raw);
+                updateData.first_response_due_at = isNaN(parsed.getTime()) ? null : parsed.toISOString();
+            }
+        }
+
+        if (updates.resolutionDueAt !== undefined) {
+            const raw = String(updates.resolutionDueAt ?? '').trim();
+            if (!raw) updateData.resolution_due_at = null;
+            else {
+                const parsed = new Date(raw);
+                updateData.resolution_due_at = isNaN(parsed.getTime()) ? null : parsed.toISOString();
             }
         }
 

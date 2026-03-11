@@ -493,7 +493,11 @@
                             </label>
                             <label class="ticket-card-settings-item">
                                 <input type="checkbox" id="tca_due" onchange="onTicketCardAnalyticsToggle('due', this.checked)" />
-                                <span>Due date</span>
+                                <span>Resolution due</span>
+                            </label>
+                            <label class="ticket-card-settings-item">
+                                <input type="checkbox" id="tca_first_response_due" onchange="onTicketCardAnalyticsToggle('firstResponseDue', this.checked)" />
+                                <span>First response due</span>
                             </label>
                             <label class="ticket-card-settings-item">
                                 <input type="checkbox" id="tca_status" onchange="onTicketCardAnalyticsToggle('status', this.checked)" />
@@ -502,6 +506,18 @@
                             <label class="ticket-card-settings-item">
                                 <input type="checkbox" id="tca_assignee" onchange="onTicketCardAnalyticsToggle('assignee', this.checked)" />
                                 <span>Assignee</span>
+                            </label>
+                            <label class="ticket-card-settings-item">
+                                <input type="checkbox" id="tca_age" onchange="onTicketCardAnalyticsToggle('age', this.checked)" />
+                                <span>Age</span>
+                            </label>
+                            <label class="ticket-card-settings-item">
+                                <input type="checkbox" id="tca_inactive" onchange="onTicketCardAnalyticsToggle('inactive', this.checked)" />
+                                <span>Inactive for</span>
+                            </label>
+                            <label class="ticket-card-settings-item">
+                                <input type="checkbox" id="tca_overdue" onchange="onTicketCardAnalyticsToggle('overdue', this.checked)" />
+                                <span>Overdue flag</span>
                             </label>
                         </div>
                     </div>
@@ -3308,7 +3324,11 @@
             priority: true,
             due: true,
             status: true,
-            assignee: true
+            assignee: true,
+            firstResponseDue: false,
+            age: false,
+            inactive: false,
+            overdue: false
         });
 
         function getTicketCardAnalyticsSettings() {
@@ -3339,13 +3359,49 @@
             const map = {
                 priority: 'tca_priority',
                 due: 'tca_due',
+                firstResponseDue: 'tca_first_response_due',
                 status: 'tca_status',
-                assignee: 'tca_assignee'
+                assignee: 'tca_assignee',
+                age: 'tca_age',
+                inactive: 'tca_inactive',
+                overdue: 'tca_overdue'
             };
             Object.keys(map).forEach((key) => {
                 const el = document.getElementById(map[key]);
                 if (el) el.checked = !!settings[key];
             });
+        }
+
+        function toDatetimeLocalValue(value) {
+            if (!value) return '';
+            const d = new Date(value);
+            if (isNaN(d.getTime())) return '';
+
+            const pad = (n) => String(n).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            const mm = pad(d.getMonth() + 1);
+            const dd = pad(d.getDate());
+            const hh = pad(d.getHours());
+            const mi = pad(d.getMinutes());
+            return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+        }
+
+        function fromDatetimeLocalValue(value) {
+            const raw = String(value ?? '').trim();
+            if (!raw) return null;
+            const d = new Date(raw);
+            if (isNaN(d.getTime())) return null;
+            return d.toISOString();
+        }
+
+        function formatDurationShort(ms) {
+            const safe = Math.max(0, Number(ms) || 0);
+            const min = Math.floor(safe / 60000);
+            if (min < 60) return `${min}m`;
+            const hours = Math.floor(min / 60);
+            if (hours < 48) return `${hours}h`;
+            const days = Math.floor(hours / 24);
+            return `${days}d`;
         }
 
         function toggleTicketCardSettings(e) {
@@ -3399,7 +3455,7 @@
 
                 const priorityVal = String(ticket.priority || 'medium').toLowerCase();
                 const statusVal = String(ticket.status || 'new').toLowerCase();
-                const dueRaw = ticket.due_date || ticket.dueDate || ticket.due_at || ticket.dueAt || ticket.due;
+                const dueRaw = ticket.resolution_due_at || ticket.resolutionDueAt || ticket.resolution_due || ticket.due_date || ticket.dueDate || ticket.due_at || ticket.dueAt || ticket.due;
                 let dueText = '—';
                 if (dueRaw) {
                     const dueDate = new Date(dueRaw);
@@ -3407,6 +3463,25 @@
                         dueText = dueDate.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
                     }
                 }
+
+                const firstResponseDueRaw = ticket.first_response_due_at || ticket.firstResponseDueAt || ticket.first_response_due || null;
+                let firstResponseDueText = '—';
+                if (firstResponseDueRaw) {
+                    const frd = new Date(firstResponseDueRaw);
+                    if (!isNaN(frd.getTime())) {
+                        firstResponseDueText = frd.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
+                    }
+                }
+
+                const createdRaw = ticket.created_at || ticket.createdAt || ticket.date;
+                const updatedRaw = ticket.updated_at || ticket.updatedAt || ticket.date;
+                const createdMs = createdRaw ? new Date(createdRaw).getTime() : NaN;
+                const updatedMs = updatedRaw ? new Date(updatedRaw).getTime() : NaN;
+                const ageText = isNaN(createdMs) ? '—' : formatDurationShort(Date.now() - createdMs);
+                const inactiveText = isNaN(updatedMs) ? '—' : formatDurationShort(Date.now() - updatedMs);
+
+                const dueMs = dueRaw ? new Date(dueRaw).getTime() : NaN;
+                const isOverdue = !isNaN(dueMs) && dueMs < Date.now() && statusVal !== 'closed';
 
                 const assignedRaw = (ticket.assigned_to ?? ticket.assignedTo ?? ticket.assignee_id ?? ticket.assigneeId ?? '').toString().trim();
                 let assigneeText = 'Unassigned';
@@ -3444,6 +3519,14 @@
                         </div>
                     `);
                 }
+                if (analyticsSettings.firstResponseDue) {
+                    analyticsRows.push(`
+                        <div class="ticket-analytics-row">
+                            <span class="ticket-analytics-icon" aria-hidden="true">🕑</span>
+                            <span class="ticket-analytics-text">${firstResponseDueText}</span>
+                        </div>
+                    `);
+                }
                 if (analyticsSettings.status) {
                     analyticsRows.push(`
                         <div class="ticket-analytics-row">
@@ -3457,6 +3540,30 @@
                         <div class="ticket-analytics-row">
                             <span class="ticket-analytics-icon" aria-hidden="true">👤</span>
                             <span class="ticket-analytics-text">${assigneeText}</span>
+                        </div>
+                    `);
+                }
+                if (analyticsSettings.age) {
+                    analyticsRows.push(`
+                        <div class="ticket-analytics-row">
+                            <span class="ticket-analytics-icon" aria-hidden="true">⏳</span>
+                            <span class="ticket-analytics-text">Age ${ageText}</span>
+                        </div>
+                    `);
+                }
+                if (analyticsSettings.inactive) {
+                    analyticsRows.push(`
+                        <div class="ticket-analytics-row">
+                            <span class="ticket-analytics-icon" aria-hidden="true">🛑</span>
+                            <span class="ticket-analytics-text">Inactive ${inactiveText}</span>
+                        </div>
+                    `);
+                }
+                if (analyticsSettings.overdue) {
+                    analyticsRows.push(`
+                        <div class="ticket-analytics-row">
+                            <span class="priority-dot ${isOverdue ? 'priority-critical' : 'priority-low'}" aria-hidden="true"></span>
+                            <span class="ticket-analytics-text">${isOverdue ? 'Overdue' : 'On track'}</span>
                         </div>
                     `);
                 }
@@ -3561,7 +3668,7 @@
             const dueInfo = appState.tickets
                 .filter(t => t.status !== 'closed')
                 .map(t => {
-                    const raw = t.due_date ?? t.dueDate ?? t.due_at ?? t.dueAt ?? t.due;
+                    const raw = t.resolution_due_at ?? t.resolutionDueAt ?? t.resolution_due ?? t.due_date ?? t.dueDate ?? t.due_at ?? t.dueAt ?? t.due;
                     const date = raw ? new Date(raw) : null;
                     if (!date || isNaN(date.getTime())) return null;
                     return date;
@@ -3937,6 +4044,8 @@
             const customerPhone = currentTicket.customer_phone || currentTicket.customerPhone || '';
             const customerCompany = currentTicket.customer_company || currentTicket.customerCompany || currentTicket.companyName || currentTicket.company_name || '';
             const assignedTo = currentTicket.assigned_to || currentTicket.assignedTo || '';
+            const firstResponseDueAtRaw = currentTicket.first_response_due_at || currentTicket.firstResponseDueAt || currentTicket.first_response_due || null;
+            const resolutionDueAtRaw = currentTicket.resolution_due_at || currentTicket.resolutionDueAt || currentTicket.resolution_due || currentTicket.due_date || currentTicket.dueDate || currentTicket.due_at || currentTicket.dueAt || currentTicket.due || null;
             const userRole = normalizeRole(authState?.user?.role);
             const canMergeTickets = userRole === 'admin' || userRole === 'agent';
             const isClosed = String(currentTicket.status || '').toLowerCase() === 'closed';
@@ -4076,6 +4185,14 @@
                                                 <option value="">Unassigned</option>
                                             </select>
                                         </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">First response due</label>
+                                            <input type="datetime-local" id="ticketFirstResponseDue" value="${escapeAttr(toDatetimeLocalValue(firstResponseDueAtRaw))}" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Resolution due</label>
+                                            <input type="datetime-local" id="ticketResolutionDue" value="${escapeAttr(toDatetimeLocalValue(resolutionDueAtRaw))}" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -4171,6 +4288,8 @@
                 const priorityEl = document.getElementById('ticketPriorityDropdown');
                 const assigneeEl = document.getElementById('ticketAssigneeDropdown');
                 const categoryEl = document.getElementById('ticketCategoryDropdown');
+                const firstResponseDueEl = document.getElementById('ticketFirstResponseDue');
+                const resolutionDueEl = document.getElementById('ticketResolutionDue');
                 const customerNameEl = document.getElementById('customerName');
                 const customerIdEl = document.getElementById('customerId');
                 const customerPhoneEl = document.getElementById('customerPhone');
@@ -4189,6 +4308,8 @@
                     priority: priorityEl.value,
                     assignedTo: assigneeEl?.value || '',
                     category: categoryEl.value,
+                    firstResponseDueAt: fromDatetimeLocalValue(firstResponseDueEl?.value),
+                    resolutionDueAt: fromDatetimeLocalValue(resolutionDueEl?.value),
                     customerName: customerNameEl?.value || '',
                     customerId: customerIdEl?.value || '',
                     customerPhone: customerPhoneEl?.value || '',
