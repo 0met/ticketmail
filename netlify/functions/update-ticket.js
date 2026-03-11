@@ -76,6 +76,9 @@ exports.handler = async (event, context) => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
+                    // Preserve any extra diagnostic fields from lib/database.js
+                    // (e.g., fallbackError + hint when PostgREST schema cache is stale).
+                    ...result,
                     success: false,
                     error: result.error || 'Failed to update ticket'
                 })
