@@ -3837,6 +3837,9 @@
 
                 const result = await response.json();
                 if (!response.ok || !result || !result.success) {
+                    if (result && result.error) {
+                        showDiscreteNotification(`Could not load todos: ${result.error}`, 'error');
+                    }
                     return;
                 }
 
@@ -3868,6 +3871,7 @@
 
                 const result = await response.json();
                 if (!response.ok || !result || !result.success) {
+                    showDiscreteNotification(`Could not save todo${result && result.error ? `: ${result.error}` : ''}`, 'error');
                     return;
                 }
 
@@ -3877,7 +3881,7 @@
                 input.value = '';
                 updateTodoDashboard();
             } catch (_) {
-                // ignore
+                showDiscreteNotification('Could not save todo (network error)', 'error');
             }
         }
 
@@ -3899,6 +3903,7 @@
 
                 const result = await response.json();
                 if (!response.ok || !result || !result.success) {
+                    showDiscreteNotification(`Could not update todo${result && result.error ? `: ${result.error}` : ''}`, 'error');
                     return;
                 }
 
@@ -3909,7 +3914,7 @@
 
                 updateTodoDashboard();
             } catch (_) {
-                // ignore
+                showDiscreteNotification('Could not update todo (network error)', 'error');
             }
         }
 

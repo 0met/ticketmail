@@ -24,13 +24,19 @@ async function ensureUserTodosTable() {
 
         await sql`CREATE TABLE IF NOT EXISTS user_todos (
             id BIGSERIAL PRIMARY KEY,
-            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            user_id TEXT NOT NULL,
             text TEXT NOT NULL,
             is_completed BOOLEAN NOT NULL DEFAULT false,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             completed_at TIMESTAMPTZ
         );`;
+
+        // Migration / compatibility:
+        // Older builds may have created user_id as UUID (or with a FK). Make it TEXT so it matches
+        // whatever users.id type is, and so PostgREST filters always work with string tokens.
+        try { await sql`ALTER TABLE user_todos DROP CONSTRAINT IF EXISTS user_todos_user_id_fkey;`; } catch (_) { /* ignore */ }
+        try { await sql`ALTER TABLE user_todos ALTER COLUMN user_id TYPE TEXT USING user_id::text;`; } catch (_) { /* ignore */ }
 
         await sql`CREATE INDEX IF NOT EXISTS idx_user_todos_user_id ON user_todos(user_id);`;
         await sql`CREATE INDEX IF NOT EXISTS idx_user_todos_user_completed ON user_todos(user_id, is_completed);`;
@@ -99,6 +105,8 @@ exports.handler = async (event, context) => {
             return json(401, { success: false, error: 'Invalid session user' });
         }
 
+        const ownerUserId = String(userId);
+
         await ensureUserTodosTable();
 
         const supabase = getSupabaseClient();
@@ -107,7 +115,7 @@ exports.handler = async (event, context) => {
             const { data, error } = await supabase
                 .from('user_todos')
                 .select('id, text, is_completed, created_at, updated_at, completed_at')
-                .eq('user_id', userId)
+                .eq('user_id', ownerUserId)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -134,7 +142,7 @@ exports.handler = async (event, context) => {
             const { data, error } = await supabase
                 .from('user_todos')
                 .insert({
-                    user_id: userId,
+                    user_id: ownerUserId,
                     text,
                     is_completed: false,
                     created_at: now,
@@ -179,7 +187,7 @@ exports.handler = async (event, context) => {
                     completed_at: isCompleted ? now : null
                 })
                 .eq('id', id)
-                .eq('user_id', userId)
+                .eq('user_id', ownerUserId)
                 .select('id, text, is_completed, created_at, updated_at, completed_at')
                 .single();
 
